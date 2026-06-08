@@ -1,4 +1,5 @@
 #---------------------FRONTEND-----------------------
+
 # Logs
 logs
 *.log
@@ -22,6 +23,44 @@ dist-ssr
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+*.sw? 
 
 #---------------------BACKEND-----------------------
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage
+*.lcov
+.nyc_output
+
+# node modules
+node_modules/
+jspm_packages/
+
+# build output
+dist/
+build/Release
+
+# env
+.env
+.env.*
+
+# Next / Nuxt / Vite
+.next
+out
+.nuxt
+.output
+.vite/
+.svelte-kit/
+
+# cache
+.cache
+.parcel-cache
