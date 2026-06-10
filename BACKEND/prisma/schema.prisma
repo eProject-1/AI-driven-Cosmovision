@@ -1,0 +1,460 @@
+// =============================================================
+//  CosmoVision AI — Prisma Schema
+//  Database: PostgreSQL (Supabase)
+//  ORM: Prisma
+// =============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // Supabase cần directUrl để migrate
+}
+
+// =============================================================
+// ENUM
+// =============================================================
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Provider {
+  LOCAL
+  GOOGLE
+  GITHUB
+}
+
+enum IntentType {
+  PLANET_INFO
+  CONSTELLATION_INFO
+  STARGAZING_RECOMMENDATION
+  WEATHER_CHECK
+  OBSERVATORY_SEARCH
+  GENERAL_ASTRONOMY
+  UNKNOWN
+}
+
+enum NewsCategory {
+  SPACE_EXPLORATION
+  SOLAR_SYSTEM
+  DEEP_SPACE
+  TECHNOLOGY
+  GENERAL
+}
+
+enum EventType {
+  METEOR_SHOWER
+  ECLIPSE
+  PLANET_OPPOSITION
+  CONJUNCTION
+  SUPERMOON
+  COMET
+  OTHER
+}
+
+enum AnalyticsEvent {
+  PAGE_VIEW
+  PLANET_VIEW
+  CONSTELLATION_VIEW
+  CHATBOT_MESSAGE
+  NEWS_VIEW
+  RECOMMENDATION_REQUEST
+  OBSERVATORY_VIEW
+  IMAGE_UPLOAD
+  SEARCH
+}
+
+// =============================================================
+// USER & AUTH
+// =============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String    @unique
+  passwordHash  String?   // null nếu đăng nhập qua OAuth
+  displayName   String?
+  avatarUrl     String?
+  role          Role      @default(USER)
+  provider      Provider  @default(LOCAL)
+  providerId    String?   // Google/GitHub user ID
+  isVerified    Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  profile             UserProfile?
+  preferences         UserPreference?
+  refreshTokens       RefreshToken[]
+  chatSessions        ChatSession[]
+  recommendations     Recommendation[]
+  imageUploads        ImageUpload[]
+  analytics           Analytics[]
+  savedEvents         SavedEvent[]
+  savedObservatories  SavedObservatory[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  bio         String?
+  location    String?
+  latitude    Float?
+  longitude   Float?
+  timezone    String?  @default("UTC")
+  website     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model UserPreference {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  // Astronomy preferences
+  favoritesPlanets      String[] @default([])     // ["Mars", "Jupiter"]
+  favoritesConstellations String[] @default([])
+  experienceLevel       String   @default("beginner") // beginner | intermediate | expert
+  // Notification preferences
+  emailAlerts           Boolean  @default(true)
+  eventReminders        Boolean  @default(true)
+  // Display preferences
+  temperatureUnit       String   @default("celsius")  // celsius | fahrenheit
+  distanceUnit          String   @default("km")        // km | miles | au
+  timeFormat            String   @default("24h")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// =============================================================
+// ASTRONOMY — PLANETS
+// =============================================================
+
+model Planet {
+  id               String   @id @default(cuid())
+  name             String   @unique
+  slug             String   @unique           // "mars", "jupiter"
+  type             String                     // "terrestrial" | "gas_giant" | "ice_giant" | "dwarf"
+  description      String
+  imageUrl         String?
+  // Physical data
+  massKg           Float?                     // kg
+  diameterKm       Float?                     // km
+  gravityMs2       Float?                     // m/s²
+  distanceFromSunAu Float?                    // Astronomical Units
+  distanceFromEarthLy Float?
+  orbitalPeriodDays Float?
+  rotationPeriodHours Float?
+  // Environment
+  avgTempCelsius   Float?
+  atmosphere       String[]  @default([])     // ["CO2", "N2"]
+  numberOfMoons    Int?      @default(0)
+  hasRings         Boolean   @default(false)
+  // Discovery
+  discoveredBy     String?
+  discoveryYear    Int?
+  // AI content
+  aiFunFacts       String[]  @default([])
+  isVisible        Boolean   @default(true)   // visible to naked eye?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@map("planets")
+}
+
+// =============================================================
+// ASTRONOMY — CONSTELLATIONS
+// =============================================================
+
+model Constellation {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  slug            String   @unique
+  latinName       String?
+  abbreviation    String?  // "Ori", "UMa"
+  description     String
+  mythology       String?
+  imageUrl        String?
+  mapImageUrl     String?  // interactive star map
+  // Visibility
+  bestMonths      Int[]    @default([])  // [11, 12, 1] = Nov-Jan
+  hemisphere      String?               // "northern" | "southern" | "both"
+  rightAscension  String?
+  declination     String?
+  // Stars
+  numberOfStars   Int?
+  brightestStar   String?
+  // AI content
+  aiFunFacts      String[] @default([])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  imageUploads ImageUpload[]
+
+  @@map("constellations")
+}
+
+// =============================================================
+// ASTRONOMY — CELESTIAL EVENTS
+// =============================================================
+
+model CelestialEvent {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  type        EventType
+  description String
+  details     String?
+  imageUrl    String?
+  startDate   DateTime
+  endDate     DateTime?
+  peakDate    DateTime?
+  // Visibility
+  visibleFrom String[]  @default([]) // ["Asia", "Europe"]
+  latitude    Float?    // best viewing latitude
+  // AI content
+  aiSummary   String?
+  isRecurring Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  savedBy SavedEvent[]
+
+  @@index([startDate])
+  @@map("celestial_events")
+}
+
+model SavedEvent {
+  id      String @id @default(cuid())
+  userId  String
+  eventId String
+  savedAt DateTime @default(now())
+
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event CelestialEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@map("saved_events")
+}
+
+// =============================================================
+// CHATBOT
+// =============================================================
+
+model ChatSession {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String?  // auto-generated từ message đầu tiên
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@index([userId])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id         String     @id @default(cuid())
+  sessionId  String
+  role       String                      // "user" | "assistant"
+  content    String
+  intent     IntentType @default(UNKNOWN)
+  // Metadata từ AI
+  tokensUsed Int?
+  modelUsed  String?    @default("llama3-8b-8192")
+  createdAt  DateTime   @default(now())
+
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("chat_messages")
+}
+
+// =============================================================
+// NEWS
+// =============================================================
+
+model NewsArticle {
+  id          String       @id @default(cuid())
+  title       String
+  slug        String       @unique
+  source      String                        // "NASA", "Space.com"
+  sourceUrl   String
+  imageUrl    String?
+  publishedAt DateTime
+  category    NewsCategory @default(GENERAL)
+  // Content
+  summary     String?                       // AI-generated summary
+  tags        String[]     @default([])
+  // Cache control
+  fetchedAt   DateTime     @default(now())
+  createdAt   DateTime     @default(now())
+
+  @@index([publishedAt])
+  @@index([category])
+  @@map("news_articles")
+}
+
+// =============================================================
+// RECOMMENDATION
+// =============================================================
+
+model Recommendation {
+  id              String   @id @default(cuid())
+  userId          String
+  // Input context
+  latitude        Float
+  longitude       Float
+  locationName    String?
+  requestedAt     DateTime @default(now())
+  // Weather snapshot
+  weatherCondition String?  // "clear", "cloudy", "rain"
+  temperature     Float?
+  humidity        Float?
+  // AI output
+  skyVisibilityScore Int?  // 0-100
+  bestTimeStart   DateTime?
+  bestTimeEnd     DateTime?
+  visiblePlanets  String[] @default([])
+  visibleConstellations String[] @default([])
+  aiSuggestion    String?          // full AI text
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([requestedAt])
+  @@map("recommendations")
+}
+
+// =============================================================
+// OBSERVATORY
+// =============================================================
+
+model Observatory {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String?
+  imageUrl    String?
+  // Location
+  address     String?
+  city        String?
+  country     String
+  latitude    Float
+  longitude   Float
+  // Info
+  website     String?
+  phone       String?
+  email       String?
+  openingHours String?
+  admission   String?  // "Free" | "$10" | etc.
+  rating      Float?   @default(0)  // 0-5
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  savedBy SavedObservatory[]
+
+  @@index([latitude, longitude])
+  @@map("observatories")
+}
+
+model SavedObservatory {
+  id            String @id @default(cuid())
+  userId        String
+  observatoryId String
+  savedAt       DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  observatory Observatory @relation(fields: [observatoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, observatoryId])
+  @@map("saved_observatories")
+}
+
+// =============================================================
+// IMAGE UPLOAD (Constellation Recognition)
+// =============================================================
+
+model ImageUpload {
+  id                String  @id @default(cuid())
+  userId            String
+  originalUrl       String  // Supabase Storage URL
+  fileName          String
+  fileSize          Int     // bytes
+  mimeType          String
+  // AI Recognition result
+  isProcessed       Boolean @default(false)
+  recognizedConstellation String?         // tên constellation nhận dạng được
+  constellationId   String?
+  confidenceScore   Float?               // 0-1
+  aiAnalysis        String?              // full AI response text
+  processedAt       DateTime?
+  createdAt         DateTime @default(now())
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  constellation Constellation? @relation(fields: [constellationId], references: [id])
+
+  @@index([userId])
+  @@map("image_uploads")
+}
+
+// =============================================================
+// ANALYTICS
+// =============================================================
+
+model Analytics {
+  id         String        @id @default(cuid())
+  userId     String?       // null = anonymous
+  event      AnalyticsEvent
+  // Context
+  entityType String?       // "planet" | "constellation" | "news"
+  entityId   String?       // ID của entity được xem
+  entityName String?       // tên để dễ query
+  // Request metadata
+  ipAddress  String?
+  userAgent  String?
+  referrer   String?
+  // Extra data (JSON)
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([event])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("analytics")
+}
