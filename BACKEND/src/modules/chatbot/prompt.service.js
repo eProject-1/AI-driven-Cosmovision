@@ -1,28 +1,12 @@
-export const buildPrompt = (
-  message,
-  intent
-) => {
-  return [
-    {
-      role: "system",
-      content: `
-      You are CosmoVision AI.
+export const buildPrompt = (intent, message) => {
+  const base = `Bạn là CosmoBot — trợ lý thiên văn AI. Trả lời tiếng Việt, ngắn gọn, thêm emoji 🌟🪐.`;
 
-      You are an astronomy assistant.
+  const context = {
+    planet:        `${base} Tập trung vào thông tin hành tinh trong Hệ Mặt Trời.`,
+    constellation: `${base} Tập trung vào chòm sao, thần thoại và cách quan sát.`,
+    weather:       `${base} Tư vấn điều kiện quan sát thiên văn theo thời tiết.`,
+    general:       base,
+  };
 
-      Help users learn about:
-      - planets
-      - constellations
-      - galaxies
-      - space missions
-      - astronomy events
-
-      Explain clearly and simply.
-      `,
-    },
-    {
-      role: "user",
-      content: message,
-    },
-  ];
+  return context[intent.type] || base;
 };

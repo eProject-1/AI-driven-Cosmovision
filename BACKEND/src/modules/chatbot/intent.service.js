@@ -1,27 +1,14 @@
 export const detectIntent = (message) => {
-  const text = message.toLowerCase();
+  const msg = message.toLowerCase();
 
-  if (
-    text.includes("planet") ||
-    text.includes("mars") ||
-    text.includes("jupiter") ||
-    text.includes("saturn")
-  ) {
-    return "PLANET";
-  }
+  if (msg.includes("hành tinh") || msg.includes("planet"))
+    return { type: "planet", keyword: msg };
 
-  if (
-    text.includes("constellation") ||
-    text.includes("orion")
-  ) {
-    return "CONSTELLATION";
-  }
+  if (msg.includes("chòm sao") || msg.includes("constellation"))
+    return { type: "constellation", keyword: msg };
 
-  if (
-    text.includes("weather")
-  ) {
-    return "WEATHER";
-  }
+  if (msg.includes("thời tiết") || msg.includes("weather"))
+    return { type: "weather", keyword: msg };
 
-  return "GENERAL";
+  return { type: "general", keyword: msg };
 };

@@ -1,33 +1,15 @@
-import * as chatbotService
-from "./chatbot.service.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
+import { sendSuccess, sendError } from "../../utils/response.util.js";
+import { chat, getChatHistory } from "./chatbot.service.js";
 
-export const chat = async (
-  req,
-  res,
-  next
-) => {
-  try {
-    const { message } =
-      req.body;
+export const sendMessage = asyncHandler(async (req, res) => {
+  const { message } = req.body;
+  if (!message?.trim()) return sendError(res, "Tin nhắn không được trống", 400);
+  const result = await chat(req.user.id, message.trim());
+  return sendSuccess(res, result);
+});
 
-    if (!message) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Message is required",
-      });
-    }
-
-    const result =
-      await chatbotService.chat(
-        message
-      );
-
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+export const getHistory = asyncHandler(async (req, res) => {
+  const messages = await getChatHistory(req.user.id);
+  return sendSuccess(res, messages);
+});
