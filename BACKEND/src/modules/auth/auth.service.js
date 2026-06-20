@@ -1,6 +1,8 @@
+// auth.service.js
 import bcrypt from "bcryptjs";
 import prisma from "../../config/db.js";
 import { signToken } from "../../utils/jwt.util.js";
+import { AppError } from "../../utils/AppError.js";
 
 const toAuthUser = (user) => ({
   id: user.id,
@@ -14,53 +16,71 @@ const toAuthUser = (user) => ({
 });
 
 const makeUsername = async (email) => {
-  const base = email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "_") || "user";
-  let username = base;
+  const base =
+    email
+      .split("@")[0]
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9_]/g, "_") || "user";
+
+  const existingUsers = await prisma.user.findMany({
+    where: {
+      OR: [
+        { username: base },
+        { username: { startsWith: `${base}_` } },
+      ],
+    },
+    select: { username: true },
+  });
+
+  const usernameSet = new Set(existingUsers.map((u) => u.username));
+  if (!usernameSet.has(base)) return base;
+
   let index = 1;
-
-  while (await prisma.user.findUnique({ where: { username } })) {
-    username = `${base}_${index}`;
-    index += 1;
-  }
-
-  return username;
+  while (usernameSet.has(`${base}_${index}`)) index++;
+  return `${base}_${index}`;
 };
 
 export const registerUser = async ({ name, email, password }) => {
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
-    throw Object.assign(new Error("Email already exists"), { statusCode: 409 });
+    throw new AppError("Email already exists", 409);
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({
-    data: {
-      email,
-      username: await makeUsername(email),
-      passwordHash,
-      displayName: name,
-      isVerified: true,
-      profile: { create: {} },
-      preferences: { create: {} },
-    },
-  });
 
-  const token = signToken({ userId: user.id, role: user.role });
-  return { user: toAuthUser(user), token };
+  try {
+    const user = await prisma.user.create({
+      data: {
+        email,
+        username: await makeUsername(email),
+        passwordHash,
+        displayName: name,
+        isVerified: false,
+        profile: { create: {} },
+        preferences: { create: {} },
+      },
+    });
+
+    const token = signToken({ userId: user.id, role: user.role });
+    return { user: toAuthUser(user), token };
+  } catch (err) {
+    if (err.code === "P2002") {
+      throw new AppError("Email already exists", 409);
+    }
+    throw err;
+  }
 };
 
 export const loginUser = async ({ email, password }) => {
   const user = await prisma.user.findUnique({ where: { email } });
-  const isValidPassword = user?.passwordHash && await bcrypt.compare(password, user.passwordHash);
+  const isValidPassword =
+    user?.passwordHash && (await bcrypt.compare(password, user.passwordHash));
 
   if (!user || !isValidPassword) {
-    throw Object.assign(new Error("Email or password is incorrect"), { statusCode: 401 });
+    throw new AppError("Email or password is incorrect", 401);
   }
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { lastLoginAt: new Date() },
-  });
 
   const token = signToken({ userId: user.id, role: user.role });
   return { user: toAuthUser(user), token };

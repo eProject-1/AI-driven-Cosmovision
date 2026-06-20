@@ -1,105 +1,216 @@
 import groq from "../../config/groq.js";
 import prisma from "../../config/db.js";
-import { detectIntent } from "./intent.service.js";
-import { buildPrompt } from "./prompt.service.js";
+import { AppError } from "../../utils/AppError.js";
 
-const SYSTEM_PROMPT = `You are CosmoBot, a friendly astronomy assistant for CosmoVision.
-Answer in Vietnamese, keep answers concise, helpful, and focused on astronomy.`;
+import {
+  detectIntent,
+  extractPlanetName,
+} from "../../services/chatbot/intent.service.js";
 
-const demoReply = (message) => {
-  const text = message.toLowerCase();
-  if (text.includes("mars") || text.includes("sao hoa")) {
-    return "Sao Hoa la hanh tinh da noi tieng voi mau do do oxit sat tren be mat. No co 2 ve tinh la Phobos va Deimos, va tung co dau vet cua nuoc long trong qua khu.";
+import {
+  getConversationHistory as fetchConversationHistory,
+  saveConversation,
+  createSession,
+  deleteSession,
+} from "../../services/chatbot/memory.service.js";
+
+import { buildChatMessages } from "../../services/chatbot/prompt.service.js";
+
+import { getPersonalizedRecommendations } from "../../services/chatbot/recommendation.service.js";
+
+// ==================== CONFIG & CONSTANTS ====================
+const DEFAULT_MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+const DEFAULT_TEMPERATURE = Number(process.env.GROQ_TEMPERATURE || 0.7);
+const DEFAULT_MAX_TOKENS = Number(process.env.GROQ_MAX_TOKENS || 800);
+
+const MAX_MESSAGE_LENGTH = 4000;
+const DEFAULT_HISTORY_LIMIT = 25;
+const DEFAULT_CHAT_HISTORY_LIMIT = 20;
+
+// ==================== VALIDATION ====================
+function assertValidChatMessage(message) {
+  if (!message || typeof message !== "string" || !message.trim()) {
+    throw new AppError("Message is required.", 400);
   }
-  if (text.includes("saturn") || text.includes("sao tho")) {
-    return "Sao Tho noi bat voi he vanh dai bang da va bang tuyet cuc ky dep. Titan, mot ve tinh cua Sao Tho, co khi quyen day va la muc tieu nghien cuu rat thu vi.";
+  if (message.length > MAX_MESSAGE_LENGTH) {
+    throw new AppError(
+      `Message is too long. Maximum length is ${MAX_MESSAGE_LENGTH} characters.`,
+      400
+    );
   }
-  if (text.includes("constellation") || text.includes("chom sao")) {
-    return "Chom sao la cac nhom sao duoc con nguoi dat ten de dinh huong va ke chuyen tren bau troi. Orion, Ursa Major va Scorpius la nhung chom sao de nhan biet.";
-  }
-  return "Minh la CosmoBot. Ban co the hoi ve hanh tinh, chom sao, mua sao bang, nhat thuc, kinh thien van hoac cach quan sat bau troi dem.";
-};
+}
 
-const toPrismaIntent = (intent) => {
-  const map = {
-    planet: "PLANET_INFO",
-    constellation: "CONSTELLATION_INFO",
-    weather: "WEATHER_CHECK",
-    general: "GENERAL_ASTRONOMY",
-  };
-  return map[intent?.type] || "UNKNOWN";
-};
+// ==================== HELPER FUNCTIONS ====================
+async function getPlanetContext(planetName) {
+  if (!planetName || !prisma?.planet) return null;
 
-const getReply = async (userMessage) => {
   try {
-    const intent = detectIntent(userMessage);
-    const prompt = buildPrompt(intent, userMessage);
-    const completion = await groq.chat.completions.create({
-      model: "llama3-8b-8192",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: prompt || userMessage },
-      ],
-      max_tokens: 400,
-      temperature: 0.7,
+    return await prisma.planet.findFirst({
+      where: { name: { equals: planetName, mode: "insensitive" } },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        type: true,
+        description: true,
+        diameterKm: true,        
+        avgTempCelsius: true,   
+        atmosphere: true,
+        hasRings: true,
+        numberOfMoons: true,
+        distanceFromSunAu: true,
+        distanceFromEarthKm: true,
+        orbitalPeriodDays: true,
+        gravityMs2: true,
+        isVisible: true,
+        aiFunFacts: true,
+        discoveredBy: true,
+        discoveryYear: true,
+      },
     });
-
-    return completion.choices?.[0]?.message?.content || demoReply(userMessage);
   } catch (error) {
-    console.warn("[chatbot] Groq unavailable, using demo reply:", error.message);
-    return demoReply(userMessage);
+    console.error("Get planet context error:", error.message);
+    return null;
   }
+}
+// ==================== HELPER ====================
+const INTENT_TYPE_MAP = {
+  planet:         "PLANET_INFO",
+  constellation:  "CONSTELLATION_INFO",
+  recommendation: "STARGAZING_RECOMMENDATION",
+  weather:        "WEATHER_CHECK",
+  astronomy:      "GENERAL_ASTRONOMY",
+  general:        "GENERAL_ASTRONOMY",
+  news:           "UNKNOWN",
+  guide:          "UNKNOWN",
+  recognition:    "UNKNOWN",
+  favorite:       "UNKNOWN",
 };
 
-export const chat = async (userId, userMessage) => {
-  const intent = detectIntent(userMessage);
-  let chatSession = await prisma.chatSession.findFirst({
-    where: { userId },
-    orderBy: { updatedAt: "desc" },
-  });
+function resolveIntentType(intent) {
+  const raw = intent?.primaryIntent?.type || intent?.type || "general";
+  return INTENT_TYPE_MAP[raw.toLowerCase()] ?? "UNKNOWN";
+}
 
-  if (!chatSession) {
-    chatSession = await prisma.chatSession.create({
-      data: { userId, title: userMessage.slice(0, 48) },
+// ==================== CORE FUNCTIONS ====================
+async function createGroqCompletion(messages) {
+  try {
+    const completion = await groq.chat.completions.create({
+      model: DEFAULT_MODEL,
+      messages,
+      temperature: DEFAULT_TEMPERATURE,
+      max_tokens: DEFAULT_MAX_TOKENS,
     });
+
+    return completion.choices?.[0]?.message?.content?.trim() || "";
+  } catch (error) {
+    console.error("Groq completion error:", error.message);
+    throw new AppError("Failed to generate AI response.", 503);
   }
+}
 
-  await prisma.chatMessage.create({
-    data: {
-      sessionId: chatSession.id,
-      role: "user",
-      content: userMessage,
-      intent: toPrismaIntent(intent),
+/**
+ * Resolve sessionId: dùng sessionId có sẵn hoặc tạo mới
+ */
+async function resolveSession(userId, sessionId) {
+  if (sessionId) return sessionId;
+
+  const session = await createSession(userId);
+  if (!session) throw new AppError("Failed to create chat session.", 500);
+
+  return session.id;
+}
+
+// ==================== EXPORTED FUNCTIONS ====================
+
+/**
+ * Send message to chatbot
+ * @param {string} userId
+ * @param {string} message
+ * @param {string|null} sessionId - nếu null sẽ tự tạo session mới
+ */
+async function sendMessage({ userId, message, sessionId }) {
+  assertValidChatMessage(message);
+  const cleanMessage = message.trim();
+
+  const resolvedSessionId = await resolveSession(userId, sessionId);
+
+  const intent = detectIntent(cleanMessage);         // object đầy đủ
+  const intentType = resolveIntentType(intent);      // string enum cho Prisma
+  const planetName = extractPlanetName(cleanMessage);
+
+  const [history, planetContext, recommendations] = await Promise.all([
+    fetchConversationHistory(resolvedSessionId, DEFAULT_HISTORY_LIMIT),
+    getPlanetContext(planetName),
+    getPersonalizedRecommendations({
+      userId,
+      message: cleanMessage,
+      intent,   //  truyền object đầy đủ cho recommendation engine
+      prisma,
+    }),
+  ]);
+
+  const messages = buildChatMessages({
+    userMessage: cleanMessage,
+    intent,       //  truyền object đày đủ cho chat engine
+    history,
+    context: {
+      planet: planetContext,
+      recommendations,
+      extra: {
+        assistantName: "CosmoBot",
+        language: "English",
+        instruction:
+          "Always answer in English. Be clear, helpful, concise, and focused on astronomy.",
+      },
     },
   });
 
-  const reply = await getReply(userMessage);
+  const assistantMessage = await createGroqCompletion(messages);
 
-  await prisma.chatMessage.create({
-    data: {
-      sessionId: chatSession.id,
-      role: "assistant",
-      content: reply,
-      intent: toPrismaIntent(intent),
-    },
+  await saveConversation({
+    sessionId: resolvedSessionId,
+    userMessage: cleanMessage,
+    assistantMessage,
+    intent: intentType,   
+    modelUsed: DEFAULT_MODEL,
   });
 
-  await prisma.chatSession.update({
-    where: { id: chatSession.id },
-    data: { updatedAt: new Date() },
-  });
+  return {
+    reply: assistantMessage,
+    intent,               //  trả object đầy đủ về cho frontend nếu cần
+    planet: planetContext,
+    recommendations,
+    sessionId: resolvedSessionId,
+  };
+}
 
-  return { reply, chatId: chatSession.id };
-};
+/**
+ * Get chat history theo session
+ * @param {string} userId
+ * @param {string} sessionId
+ * @param {number} limit
+ */
+async function getConversationHistory({ userId, sessionId, limit = DEFAULT_CHAT_HISTORY_LIMIT }) {
+  if (!userId) throw new AppError("User authentication is required.", 401);
+  if (!sessionId) throw new AppError("sessionId is required.", 400);
 
-export const getChatHistory = async (userId) => {
-  const chatSession = await prisma.chatSession.findFirst({
-    where: { userId },
-    include: {
-      messages: { orderBy: { createdAt: "asc" }, take: 50 },
-    },
-    orderBy: { updatedAt: "desc" },
-  });
+  return fetchConversationHistory(sessionId, Number(limit)); 
+}
 
-  return chatSession?.messages || [];
-};
+/**
+ * Clear chat history (xóa cả session)
+ * @param {string} userId
+ * @param {string} sessionId
+ */
+async function clearConversationHistory({ userId, sessionId }) {
+  if (!userId) throw new AppError("User authentication is required.", 401);
+  if (!sessionId) throw new AppError("sessionId is required.", 400);
+
+  const deleted = await deleteSession(sessionId); // cascade delete messages theo session
+  if (!deleted) throw new AppError("Failed to clear chat history.", 500);
+
+  return { deleted: true, sessionId };
+}
+
+export { sendMessage, getConversationHistory, clearConversationHistory };

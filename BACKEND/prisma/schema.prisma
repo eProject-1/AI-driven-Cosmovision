@@ -19,6 +19,7 @@ model User {
   provider           Provider           @default(LOCAL)
   providerId         String?
   isVerified         Boolean            @default(false)
+  verificationToken  String?            @unique
   isActive           Boolean            @default(true)
   lastLoginAt        DateTime?
   createdAt          DateTime           @default(now())
@@ -84,24 +85,35 @@ model RefreshToken {
 
 model Planet {
   id                  String   @id @default(cuid())
+
   name                String   @unique
   slug                String   @unique
+
   type                String
   description         String
+
   imageUrl            String?
+
   massKg              Float?
   diameterKm          Float?
   gravityMs2          Float?
+
   distanceFromSunAu   Float?
-  distanceFromEarthLy Float?
+  distanceFromEarthKm Float?
+
   orbitalPeriodDays   Float?
   rotationPeriodHours Float?
+
   avgTempCelsius      Float?
+
   atmosphere          String[] @default([])
+
   numberOfMoons       Int?     @default(0)
   hasRings            Boolean  @default(false)
+
   discoveredBy        String?
   discoveryYear       Int?
+  
   aiFunFacts          String[] @default([])
   isVisible           Boolean  @default(true)
   createdAt           DateTime @default(now())
@@ -111,29 +123,47 @@ model Planet {
 }
 
 model Constellation {
-  id             String        @id @default(cuid())
-  name           String        @unique
-  slug           String        @unique
-  latinName      String?
-  abbreviation   String?
-  description    String
-  mythology      String?
-  imageUrl       String?
-  mapImageUrl    String?
-  bestMonths     Int[]         @default([])
-  hemisphere     String?
-  rightAscension String?
-  declination    String?
-  numberOfStars  Int?
-  brightestStar  String?
-  aiFunFacts     String[]      @default([])
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  imageUploads   ImageUpload[]
+  id   String @id @default(cuid())
+  name String @unique
+  slug String @unique
+
+  // ── Định danh thiên văn ──────────────────────────────────
+  latinName    String?
+  abbreviation String?   // VD: "Ori", "UMa"
+  family       String?   // VD: "Orion", "Ursa Major"
+  quadrant     String?   // VD: "NQ1", "SQ2"
+
+  // ── Toạ độ thiên cầu ────────────────────────────────────
+  rightAscension  String?  // VD: "5h 30m"
+  declination     String?  // VD: "+0°"
+  areaSqDeg       Float?   // Diện tích (độ vuông)
+  visibleLatitudes String? // VD: "+90° to -75°"
+
+  // ── Quan sát ─────────────────────────────────────────────
+  mainStars   Int?     // Số sao chính
+  brightestStar String? // Tên sao sáng nhất
+  bestMonth   String?  // Tháng tốt nhất (VD: "January")
+  bestSeason  String?  // Mùa tốt nhất (VD: "Winter")
+
+  // ── Media & mô tả ────────────────────────────────────────
+  images           ImageUpload[]
+  imageUrl         String?
+  mapUrl           String?  // URL ảnh bản đồ sao
+  description      String?
+  mythologicalOrigin String?
+
+  // ── AI-generated content (cached) ────────────────────────
+  aiMythology  String?
+  aiFacts      String[] @default([])
+  aiObserverTip String?
+
+  // ── Flags ────────────────────────────────────────────────
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("constellations")
 }
-
 model CelestialEvent {
   id          String       @id @default(cuid())
   title       String
@@ -189,7 +219,7 @@ model ChatMessage {
   content    String
   intent     IntentType  @default(UNKNOWN)
   tokensUsed Int?
-  modelUsed  String?     @default("llama3-8b-8192")
+  modelUsed  String?     @default("llama-3.1-8b-instant")
   createdAt  DateTime    @default(now())
   session    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
@@ -241,27 +271,52 @@ model Recommendation {
 }
 
 model Observatory {
-  id           String             @id @default(cuid())
-  name         String
-  slug         String             @unique
-  description  String?
-  imageUrl     String?
-  address      String?
-  city         String?
-  country      String
-  latitude     Float
-  longitude    Float
-  website      String?
-  phone        String?
-  email        String?
-  openingHours String?
-  admission    String?
-  rating       Float?             @default(0)
-  isPublic     Boolean            @default(true)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  savedBy      SavedObservatory[]
+  id                  String   @id @default(cuid())
 
+  // Basic Information
+  name                String
+  slug                String   @unique
+  description         String?  @db.Text
+  imageUrl            String?
+
+  // Location
+  address             String?
+  city                String?
+  state               String?
+  country             String
+  latitude            Float
+  longitude           Float
+
+  // Contact
+  website             String?
+  phone               String?
+  email               String?
+
+  // Visit Information
+  openingHours        String?
+  admissionFee        Float?
+  currency            String?  @default("VND")
+
+  // Observatory Quality
+  rating              Float?   @default(0)
+  reviewCount         Int       @default(0)
+
+  // Stargazing Metrics
+  lightPollutionScore Float?    // 0-100 (càng thấp càng tốt)
+  skyQualityScore     Float?    // 0-100 (càng cao càng tốt)
+  altitude            Float?    // mét
+
+  // System
+  isPublic            Boolean   @default(true)
+  isFeatured          Boolean   @default(false)
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relations
+  savedBy             SavedObservatory[]
+  @@index([city])
+  @@index([country])
   @@index([latitude, longitude])
   @@map("observatories")
 }
@@ -337,6 +392,10 @@ enum IntentType {
   WEATHER_CHECK
   OBSERVATORY_SEARCH
   GENERAL_ASTRONOMY
+  NEWS             
+  GUIDE               
+  IMAGE_RECOGNITION   
+  FAVORITE            
   UNKNOWN
 }
 

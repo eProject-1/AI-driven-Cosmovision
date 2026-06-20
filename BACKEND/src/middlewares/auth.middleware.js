@@ -17,7 +17,7 @@ export const authenticate = async (req, res, next) => {
       select: {
         id: true,
         email: true,
-        username: true,
+        username: true, 
         displayName: true,
         role: true,
       },

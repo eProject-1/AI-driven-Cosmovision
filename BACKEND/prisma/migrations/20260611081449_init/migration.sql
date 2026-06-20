@@ -185,7 +185,7 @@ CREATE TABLE "chat_messages" (
     "content" TEXT NOT NULL,
     "intent" "IntentType" NOT NULL DEFAULT 'UNKNOWN',
     "tokensUsed" INTEGER,
-    "modelUsed" TEXT DEFAULT 'llama3-8b-8192',
+    "modelUsed" TEXT DEFAULT 'llama-3.1-8b-instant',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "chat_messages_pkey" PRIMARY KEY ("id")

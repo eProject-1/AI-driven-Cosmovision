@@ -1,12 +1,18 @@
 import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware.js";
-import { sendMessage, getHistory } from "./chatbot.controller.js";
+import { validate } from "../../middlewares/validate.middleware.js";
+import { sendMessageSchema } from "./chatbot.validation.js";
+
+import {
+  sendMessage,
+  getConversationHistory,
+  clearConversationHistory,
+} from "./chatbot.controller.js";
 
 const router = Router();
 
-router.use(authenticate); // tất cả chatbot routes đều cần login
-
-router.post("/", sendMessage);
-router.get("/history", getHistory);
+router.post("/message", authenticate, validate(sendMessageSchema), sendMessage);
+router.get("/history", authenticate, getConversationHistory);
+router.delete("/history", authenticate, clearConversationHistory);
 
 export default router;

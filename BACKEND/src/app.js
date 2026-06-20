@@ -5,7 +5,6 @@ import { errorHandler } from "./middlewares/error.middleware.js";
 
 // Routes
 import authRoutes from "./modules/auth/auth.routes.js";
-import astronomyRoutes from "./modules/astronomy/astronomy.routes.js";
 import chatbotRoutes from "./modules/chatbot/chatbot.routes.js";
 
 const app = express();
@@ -20,8 +19,9 @@ app.get("/health", (req, res) => res.json({ status: "ok", timestamp: new Date() 
 
 // API Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/astronomy", astronomyRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/astronomy/planets", (await import("./modules/astronomy/planets/planet.routes.js")).default);
+app.use("/api/astronomy/constellations", (await import("./modules/astronomy/constellations/constellation.routes.js")).default);
 
 // 404
 app.use((req, res) => res.status(404).json({ success: false, message: "Route không tồn tại" }));

@@ -1,15 +1,59 @@
 import { asyncHandler } from "../../utils/asyncHandler.js";
-import { sendSuccess, sendError } from "../../utils/response.util.js";
-import { chat, getChatHistory } from "./chatbot.service.js";
+import { sendSuccess } from "../../utils/response.util.js";
+import {
+  sendMessage as sendMessageService,
+  getConversationHistory as getConversationHistoryService,
+  clearConversationHistory as clearConversationHistoryService,
+} from "./chatbot.service.js";
 
-export const sendMessage = asyncHandler(async (req, res) => {
-  const { message } = req.body;
-  if (!message?.trim()) return sendError(res, "Tin nhắn không được trống", 400);
-  const result = await chat(req.user.id, message.trim());
-  return sendSuccess(res, result);
+// ─── Helper ───────────────────────────────────────────────────────────────────
+
+function getUserIdFromRequest(req) {
+  return req.user?.userId || req.user?.id || req.body?.userId || null;
+}
+
+// ─── Controllers ──────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/chatbot/message
+ */
+const sendMessage = asyncHandler(async (req, res) => {
+  const userId = getUserIdFromRequest(req);
+  const { message, sessionId } = req.body;
+
+  const data = await sendMessageService({ userId, message, sessionId });
+
+  return sendSuccess(res, data, "Chat response generated successfully.");
 });
 
-export const getHistory = asyncHandler(async (req, res) => {
-  const messages = await getChatHistory(req.user.id);
-  return sendSuccess(res, messages);
+/**
+ * GET /api/chatbot/conversation
+ */
+const getConversationHistory = asyncHandler(async (req, res) => {
+  const userId = getUserIdFromRequest(req);
+  const { limit, sessionId } = req.query;
+
+  const data = await getConversationHistoryService({
+    userId,
+    sessionId,
+    limit: limit ? Number(limit) : undefined,
+  });
+
+  return sendSuccess(res, data, "Conversation history fetched successfully.");
 });
+
+/**
+ * DELETE /api/chatbot/conversation
+ */
+const clearConversationHistory = asyncHandler(async (req, res) => {
+  const userId = getUserIdFromRequest(req);
+  const { sessionId } = req.query;
+
+  const data = await clearConversationHistoryService({ userId, sessionId });
+
+  return sendSuccess(res, data, "Conversation history cleared successfully.");
+});
+
+// ─── Exports ──────────────────────────────────────────────────────────────────
+
+export { sendMessage, getConversationHistory, clearConversationHistory };
