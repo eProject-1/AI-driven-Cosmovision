@@ -74,13 +74,18 @@ Example format: ["Fact one.", "Fact two.", "Fact three.", "Fact four.", "Fact fi
  */
 export async function getAllPlanets() {
   return prisma.planet.findMany({
-    where: { isVisible: true },
     select: {
       id: true,
       name: true,
       slug: true,
       type: true,
+      description: true,
       imageUrl: true,
+      diameterKm: true,
+      distanceFromSunAu: true,
+      orbitalPeriodDays: true,
+      rotationPeriodHours: true,
+      numberOfMoons: true,
       hasRings: true,
     },
     orderBy: { distanceFromSunAu: "asc" },

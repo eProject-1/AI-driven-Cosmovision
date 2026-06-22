@@ -537,77 +537,288 @@ for (const c of constellations) {
     })
   }
 
-  console.log(`   ✅ Seeded ${events.length} celestial events`)
-
+  console.log(` Seeded ${events.length} celestial events`)
+  
   // -----------------------------------------------------------
   // 5. OBSERVATORIES
   // -----------------------------------------------------------
+
   console.log('🔭 Seeding observatories...')
+  
 
-  const observatories = [
-    {
-      name:         'Đài Thiên Văn Hà Nội',
-      slug:         'dai-thien-van-ha-noi',
-      description:  'Đài thiên văn quốc gia Việt Nam, trực thuộc Viện Hàn lâm Khoa học và Công nghệ Việt Nam.',
-      country:      'Vietnam',
-      city:         'Hanoi',
-      latitude:     21.0285,
-      longitude:    105.8542,
-      isPublic:     true,
-      rating:       4.2,
-    },
-    {
-      name:         'Mauna Kea Observatories',
-      slug:         'mauna-kea-observatories',
-      description:  'Tổ hợp đài thiên văn lớn nhất thế giới tại đỉnh núi lửa Mauna Kea, Hawaii.',
-      country:      'United States',
-      city:         'Hilo, Hawaii',
-      latitude:     19.8207,
-      longitude:    -155.4681,
-      website:      'https://www.ifa.hawaii.edu/mko/',
-      rating:       4.9,
-      isPublic:     true,
-    },
-    {
-      name:         'European Southern Observatory (ESO)',
-      slug:         'eso-la-silla',
-      description:  'Đài thiên văn La Silla của ESO tại sa mạc Atacama, Chile — một trong những địa điểm quan sát tốt nhất thế giới.',
-      country:      'Chile',
-      city:         'La Serena',
-      latitude:     -29.2574,
-      longitude:    -70.7345,
-      website:      'https://www.eso.org/public/teles-instr/lasilla/',
-      rating:       4.8,
-      isPublic:     true,
-    },
-    {
-      name:         'Greenwich Royal Observatory',
-      slug:         'greenwich-royal-observatory',
-      description:  'Đài thiên văn hoàng gia Greenwich — nơi định nghĩa kinh tuyến gốc và GMT.',
-      country:      'United Kingdom',
-      city:         'London',
-      latitude:     51.4769,
-      longitude:    -0.0005,
-      website:      'https://www.rmg.co.uk/royal-observatory',
-      rating:       4.7,
-      isPublic:     true,
-    },
-  ]
+  // prisma/seed_observatories.js
+// Chạy: node prisma/seed_observatories.js
+// Hoặc tích hợp vào seed.js chính bằng cách import và gọi hàm seedObservatories()
 
-  for (const obs of observatories) {
-    await prisma.observatory.upsert({
-      where:  { slug: obs.slug },
-      update: {},
-      create: obs,
-    })
-  }
+const observatories = [
+{
+name: "Đài Thiên văn Hà Nội",
+slug: "dai-thien-van-ha-noi",
+description:
+"Đài thiên văn lịch sử tại Hà Nội thuộc Viện Vật lý Địa cầu. Có các thiết bị quan sát và nghiên cứu thiên văn phục vụ đào tạo và nghiên cứu.",
 
-  console.log(`   ✅ Seeded ${observatories.length} observatories`)
+type: "UNIVERSITY",
+
+latitude: 21.0285,
+longitude: 105.8542,
+
+address: "18 Hoàng Quốc Việt, Cầu Giấy",
+city: "Hà Nội",
+province: "Hà Nội",
+
+elevation: 10,
+
+equipment: [
+  "Kính khúc xạ 135mm",
+  "Kính phản xạ 250mm",
+  "Máy đo quang phổ",
+],
+
+openingHours: "Theo lịch đăng ký",
+
+website: "https://igp-vast.vn",
+
+imageUrl:
+  "https://images.unsplash.com/photo-1462331940025-496dfbfc7564",
+
+rating: 4.4,
+reviewCount: 58,
+
+lightPollutionScore: 82,
+skyQualityScore: 40,
+
+isFeatured: true,
+
+},
+
+{
+name: "Trung tâm Vũ trụ Việt Nam",
+slug: "trung-tam-vu-tru-viet-nam",
+description:
+  "Trung tâm nghiên cứu và phát triển công nghệ vũ trụ quốc gia với nhiều hoạt động phổ biến thiên văn cho cộng đồng.",
+
+type: "PUBLIC",
+
+latitude: 21.0365,
+longitude: 105.7833,
+
+address: "18 Hoàng Quốc Việt, Cầu Giấy",
+city: "Hà Nội",
+province: "Hà Nội",
+
+elevation: 15,
+
+equipment: [
+  "Kính thiên văn quang học",
+  "Anten theo dõi vệ tinh",
+],
+
+openingHours: "Theo lịch sự kiện",
+
+website: "https://vnsc.org.vn",
+
+imageUrl:
+  "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa",
+
+rating: 4.7,
+reviewCount: 210,
+
+lightPollutionScore: 80,
+skyQualityScore: 45,
+
+isFeatured: true,
+
+
+},
+
+{
+name: "Đài Quan sát Đà Lạt",
+slug: "dai-quan-sat-da-lat",
+
+description:
+  "Điểm quan sát thiên văn nổi bật tại cao nguyên Lâm Viên với điều kiện bầu trời rất tốt cho quan sát sao.",
+
+type: "PUBLIC",
+
+latitude: 11.9465,
+longitude: 108.4419,
+
+address: "Phường 4, Thành phố Đà Lạt",
+city: "Đà Lạt",
+province: "Lâm Đồng",
+
+elevation: 1500,
+
+equipment: [
+  "Kính thiên văn 200mm",
+  "Camera CCD",
+  "Bộ lọc quang phổ",
+],
+
+openingHours: "19:30 - 23:00 cuối tuần",
+
+rating: 4.9,
+reviewCount: 420,
+
+lightPollutionScore: 25,
+skyQualityScore: 92,
+
+isFeatured: true,
+
+},
+
+{
+name: "Vườn Quốc gia Cúc Phương",
+slug: "vqg-cuc-phuong-quan-sat-sao",
+
+description:
+  "Một trong những địa điểm quan sát bầu trời đêm đẹp nhất miền Bắc với ô nhiễm ánh sáng thấp.",
+
+type: "PUBLIC",
+
+latitude: 20.3249,
+longitude: 105.6684,
+
+address: "Vườn Quốc gia Cúc Phương",
+city: "Nho Quan",
+province: "Ninh Bình",
+
+elevation: 220,
+
+equipment: [
+  "Kính thiên văn dã ngoại",
+  "Ống nhòm thiên văn",
+],
+
+openingHours: "Theo sự kiện",
+
+website: "https://cucphuongnationalpark.com",
+
+rating: 4.8,
+reviewCount: 173,
+
+lightPollutionScore: 20,
+skyQualityScore: 90,
+
+isFeatured: true,
+
+},
+
+{
+name: "CLB Thiên văn Nghiệp dư TP.HCM",
+slug: "clb-thien-van-nghiep-du-tphcm",
+description:
+  "Câu lạc bộ thiên văn dành cho cộng đồng yêu thích quan sát bầu trời tại TP.HCM.",
+
+type: "PUBLIC",
+
+latitude: 10.7769,
+longitude: 106.7009,
+
+address: "Công viên Tao Đàn, Quận 1",
+city: "Hồ Chí Minh",
+province: "Hồ Chí Minh",
+
+elevation: 5,
+
+equipment: [
+  "Kính 80mm ED",
+  "Dobsonian 8 inch",
+],
+
+openingHours: "Theo lịch sinh hoạt CLB",
+
+rating: 4.5,
+reviewCount: 95,
+
+lightPollutionScore: 88,
+skyQualityScore: 30,
+
+isFeatured: false,
+},
+
+{
+name: "Đèo Hải Vân Stargazing Point",
+slug: "deo-hai-van-quan-sat-sao",
+description:
+  "Địa điểm lý tưởng để quan sát dải Ngân Hà và bầu trời đêm khu vực miền Trung.",
+
+type: "PUBLIC",
+
+latitude: 16.1833,
+longitude: 108.1167,
+
+address: "Đỉnh đèo Hải Vân",
+city: "Đà Nẵng",
+province: "Đà Nẵng",
+
+elevation: 500,
+
+equipment: [],
+
+openingHours: "24/7",
+
+rating: 4.8,
+reviewCount: 320,
+
+lightPollutionScore: 30,
+skyQualityScore: 85,
+
+isFeatured: true,
+},
+
+{
+name: "Vườn Quốc gia Bạch Mã Stargazing Point",
+slug: "vqg-bach-ma-quan-sat-sao",
+description:
+  "Địa điểm quan sát thiên văn chất lượng cao tại miền Trung với bầu trời rất tối.",
+
+type: "PUBLIC",
+
+latitude: 16.19,
+longitude: 107.85,
+
+address: "Vườn Quốc gia Bạch Mã",
+city: "Phú Lộc",
+province: "Thừa Thiên Huế",
+
+elevation: 1450,
+
+equipment: [
+  "Kính thiên văn dã ngoại",
+],
+
+openingHours: "Theo mùa khô",
+
+website: "https://bachma.gov.vn",
+
+rating: 4.9,
+reviewCount: 118,
+
+lightPollutionScore: 15,
+skyQualityScore: 95,
+
+isFeatured: true,
+
+},
+];
+
+
+for (const obs of observatories) {
+  await prisma.observatory.upsert({
+    where: { slug: obs.slug },
+    update: obs,
+    create: obs,
+  })
+}
+
+console.log(`✅ Seeded ${observatories.length} observatories`)
+
 
   // -----------------------------------------------------------
   // 6. SAMPLE CHAT SESSION
   // -----------------------------------------------------------
-  console.log('💬 Seeding sample chat session...')
+  console.log(' Seeding sample chat session...')
 
   const session = await prisma.chatSession.create({
     data: {
@@ -632,16 +843,13 @@ for (const c of constellations) {
     },
   })
 
-  console.log(`   ✅ Seeded sample chat session`)
+  console.log(` Seeded sample chat session`)
 
   // -----------------------------------------------------------
   // DONE
   // -----------------------------------------------------------
   console.log('\n🚀 Seed hoàn tất!')
-  console.log('─────────────────────────────────────')
-  console.log('📧 Admin:    admin@cosmovision.app / Admin@123')
-  console.log('📧 User:     user@cosmovision.app  / User@123')
-  console.log('─────────────────────────────────────')
+
 }
 
 main()
@@ -652,3 +860,5 @@ main()
   .finally(async () => {
     await prisma.$disconnect()
   })
+
+ 

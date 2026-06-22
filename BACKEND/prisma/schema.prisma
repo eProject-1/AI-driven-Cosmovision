@@ -84,19 +84,19 @@ model RefreshToken {
 }
 
 model Planet {
-  id                  String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  name                String   @unique
-  slug                String   @unique
+  name String @unique
+  slug String @unique
 
-  type                String
-  description         String
+  type        String
+  description String
 
-  imageUrl            String?
+  imageUrl String?
 
-  massKg              Float?
-  diameterKm          Float?
-  gravityMs2          Float?
+  massKg     Float?
+  diameterKm Float?
+  gravityMs2 Float?
 
   distanceFromSunAu   Float?
   distanceFromEarthKm Float?
@@ -104,20 +104,20 @@ model Planet {
   orbitalPeriodDays   Float?
   rotationPeriodHours Float?
 
-  avgTempCelsius      Float?
+  avgTempCelsius Float?
 
-  atmosphere          String[] @default([])
+  atmosphere String[] @default([])
 
-  numberOfMoons       Int?     @default(0)
-  hasRings            Boolean  @default(false)
+  numberOfMoons Int?    @default(0)
+  hasRings      Boolean @default(false)
 
-  discoveredBy        String?
-  discoveryYear       Int?
-  
-  aiFunFacts          String[] @default([])
-  isVisible           Boolean  @default(true)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  discoveredBy  String?
+  discoveryYear Int?
+
+  aiFunFacts String[] @default([])
+  isVisible  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@map("planets")
 }
@@ -129,32 +129,32 @@ model Constellation {
 
   // ── Định danh thiên văn ──────────────────────────────────
   latinName    String?
-  abbreviation String?   // VD: "Ori", "UMa"
-  family       String?   // VD: "Orion", "Ursa Major"
-  quadrant     String?   // VD: "NQ1", "SQ2"
+  abbreviation String? // VD: "Ori", "UMa"
+  family       String? // VD: "Orion", "Ursa Major"
+  quadrant     String? // VD: "NQ1", "SQ2"
 
   // ── Toạ độ thiên cầu ────────────────────────────────────
-  rightAscension  String?  // VD: "5h 30m"
-  declination     String?  // VD: "+0°"
-  areaSqDeg       Float?   // Diện tích (độ vuông)
+  rightAscension   String? // VD: "5h 30m"
+  declination      String? // VD: "+0°"
+  areaSqDeg        Float? // Diện tích (độ vuông)
   visibleLatitudes String? // VD: "+90° to -75°"
 
   // ── Quan sát ─────────────────────────────────────────────
-  mainStars   Int?     // Số sao chính
+  mainStars     Int? // Số sao chính
   brightestStar String? // Tên sao sáng nhất
-  bestMonth   String?  // Tháng tốt nhất (VD: "January")
-  bestSeason  String?  // Mùa tốt nhất (VD: "Winter")
+  bestMonth     String? // Tháng tốt nhất (VD: "January")
+  bestSeason    String? // Mùa tốt nhất (VD: "Winter")
 
   // ── Media & mô tả ────────────────────────────────────────
-  images           ImageUpload[]
-  imageUrl         String?
-  mapUrl           String?  // URL ảnh bản đồ sao
-  description      String?
+  images             ImageUpload[]
+  imageUrl           String?
+  mapUrl             String? // URL ảnh bản đồ sao
+  description        String?
   mythologicalOrigin String?
 
   // ── AI-generated content (cached) ────────────────────────
-  aiMythology  String?
-  aiFacts      String[] @default([])
+  aiMythology   String?
+  aiFacts       String[] @default([])
   aiObserverTip String?
 
   // ── Flags ────────────────────────────────────────────────
@@ -164,6 +164,7 @@ model Constellation {
 
   @@map("constellations")
 }
+
 model CelestialEvent {
   id          String       @id @default(cuid())
   title       String
@@ -251,6 +252,7 @@ model Recommendation {
   userId                String
   latitude              Float
   longitude             Float
+  locationKey           String? // NEW — cache key: "21.03_105.85"
   locationName          String?
   requestedAt           DateTime  @default(now())
   weatherCondition      String?
@@ -261,76 +263,89 @@ model Recommendation {
   bestTimeEnd           DateTime?
   visiblePlanets        String[]  @default([])
   visibleConstellations String[]  @default([])
+  nearbyObservatories   String[]  @default([]) // NEW — slug[] của observatory gần đó
   aiSuggestion          String?
+  expiresAt             DateTime? // NEW — TTL cho recommendation cache (30 phút)
   createdAt             DateTime  @default(now())
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([requestedAt])
+  @@index([locationKey, expiresAt]) // NEW — tăng tốc tìm cache còn hạn
   @@map("recommendations")
 }
 
 model Observatory {
-  id                  String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  // Basic Information
-  name                String
-  slug                String   @unique
-  description         String?  @db.Text
-  imageUrl            String?
+  name String @unique
+  slug String @unique
 
-  // Location
-  address             String?
-  city                String?
-  state               String?
-  country             String
-  latitude            Float
-  longitude           Float
+  description String
 
-  // Contact
-  website             String?
-  phone               String?
-  email               String?
+  type ObservatoryType @default(PUBLIC)
 
-  // Visit Information
-  openingHours        String?
-  admissionFee        Float?
-  currency            String?  @default("VND")
+  latitude  Float
+  longitude Float
 
-  // Observatory Quality
-  rating              Float?   @default(0)
-  reviewCount         Int       @default(0)
+  address  String
+  city     String
+  province String
+  country  String @default("Vietnam")
 
-  // Stargazing Metrics
-  lightPollutionScore Float?    // 0-100 (càng thấp càng tốt)
-  skyQualityScore     Float?    // 0-100 (càng cao càng tốt)
-  altitude            Float?    // mét
+  elevation Float?
 
-  // System
-  isPublic            Boolean   @default(true)
-  isFeatured          Boolean   @default(false)
+  website String?
+  phone   String?
+  email   String?
 
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  imageUrl String?
 
-  // Relations
-  savedBy             SavedObservatory[]
-  @@index([city])
-  @@index([country])
+  equipment String[] @default([])
+
+  openingHours String?
+
+  // Recommendation fields
+  rating      Float? @default(0)
+  reviewCount Int    @default(0)
+
+  lightPollutionScore Float?
+  skyQualityScore     Float?
+
+  isFeatured Boolean @default(false)
+  isActive   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  savedBy SavedObservatory[]
+
   @@index([latitude, longitude])
+  @@index([province])
   @@map("observatories")
 }
 
 model SavedObservatory {
-  id            String      @id @default(cuid())
+  id String @id @default(cuid())
+
   userId        String
   observatoryId String
-  savedAt       DateTime    @default(now())
-  observatory   Observatory @relation(fields: [observatoryId], references: [id], onDelete: Cascade)
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  savedAt DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  observatory Observatory @relation(fields: [observatoryId], references: [id], onDelete: Cascade)
 
   @@unique([userId, observatoryId])
+  @@index([userId])
+  @@index([observatoryId])
   @@map("saved_observatories")
+}
+
+enum ObservatoryType {
+  PUBLIC
+  PRIVATE
+  UNIVERSITY
 }
 
 model ImageUpload {
@@ -392,10 +407,10 @@ enum IntentType {
   WEATHER_CHECK
   OBSERVATORY_SEARCH
   GENERAL_ASTRONOMY
-  NEWS             
-  GUIDE               
-  IMAGE_RECOGNITION   
-  FAVORITE            
+  NEWS
+  GUIDE
+  IMAGE_RECOGNITION
+  FAVORITE
   UNKNOWN
 }
 
@@ -429,3 +444,29 @@ enum AnalyticsEvent {
   SEARCH
 }
 
+model WeatherCache {
+  id         String @id @default(cuid())
+  latRounded Float
+  lonRounded Float
+
+  condition   String
+  label       String
+  temperature Float
+  feelsLike   Float?
+  humidity    Float
+  cloudCover  Float
+  windSpeed   Float
+  visibility  Float
+  description String?
+  cityName    String?
+  countryCode String?
+  sunrise     DateTime?
+  sunset      DateTime?
+
+  fetchedAt DateTime
+  expiresAt DateTime
+
+  @@unique([latRounded, lonRounded], name: "latRounded_lonRounded")
+  @@index([expiresAt])
+  @@map("weather_cache")
+}

@@ -11,8 +11,11 @@ const STARTER_MESSAGES = [
   "Giai thich mua sao bang la gi",
 ];
 
+const CHAT_SESSION_STORAGE_KEY = "cosmovision_chat_session_id";
+
 export default function ChatWindow({ onClose }) {
   const { user, loading: authLoading } = useAuth();
+  const [sessionId, setSessionId] = useState(() => localStorage.getItem(CHAT_SESSION_STORAGE_KEY));
   const [messages, setMessages] = useState([
     {
       id: "welcome",
@@ -27,16 +30,16 @@ export default function ChatWindow({ onClose }) {
   const canChat = Boolean(user);
 
   useEffect(() => {
-    if (!canChat) return;
+    if (!canChat || !sessionId) return;
 
     let alive = true;
     setHistoryLoading(true);
-    getChatHistory()
+    getChatHistory(sessionId)
       .then((history) => {
         if (!alive || !history?.length) return;
         setMessages(
-          history.map((message) => ({
-            id: message.id,
+          history.map((message, index) => ({
+            id: message.id || `${message.role}-${index}`,
             role: message.role,
             content: message.content,
           }))
@@ -52,7 +55,7 @@ export default function ChatWindow({ onClose }) {
     return () => {
       alive = false;
     };
-  }, [canChat]);
+  }, [canChat, sessionId]);
 
   const statusText = useMemo(() => {
     if (authLoading) return "Dang kiem tra dang nhap";
@@ -74,7 +77,11 @@ export default function ChatWindow({ onClose }) {
     setLoading(true);
 
     try {
-      const result = await sendMessage(userMessage.content);
+      const result = await sendMessage(userMessage.content, sessionId);
+      if (result.sessionId && result.sessionId !== sessionId) {
+        localStorage.setItem(CHAT_SESSION_STORAGE_KEY, result.sessionId);
+        setSessionId(result.sessionId);
+      }
       setMessages((current) => [
         ...current,
         {

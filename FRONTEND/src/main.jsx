@@ -8,6 +8,9 @@ import App from "./App";
 
 import { AuthProvider } from "./context/AuthContext";
 
+// Lovable UI styles (visual source of truth)
+//import "./lovable-import/src/styles.css";
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>

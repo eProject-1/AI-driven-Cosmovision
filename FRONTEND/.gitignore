@@ -1,0 +1,66 @@
+#---------------------FRONTEND-----------------------
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw? 
+
+#---------------------BACKEND-----------------------
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage
+*.lcov
+.nyc_output
+
+# node modules
+node_modules/
+jspm_packages/
+
+# build output
+dist/
+build/Release
+
+# env
+.env
+.env.*
+
+# Next / Nuxt / Vite
+.next
+out
+.nuxt
+.output
+.vite/
+.svelte-kit/
+
+# cache
+.cache
+.parcel-cache
