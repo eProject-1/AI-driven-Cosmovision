@@ -1,16 +1,17 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const { login, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: "user@cosmovision.app", password: "User@123" });
+  const location = useLocation();
+  const [form, setForm] = useState({ email: "", password: "" });
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  if (!authLoading && user) return <Navigate to="/" replace />;
+  if (!authLoading && user) return <Navigate to="/profile" replace />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,7 +20,7 @@ export default function Login() {
 
     try {
       await login(form.email, form.password);
-      navigate("/");
+      navigate("/profile");
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Login failed. Please try again.");
     } finally {
@@ -39,11 +40,17 @@ export default function Login() {
         <div className="auth-card">
           <div className="auth-header">
             <p>Welcome Back</p>
-            <h1>Dang nhap</h1>
-            <span>Kham pha vu tru cung AI va du lieu thien van hoc.</span>
+            <h1>Login</h1>
+            <span>Sign in to chat with NOVA and open your explorer profile.</span>
           </div>
 
-        
+          {location.state?.registered && (
+            <div className="demo-box">
+              <strong>Account created</strong>
+              <span>Please log in with your new account.</span>
+            </div>
+          )}
+
           {error && <div className="auth-error">{error}</div>}
 
           <form onSubmit={handleSubmit} className="auth-form">
@@ -59,7 +66,7 @@ export default function Login() {
             </label>
 
             <label>
-              Mat khau
+              Password
               <div className="password-field">
                 <input
                   type={showPass ? "text" : "password"}
@@ -75,9 +82,16 @@ export default function Login() {
             </label>
 
             <button type="submit" disabled={loading || authLoading} className="auth-submit">
-              {loading ? "Dang dang nhap..." : "Dang nhap"}
+              {loading ? "Signing in..." : "Login"}
             </button>
           </form>
+
+          <p className="mt-5 text-center text-sm text-slate-400">
+            New here?{" "}
+            <Link to="/register" className="font-semibold text-cyan-200 hover:text-white">
+              Create an account
+            </Link>
+          </p>
         </div>
       </section>
     </main>

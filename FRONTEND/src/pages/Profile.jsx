@@ -1,9 +1,29 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Starfield } from "../components/lovable/Starfield";
 import { planets } from "../lib/planets";
 import { Award, Compass, Rocket } from "lucide-react";
+import { getCurrentUser, getSavedObservatories, getRecommendations } from "../services/user.api";
 
 export default function LovableProfile() {
+  const [user, setUser] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
+  const [savedObservatories, setSavedObservatories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([getCurrentUser(), getRecommendations(3), getSavedObservatories()])
+      .then(([userData, recs, observatories]) => {
+        setUser(userData);
+        setRecommendations(recs || []);
+        setSavedObservatories(observatories || []);
+      })
+      .catch(() => {
+        setUser(null);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
   const visited = ["earth", "mars", "jupiter", "saturn"];
   const achievements = [
     { icon: Rocket, title: "First Launch", desc: "Began your journey from Earth." },
@@ -20,11 +40,13 @@ export default function LovableProfile() {
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="flex items-center gap-5">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent grid place-items-center glow-ring text-2xl font-display font-bold text-primary-foreground">AS</div>
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent grid place-items-center glow-ring text-2xl font-display font-bold text-primary-foreground">
+                {(user?.displayName || user?.username || "U").slice(0, 2).toUpperCase()}
+              </div>
               <div>
                 <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground">Explorer</p>
-                <h1 className="mt-1 text-4xl font-bold"><span className="text-aurora">Astra Stellaris</span></h1>
-                <p className="text-sm text-muted-foreground">Joined 2026 · Sector 7G</p>
+                <h1 className="mt-1 text-4xl font-bold"><span className="text-aurora">{user?.displayName || user?.username || "Explorer"}</span></h1>
+                <p className="text-sm text-muted-foreground">{user?.profile?.location ? `From ${user.profile.location}` : "Welcome to CosmoVision"}</p>
               </div>
             </div>
             <Link to="/" className="glass rounded-full px-5 py-3 text-sm hover:bg-white/10">Resume journey</Link>
@@ -53,6 +75,32 @@ export default function LovableProfile() {
                   </Link>
                 );
               })}
+            </div>
+          </section>
+
+          <section className="mt-12">
+            <h2 className="text-xl font-display mb-4">Recent recommendations</h2>
+            {loading ? <p className="text-sm text-muted-foreground">Loading profile data...</p> : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {recommendations.length > 0 ? recommendations.map((item) => (
+                  <div key={item.id} className="glass rounded-2xl p-5">
+                    <p className="text-sm font-display">{item.aiSuggestion || "Sky observation recommendation"}</p>
+                    <p className="mt-2 text-sm text-muted-foreground">{item.locationName || "Saved location"}</p>
+                  </div>
+                )) : <div className="glass rounded-2xl p-5 text-sm text-muted-foreground">No recommendations yet.</div>}
+              </div>
+            )}
+          </section>
+
+          <section className="mt-12">
+            <h2 className="text-xl font-display mb-4">Saved observatories</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              {savedObservatories.length > 0 ? savedObservatories.map((item) => (
+                <div key={item.id} className="glass rounded-2xl p-5">
+                  <p className="font-display">{item.observatory?.name || "Observatory"}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">{item.observatory?.city || "Location unavailable"}</p>
+                </div>
+              )) : <div className="glass rounded-2xl p-5 text-sm text-muted-foreground">No saved observatories yet.</div>}
             </div>
           </section>
 

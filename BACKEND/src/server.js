@@ -1,10 +1,12 @@
 import app from "./app.js";
 import { env } from "./config/env.js";
 import prisma from "./config/db.js";
+import { startNewsMaintenanceJob } from "./modules/news/news.service.js";
 
 async function startServer() {
   try {
     await prisma.$connect();
+    startNewsMaintenanceJob();
     console.log("✅ Database connected");
 
     app.listen(env.PORT, () => {

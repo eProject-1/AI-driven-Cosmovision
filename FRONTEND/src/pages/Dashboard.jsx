@@ -1,24 +1,109 @@
-
+import { useEffect, useState } from "react";
 import { PageShell } from "../components/lovable/PageShell";
 import { DataGrid, DividerList } from "../components/lovable/Framing";
+import { getDashboardData } from "../services/dashboard.api";
+
+const formatDate = (value) => {
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const formatTime = (value) => {
+  if (!value) return "—";
+  return new Date(value).toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
 export default function LovableDashboard() {
-  const stats = [
-    { label: "Planets explored", value: "6", of: "of 8" },
-    { label: "Constellations traced", value: "14", of: "of 88" },
-    { label: "Hours observing", value: "42.5", of: "this year" },
-    { label: "Objects logged", value: "127", of: "all time" },
-  ];
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
+  const [now, setNow] = useState(new Date());
 
-  const recent = [
-    { when: "Last night", what: "Observed Jupiter and the Galilean moons" },
-    { when: "3 days ago", what: "Traced Cassiopeia from the northern horizon" },
-    { when: "1 week ago", what: "Completed the Inner Planets chapter" },
-    { when: "2 weeks ago", what: "First successful Saturn ring observation" },
-  ];
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const fetchDashboard = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
+    setRefreshing(true);
+    setError("");
+    try {
+      const result = await getDashboardData({ limit: 5 });
+      setData(result);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Could not load dashboard data.");
+      setData(null);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboard(true);
+    const interval = window.setInterval(() => fetchDashboard(false), 300000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const stats = data
+    ? [
+        { label: "Sky visibility", value: `${data.sky?.score ?? 0}`, of: data.sky?.label ?? "Unknown" },
+        { label: "Upcoming events", value: `${data.upcomingEvents?.length ?? 0}`, of: "scheduled" },
+        { label: "Nearby observatories", value: `${data.nearbyObservatories?.length ?? 0}`, of: "near you" },
+        { label: "Recommendation", value: data?.recommendation?.aiSuggestion ? "Personal" : "—", of: data?.recommendation?.aiSuggestion ? "Available" : "None" },
+      ]
+    : [
+        { label: "Sky visibility", value: "—", of: "loading" },
+        { label: "Upcoming events", value: "—", of: "loading" },
+        { label: "Nearby observatories", value: "—", of: "loading" },
+        { label: "Recommendation", value: "—", of: "loading" },
+      ];
+
+  const weather = data?.sky?.weather;
+  const cloudCover = weather?.cloudCover ?? weather?.cloudiness;
+  const suggestion = data?.sky?.suggestion;
+  const observatories = data?.nearbyObservatories || [];
+  const news = data?.latestNews || [];
+  const events = data?.upcomingEvents || [];
+  const skyScore = data?.sky?.score ?? 0;
+  const skyStatus = skyScore >= 80 ? "Excellent" : skyScore >= 60 ? "Good" : skyScore >= 40 ? "Fair" : "Poor";
 
   return (
-    <PageShell eyebrow="Mission Log" title="Dashboard" lead="A quiet record of your journey through the cosmos.">
+    <PageShell eyebrow="Mission Log" title="Dashboard" lead="Live sky conditions, weather, astronomy events, and observatory recommendations from the backend.">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-white/10 bg-background/70 px-4 py-4 backdrop-blur-sm">
+        <div>
+          <p className="text-[10px] font-light uppercase tracking-[0.35em] text-foreground/40">Live status</p>
+          <p className="mt-2 font-display text-2xl">{now.toLocaleString("vi-VN")}</p>
+          <p className="text-sm text-foreground/60">{data?.current?.location?.name || "Current location"}</p>
+        </div>
+        <button
+          onClick={() => fetchDashboard(true)}
+          className="rounded-full border border-white/10 px-4 py-2 text-sm text-foreground/70 transition hover:bg-white/10"
+          disabled={refreshing}
+        >
+          {refreshing ? "Updating..." : "Refresh live data"}
+        </button>
+      </div>
+
+      {loading ? (
+        <p className="mb-6 text-sm text-foreground/60">Loading live dashboard data...</p>
+      ) : null}
+
+      {error ? (
+        <div className="mb-6 rounded-2xl border border-red-300/20 bg-red-950/20 p-4 text-sm text-red-100/80">
+          {error}
+        </div>
+      ) : null}
+
       <DataGrid columns="sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (
           <div key={s.label} className="bg-background/70 p-8 backdrop-blur-sm">
@@ -29,16 +114,97 @@ export default function LovableDashboard() {
         ))}
       </DataGrid>
 
-      <div className="mt-20">
-        <h2 className="font-sans text-[10px] font-light tracking-[0.45em] uppercase text-foreground/40">Recent activity</h2>
-        <DividerList as="ul" className="mt-6">
-          {recent.map((r) => (
-            <li key={r.what} className="flex items-baseline gap-8 px-6 py-5 sm:px-8">
-              <span className="w-32 text-[11px] font-light tracking-[0.3em] uppercase text-foreground/45">{r.when}</span>
-              <span className="text-sm font-light text-foreground/70">{r.what}</span>
-            </li>
-          ))}
-        </DividerList>
+      <div className="mt-16 grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
+        <section className="rounded-3xl border border-white/10 bg-background/60 p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-[10px] font-light uppercase tracking-[0.35em] text-foreground/40">Sky overview</h2>
+              <p className="mt-3 text-sm leading-relaxed text-foreground/70">{data?.recommendation?.aiSuggestion || suggestion || "No sky suggestion available yet."}</p>
+            </div>
+            <div className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-sm text-emerald-300">
+              {skyStatus}
+            </div>
+          </div>
+
+          <div className="mt-6 h-2 overflow-hidden rounded-full bg-white/10">
+            <div className="h-full rounded-full bg-emerald-400" style={{ width: `${Math.max(8, skyScore)}%` }} />
+          </div>
+          <p className="mt-2 text-sm text-foreground/60">Visibility score: {skyScore}/100</p>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-background/70 p-4">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-foreground/35">Humidity</p>
+              <p className="mt-2 font-display text-xl">{weather?.humidity ?? "—"}%</p>
+              <p className="mt-1 text-sm text-foreground/60">Wind {weather?.windSpeed ?? "—"} km/h</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-background/70 p-4">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-foreground/35">Cloud cover</p>
+              <p className="mt-2 font-display text-xl">{cloudCover ?? "—"}%</p>
+              <p className="mt-1 text-sm text-foreground/60">Visibility {weather?.visibility ?? "—"} km</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-background/70 p-4">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-foreground/35">Sunrise / Sunset</p>
+              <p className="mt-2 text-sm text-foreground/70">{formatTime(weather?.sunrise)} · {formatTime(weather?.sunset)}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-background/70 p-4">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-foreground/35">Temperature</p>
+              <p className="mt-2 font-display text-xl">{weather?.temperature ?? "—"}°C</p>
+              <p className="mt-1 text-sm text-foreground/60">Feels like {weather?.feelsLike ?? "—"}°C</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-white/10 bg-background/60 p-6">
+          <h2 className="text-[10px] font-light uppercase tracking-[0.35em] text-foreground/40">Latest space news</h2>
+          <DividerList as="ul" className="mt-4">
+            {news.length > 0 ? news.map((item) => (
+              <li key={item.id} className="px-3 py-3">
+                <p className="font-display text-base">{item.title}</p>
+                <p className="mt-1 text-sm text-foreground/60">{item.summary || item.source}</p>
+              </li>
+            )) : <li className="px-3 py-3 text-sm text-foreground/60">No news available.</li>}
+          </DividerList>
+        </section>
+      </div>
+
+      <div className="mt-16 grid gap-8 xl:grid-cols-[1fr_1fr]">
+        <section>
+          <h2 className="font-sans text-[10px] font-light tracking-[0.45em] uppercase text-foreground/40">Upcoming astronomy events</h2>
+          <DividerList as="ul" className="mt-6">
+            {events.length > 0 ? events.map((event) => (
+              <li key={event.id} className="px-6 py-5 sm:px-8">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="font-display text-base">{event.title}</p>
+                  <span className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-foreground/40">
+                    {event.type}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-foreground/60">{formatDate(event.startDate)} · {formatTime(event.startDate)}</p>
+                <p className="mt-2 text-sm text-foreground/70">{event.description || "No description available."}</p>
+              </li>
+            )) : <li className="px-6 py-5 text-sm text-foreground/60">No upcoming events available.</li>}
+          </DividerList>
+        </section>
+
+        <section>
+          <h2 className="font-sans text-[10px] font-light tracking-[0.45em] uppercase text-foreground/40">Nearby observatories</h2>
+          <DividerList as="ul" className="mt-6">
+            {observatories.length > 0 ? observatories.map((item) => (
+              <li key={item.id} className="px-6 py-5 sm:px-8">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-display text-base">{item.name}</p>
+                    <p className="mt-1 text-sm text-foreground/60">{item.city} · {item.distanceKm ?? "—"} km away</p>
+                  </div>
+                  <span className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-foreground/40">
+                    ★ {item.rating ?? "N/A"}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-foreground/70">Sky quality: {item.skyQualityScore ?? "N/A"}</p>
+              </li>
+            )) : <li className="px-6 py-5 text-sm text-foreground/60">No nearby observatories available.</li>}
+          </DividerList>
+        </section>
       </div>
     </PageShell>
   );

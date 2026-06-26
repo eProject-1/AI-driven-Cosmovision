@@ -242,6 +242,7 @@ model NewsArticle {
   fetchedAt   DateTime     @default(now())
   createdAt   DateTime     @default(now())
 
+  @@index([sourceUrl])
   @@index([publishedAt])
   @@index([category])
   @@map("news_articles")

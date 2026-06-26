@@ -218,3 +218,5 @@ export function getWeatherConditionLabel(condition) {
   };
   return map[condition] ?? "Không xác định";
 }
+
+export const getCurrentWeatherByCoordinates = getWeatherByCoords;

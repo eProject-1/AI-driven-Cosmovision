@@ -1,13 +1,11 @@
 import { AppError } from "../utils/AppError.js";
 
 /**
- * Middleware kiểm tra quyền (role) của người dùng.
  *
  * Sử dụng SAU authMiddleware — yêu cầu req.user đã được gắn vào request.
- *
  * @param {...string} allowedRoles - Một hoặc nhiều role được phép truy cập.
  *
- * @example
+ * @example 
  * // Chỉ ADMIN
  * router.post("/facts/refresh", authMiddleware, roleMiddleware("ADMIN"), handler);
  *
