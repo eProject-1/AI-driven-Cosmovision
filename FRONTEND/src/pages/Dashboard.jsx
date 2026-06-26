@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { PageShell } from "../components/lovable/PageShell";
 import { DataGrid, DividerList } from "../components/lovable/Framing";
 import { getDashboardData } from "../services/dashboard.api";
+import { getObservatoryImage } from "../utils/observatoryImages";
 
 const formatDate = (value) => {
   if (!value) return "—";
@@ -19,6 +21,83 @@ const formatTime = (value) => {
     minute: "2-digit",
   });
 };
+
+function NearbyObservatoryItem({ item }) {
+  const imageUrl = getObservatoryImage(item);
+
+  return (
+    <li className="group relative z-0 px-6 py-5 hover:z-50 focus-within:z-50 sm:px-8">
+      <Link to={`/observatory/${item.slug}`} className="block">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="font-display text-base transition-colors group-hover:text-aurora">{item.name}</p>
+            <p className="mt-1 text-sm text-foreground/60">
+              {item.city} - {item.distanceKm ?? "?"} km away
+            </p>
+          </div>
+          <span className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-foreground/40">
+            Rating {item.rating ?? "N/A"}
+          </span>
+        </div>
+        <p className="mt-2 text-sm text-foreground/70">Sky quality: {item.skyQualityScore ?? "N/A"}</p>
+      </Link>
+
+      <div className="pointer-events-none absolute bottom-full left-4 z-[999] mb-3 hidden w-[min(22rem,calc(100vw-3rem))] overflow-hidden rounded-2xl border border-cyan-200/20 bg-slate-950 shadow-2xl shadow-black/70 ring-1 ring-white/10 group-hover:block group-focus-within:block sm:left-auto sm:right-4">
+        <img src={imageUrl} alt={item.name} className="h-36 w-full object-cover" loading="lazy" />
+        <div className="bg-slate-950 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="font-display text-lg font-light">{item.name}</p>
+              <p className="mt-1 text-xs text-foreground/55">{item.address || item.city}</p>
+            </div>
+            <span className="shrink-0 rounded-full border border-white/10 px-2 py-1 text-[10px] text-foreground/50">
+              {item.distanceKm ?? "?"} km
+            </span>
+          </div>
+          <p className="mt-3 line-clamp-3 text-sm font-light leading-relaxed text-foreground/65">
+            {item.description || "No description available."}
+          </p>
+          <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[10px] uppercase tracking-[0.18em] text-foreground/45">
+            <span className="rounded-xl bg-white/[0.04] px-2 py-2">Sky {item.skyQualityScore ?? "N/A"}</span>
+            <span className="rounded-xl bg-white/[0.04] px-2 py-2">Light {item.lightPollutionScore ?? "N/A"}</span>
+            <span className="rounded-xl bg-white/[0.04] px-2 py-2">Rate {item.rating ?? "N/A"}</span>
+          </div>
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function DashboardNewsItem({ item }) {
+  const articleUrl = item.sourceUrl || item.url || "#";
+  const imageUrl =
+    item.imageUrl ||
+    "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1200&q=80";
+
+  return (
+    <li className="group relative z-0 px-3 py-3 hover:z-50 focus-within:z-50">
+      <a href={articleUrl} target="_blank" rel="noreferrer" className="block">
+        <p className="font-display text-base transition-colors group-hover:text-aurora">{item.title}</p>
+        <p className="mt-1 line-clamp-2 text-sm text-foreground/60">{item.summary || item.source}</p>
+      </a>
+
+      <div className="pointer-events-none absolute bottom-full left-0 z-[999] mb-3 hidden w-[min(24rem,calc(100vw-3rem))] overflow-hidden rounded-2xl border border-cyan-200/20 bg-slate-950 shadow-2xl shadow-black/70 ring-1 ring-white/10 group-hover:block group-focus-within:block sm:left-auto sm:right-0">
+        <img src={imageUrl} alt={item.title} className="h-40 w-full object-cover" loading="lazy" />
+        <div className="bg-slate-950 p-4">
+          <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.22em] text-foreground/40">
+            <span>{item.source || "Space news"}</span>
+            <span>{item.publishedAt ? formatDate(item.publishedAt) : "Latest"}</span>
+          </div>
+          <p className="mt-3 font-display text-lg font-light leading-snug">{item.title}</p>
+          <p className="mt-3 line-clamp-3 text-sm font-light leading-relaxed text-foreground/65">
+            {item.summary || "Open this story to read the full article."}
+          </p>
+          <p className="mt-4 text-[10px] uppercase tracking-[0.25em] text-cyan-200/70">Open article</p>
+        </div>
+      </div>
+    </li>
+  );
+}
 
 export default function LovableDashboard() {
   const [data, setData] = useState(null);
@@ -156,12 +235,9 @@ export default function LovableDashboard() {
 
         <section className="rounded-3xl border border-white/10 bg-background/60 p-6">
           <h2 className="text-[10px] font-light uppercase tracking-[0.35em] text-foreground/40">Latest space news</h2>
-          <DividerList as="ul" className="mt-4">
+          <DividerList as="ul" className="relative z-20 mt-4" allowOverflow>
             {news.length > 0 ? news.map((item) => (
-              <li key={item.id} className="px-3 py-3">
-                <p className="font-display text-base">{item.title}</p>
-                <p className="mt-1 text-sm text-foreground/60">{item.summary || item.source}</p>
-              </li>
+              <DashboardNewsItem key={item.id} item={item} />
             )) : <li className="px-3 py-3 text-sm text-foreground/60">No news available.</li>}
           </DividerList>
         </section>
@@ -188,20 +264,9 @@ export default function LovableDashboard() {
 
         <section>
           <h2 className="font-sans text-[10px] font-light tracking-[0.45em] uppercase text-foreground/40">Nearby observatories</h2>
-          <DividerList as="ul" className="mt-6">
+          <DividerList as="ul" className="relative z-20 mt-6" allowOverflow>
             {observatories.length > 0 ? observatories.map((item) => (
-              <li key={item.id} className="px-6 py-5 sm:px-8">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-display text-base">{item.name}</p>
-                    <p className="mt-1 text-sm text-foreground/60">{item.city} · {item.distanceKm ?? "—"} km away</p>
-                  </div>
-                  <span className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-foreground/40">
-                    ★ {item.rating ?? "N/A"}
-                  </span>
-                </div>
-                <p className="mt-2 text-sm text-foreground/70">Sky quality: {item.skyQualityScore ?? "N/A"}</p>
-              </li>
+              <NearbyObservatoryItem key={item.id} item={item} />
             )) : <li className="px-6 py-5 text-sm text-foreground/60">No nearby observatories available.</li>}
           </DividerList>
         </section>

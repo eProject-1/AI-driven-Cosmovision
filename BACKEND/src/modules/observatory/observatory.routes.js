@@ -19,7 +19,14 @@
 
 import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware.js";
-import { getAll, getNearby, getBySlug, toggleSave } from "./observatory.controller.js";
+import {
+  getAll,
+  getBySlug,
+  getNearby,
+  getStats,
+  removeSave,
+  toggleSave,
+} from "./observatory.controller.js";
 
 const router = Router();
 
@@ -31,6 +38,8 @@ router.get("/", getAll);
 // GET /api/observatory/nearby?lat=21.02&lon=105.84&radius=100
 //PHẢI đứng trước /:slug
 router.get("/nearby", getNearby);
+
+router.get("/stats", getStats);
 
 // GET /api/observatory/bach-ma-observatory
 // Optional auth: authenticate middleware bỏ qua nếu không có token
@@ -48,5 +57,6 @@ router.get("/:slug", (req, res, next) => {
 
 // POST /api/observatory/:id/save  → toggle lưu yêu thích
 router.post("/:id/save", authenticate, toggleSave);
+router.delete("/:id/save", authenticate, removeSave);
 
 export default router;

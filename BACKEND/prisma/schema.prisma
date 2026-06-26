@@ -238,6 +238,9 @@ model NewsArticle {
   publishedAt DateTime
   category    NewsCategory @default(GENERAL)
   summary     String?
+  aiSummary   String?
+  importance  String?
+  aiCategory  String?
   tags        String[]     @default([])
   fetchedAt   DateTime     @default(now())
   createdAt   DateTime     @default(now())
@@ -347,6 +350,7 @@ enum ObservatoryType {
   PUBLIC
   PRIVATE
   UNIVERSITY
+  STARGAZING_SITE
 }
 
 model ImageUpload {

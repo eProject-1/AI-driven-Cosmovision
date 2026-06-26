@@ -6,6 +6,8 @@ import {
   fetchNewsSchema,
   summarizeNewsSchema,
   cleanupNewsSchema,
+  newsAiRequestSchema,
+  newsQuestionSchema,
 } from "./news.validation.js";
 
 import {
@@ -18,6 +20,12 @@ import {
   getDashboardNewsHighlights,
   cleanupOldNews,
   runNewsMaintenance,
+  generateNewsAiSummary,
+  generateNewsImportance,
+  generateNewsAiCategory,
+  generateNewsAiTags,
+  explainNewsArticle,
+  answerNewsQuestion,
 } from "./news.service.js";
 
 export const listNews = asyncHandler(async (req, res) => {
@@ -83,6 +91,59 @@ export const summarizeNews = asyncHandler(async (req, res) => {
 
   const data = await summarizeNewsArticle(req.params.id, parsed.data);
   return sendSuccess(res, data, "News article summarized successfully");
+});
+
+function parseAiRequest(req, res) {
+  const parsed = newsAiRequestSchema.safeParse(req.body || {});
+  if (!parsed.success) {
+    sendError(res, "Validation failed", 400, parsed.error.flatten().fieldErrors);
+    return null;
+  }
+  return parsed.data;
+}
+
+export const aiSummary = asyncHandler(async (req, res) => {
+  const body = parseAiRequest(req, res);
+  if (!body) return;
+  const data = await generateNewsAiSummary(req.params.id, body);
+  return sendSuccess(res, data, "AI summary generated successfully");
+});
+
+export const aiImportance = asyncHandler(async (req, res) => {
+  const body = parseAiRequest(req, res);
+  if (!body) return;
+  const data = await generateNewsImportance(req.params.id, body);
+  return sendSuccess(res, data, "News importance generated successfully");
+});
+
+export const aiCategory = asyncHandler(async (req, res) => {
+  const body = parseAiRequest(req, res);
+  if (!body) return;
+  const data = await generateNewsAiCategory(req.params.id, body);
+  return sendSuccess(res, data, "AI category generated successfully");
+});
+
+export const aiTags = asyncHandler(async (req, res) => {
+  const body = parseAiRequest(req, res);
+  if (!body) return;
+  const data = await generateNewsAiTags(req.params.id, body);
+  return sendSuccess(res, data, "AI tags generated successfully");
+});
+
+export const aiExplain = asyncHandler(async (req, res) => {
+  const data = await explainNewsArticle(req.params.id);
+  return sendSuccess(res, data, "News article explained successfully");
+});
+
+export const aiQuestion = asyncHandler(async (req, res) => {
+  const parsed = newsQuestionSchema.safeParse(req.body || {});
+
+  if (!parsed.success) {
+    return sendError(res, "Validation failed", 400, parsed.error.flatten().fieldErrors);
+  }
+
+  const data = await answerNewsQuestion(req.params.id, parsed.data.question);
+  return sendSuccess(res, data, "News question answered successfully");
 });
 
 export const cleanupNews = asyncHandler(async (req, res) => {

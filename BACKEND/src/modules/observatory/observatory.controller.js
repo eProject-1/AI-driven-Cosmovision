@@ -6,6 +6,8 @@ import {
   getAllObservatories,
   getNearbyObservatories,
   getObservatoryBySlug,
+  getObservatoryStats,
+  removeSavedObservatory,
   toggleSaveObservatory,
 } from "./observatory.service.js";
 
@@ -29,6 +31,8 @@ export const getNearby = asyncHandler(async (req, res) => {
   const lat = Number(req.query.lat);
   const lon = Number(req.query.lon);
   const radius = Number(req.query.radius) || 100;
+  const limit = Number(req.query.limit) || 20;
+  const includeWeather = req.query.includeWeather === "true";
 
   if (Number.isNaN(lat) || Number.isNaN(lon)) {
     throw new AppError("lat and lon are required", 400);
@@ -37,7 +41,11 @@ export const getNearby = asyncHandler(async (req, res) => {
   const result = await getNearbyObservatories(
     lat,
     lon,
-    radius
+    radius,
+    {
+      limit,
+      includeWeather,
+    }
   );
 
   return sendSuccess(
@@ -66,6 +74,22 @@ export const getBySlug = asyncHandler(async (req, res) => {
 });
 
 /**
+ * GET /api/observatory/stats
+ */
+export const getStats = asyncHandler(async (req, res) => {
+  const result = await getObservatoryStats(
+    req.query,
+    req.user?.id ?? null
+  );
+
+  return sendSuccess(
+    res,
+    result,
+    "Observatory stats fetched successfully"
+  );
+});
+
+/**
  * POST /api/observatory/:id/save
  */
 export const toggleSave = asyncHandler(async (req, res) => {
@@ -80,5 +104,21 @@ export const toggleSave = asyncHandler(async (req, res) => {
     result.saved
       ? `${result.observatoryName} saved successfully`
       : `${result.observatoryName} removed successfully`
+  );
+});
+
+/**
+ * DELETE /api/observatory/:id/save
+ */
+export const removeSave = asyncHandler(async (req, res) => {
+  const result = await removeSavedObservatory(
+    req.params.id,
+    req.user.id
+  );
+
+  return sendSuccess(
+    res,
+    result,
+    `${result.observatoryName} removed successfully`
   );
 });

@@ -15,8 +15,12 @@ export const authenticate = async (req, res, next) => {
   // Allow public access to dashboard endpoints (they handle personalization internally)
   try {
     writeDebug('authenticate called', req.method, req.originalUrl, 'auth=', !!req.headers.authorization);
-    if (req.path && req.path.startsWith('/api/dashboard')) {
-      writeDebug('authenticate bypass for dashboard path', req.originalUrl);
+    const orig = req.originalUrl || req.url || '';
+    const base = req.baseUrl || '';
+    const path = req.path || '';
+    // Bypass authentication for any request targeting the dashboard endpoints
+    if (orig.startsWith('/api/dashboard') || base.startsWith('/api/dashboard') || path.startsWith('/api/dashboard')) {
+      writeDebug('authenticate bypass for dashboard path', orig || base || path);
       return next();
     }
   } catch (e) {}

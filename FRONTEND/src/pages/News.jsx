@@ -2,10 +2,134 @@
 import { useEffect, useState } from "react";
 import { PageShell } from "../components/lovable/PageShell";
 import { DividerList } from "../components/lovable/Framing";
-import { getNewsList } from "../services/news.api";
+import {
+  askNewsQuestion,
+  explainNewsArticle,
+  generateNewsAiCategory,
+  generateNewsAiSummary,
+  generateNewsAiTags,
+  generateNewsImportance,
+  getNewsList,
+} from "../services/news.api";
 
 const PAGE_SIZE = 6;
 const categories = ["ALL", "GENERAL", "SPACE_EXPLORATION", "SOLAR_SYSTEM", "DEEP_SPACE", "TECHNOLOGY"];
+
+function NewsAiPanel({ story, onArticleUpdate }) {
+  const [loadingAction, setLoadingAction] = useState("");
+  const [activeResult, setActiveResult] = useState("");
+  const [question, setQuestion] = useState("");
+  const [error, setError] = useState("");
+
+  const runArticleAction = async (action, label, pickResult) => {
+    setLoadingAction(label);
+    setActiveResult("");
+    setError("");
+    try {
+      const article = await action(story.id);
+      onArticleUpdate(article);
+      setActiveResult(pickResult(article));
+    } catch (err) {
+      setError(err.response?.data?.message || "AI feature is unavailable right now.");
+    } finally {
+      setLoadingAction("");
+    }
+  };
+
+  const runExplain = async () => {
+    setLoadingAction("Explain");
+    setError("");
+    try {
+      const result = await explainNewsArticle(story.id);
+      setActiveResult(result.explanation);
+    } catch (err) {
+      setError(err.response?.data?.message || "AI explanation is unavailable right now.");
+    } finally {
+      setLoadingAction("");
+    }
+  };
+
+  const askQuestion = async (event) => {
+    event.preventDefault();
+    if (!question.trim()) return;
+
+    setLoadingAction("Ask");
+    setError("");
+    try {
+      const result = await askNewsQuestion(story.id, question.trim());
+      setActiveResult(result.answer);
+    } catch (err) {
+      setError(err.response?.data?.message || "AI Q&A is unavailable right now.");
+    } finally {
+      setLoadingAction("");
+    }
+  };
+
+  const buttonClass =
+    "rounded-full border border-white/15 bg-white/[0.03] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-foreground/75 transition duration-300 hover:scale-105 hover:border-white/40 hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50";
+
+  return (
+    <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          disabled={!!loadingAction}
+          onClick={() => runArticleAction(generateNewsAiSummary, "Summary", (article) => article.aiSummary || "No AI summary generated.")}
+          className={buttonClass}
+        >
+          AI Summary
+        </button>
+        <button
+          type="button"
+          disabled={!!loadingAction}
+          onClick={() => runArticleAction(generateNewsImportance, "Why it matters", (article) => article.importance || "No importance generated.")}
+          className={buttonClass}
+        >
+          Why it matters
+        </button>
+        <button type="button" disabled={!!loadingAction} onClick={runExplain} className={buttonClass}>
+          Explain
+        </button>
+        <button
+          type="button"
+          disabled={!!loadingAction}
+          onClick={() => runArticleAction(generateNewsAiTags, "Tags", (article) => `Tags: ${(article.tags || []).join(", ") || "No tags"}`)}
+          className={buttonClass}
+        >
+          Tags
+        </button>
+        <button
+          type="button"
+          disabled={!!loadingAction}
+          onClick={() => runArticleAction(generateNewsAiCategory, "Category", (article) => `AI category: ${article.aiCategory || "GENERAL"}`)}
+          className={buttonClass}
+        >
+          Category
+        </button>
+      </div>
+
+      <form onSubmit={askQuestion} className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <input
+          value={question}
+          onChange={(event) => setQuestion(event.target.value)}
+          placeholder="Ask AI about this article"
+          className="min-h-11 flex-1 rounded-full border border-white/10 bg-black/20 px-4 text-sm text-foreground outline-none focus:border-white/40"
+        />
+        <button type="submit" disabled={!!loadingAction || !question.trim()} className={buttonClass}>
+          Ask
+        </button>
+      </form>
+
+      {loadingAction ? <p className="mt-3 text-sm text-cyan-100/80">AI is working on {loadingAction}...</p> : null}
+      {error ? <p className="mt-3 text-sm text-red-200/85">{error}</p> : null}
+      {activeResult ? (
+        <div className="mt-4 whitespace-pre-wrap rounded-2xl border border-cyan-200/15 bg-cyan-950/20 p-4 text-sm leading-relaxed text-foreground/85">
+          {activeResult}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export default function LovableNews() {
   const [stories, setStories] = useState([]);
@@ -55,6 +179,12 @@ export default function LovableNews() {
       .finally(() => setLoading(false));
   };
 
+  const updateStory = (updatedArticle) => {
+    setStories((current) =>
+      current.map((story) => (story.id === updatedArticle.id ? { ...story, ...updatedArticle } : story))
+    );
+  };
+
   return (
     <PageShell
       eyebrow="Chapter IV"
@@ -73,7 +203,14 @@ export default function LovableNews() {
                 setPage(1);
                 setCategory(item);
               }}
-              className={`rounded-full px-3 py-1 text-xs uppercase tracking-[0.2em] ${category === item ? "bg-aurora text-black" : "border border-white/10 text-foreground/70"}`}
+              className={[
+                "rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em]",
+                "transition duration-300 ease-out hover:scale-105 hover:border-white/40 hover:bg-white/15 hover:text-white",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50",
+                category === item
+                  ? "border-white bg-white text-black shadow-lg shadow-white/10"
+                  : "border-white/10 bg-white/[0.03] text-foreground/75",
+              ].join(" ")}
             >
               {item === "ALL" ? "All" : item.replace(/_/g, " ")}
             </button>
@@ -136,6 +273,11 @@ export default function LovableNews() {
 
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <span className="text-[10px] font-light tracking-[0.25em] uppercase text-foreground/35">{s.source}</span>
+                {s.category ? (
+                  <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-foreground/70">
+                    {s.category}
+                  </span>
+                ) : null}
                 <a
                   href={articleUrl}
                   target="_blank"
@@ -145,6 +287,8 @@ export default function LovableNews() {
                   Open on Spaceflight News
                 </a>
               </div>
+
+              <NewsAiPanel story={s} onArticleUpdate={updateStory} />
             </article>
           );
         })}

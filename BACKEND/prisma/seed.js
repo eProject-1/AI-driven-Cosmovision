@@ -317,7 +317,7 @@ async function main() {
     imageUrl: null,
   },
   {
-    name: "Ursa Major",
+    name: "Ursa Major Minh Pham ",
     slug: "ursa-major",
     latinName: "Ursa Major",
     abbreviation: "UMa",
@@ -551,258 +551,474 @@ for (const c of constellations) {
 // Hoặc tích hợp vào seed.js chính bằng cách import và gọi hàm seedObservatories()
 
 const observatories = [
-{
-name: "Đài Thiên văn Hà Nội",
-slug: "dai-thien-van-ha-noi",
-description:
-"Đài thiên văn lịch sử tại Hà Nội thuộc Viện Vật lý Địa cầu. Có các thiết bị quan sát và nghiên cứu thiên văn phục vụ đào tạo và nghiên cứu.",
+  {
+    name: "Nha Trang Observatory",
+    slug: "nha-trang-observatory",
+    description:
+      "Vietnam's first public astronomical observatory, located at Hon Chong in Nha Trang. The site includes a 50 cm optical reflector, a planetarium and a space gallery for science communication and education.",
 
-type: "UNIVERSITY",
+    type: "PUBLIC",
 
-latitude: 21.0285,
-longitude: 105.8542,
+    latitude: 12.2727,
+    longitude: 109.2055,
 
-address: "18 Hoàng Quốc Việt, Cầu Giấy",
-city: "Hà Nội",
-province: "Hà Nội",
+    address: "Hon Chong, Vinh Phuoc Ward",
+    city: "Nha Trang",
+    province: "Khanh Hoa",
+    country: "Vietnam",
 
-elevation: 10,
+    elevation: 20,
 
-equipment: [
-  "Kính khúc xạ 135mm",
-  "Kính phản xạ 250mm",
-  "Máy đo quang phổ",
-],
+    equipment: [
+      "50 cm reflector telescope",
+      "CCD camera",
+      "Spectral analyzer",
+      "Planetarium",
+      "Space gallery",
+    ],
 
-openingHours: "Theo lịch đăng ký",
+    openingHours: "Check Vietnam National Authority of Tourism / VNSC schedule",
 
-website: "https://igp-vast.vn",
+    website: "https://vietnamtourism.gov.vn/en/tags/Nha-Trang-Observatory",
 
-imageUrl:
-  "https://images.unsplash.com/photo-1462331940025-496dfbfc7564",
+    imageUrl:
+      "https://images.unsplash.com/photo-1620589105774-b057272eff2c?auto=format&fit=crop&w=1400&q=85",
 
-rating: 4.4,
-reviewCount: 58,
+    rating: 4.7,
+    reviewCount: 260,
 
-lightPollutionScore: 82,
-skyQualityScore: 40,
+    lightPollutionScore: 55,
+    skyQualityScore: 70,
 
-isFeatured: true,
+    isFeatured: true,
+  },
 
-},
+  {
+    name: "Paranal Observatory",
+    slug: "paranal-observatory",
+    description:
+      "ESO's flagship ground-based observatory in Chile's Atacama Desert, home to the Very Large Telescope and several world-class optical and infrared facilities.",
 
-{
-name: "Trung tâm Vũ trụ Việt Nam",
-slug: "trung-tam-vu-tru-viet-nam",
-description:
-  "Trung tâm nghiên cứu và phát triển công nghệ vũ trụ quốc gia với nhiều hoạt động phổ biến thiên văn cho cộng đồng.",
+    type: "PUBLIC",
 
-type: "PUBLIC",
+    latitude: -24.6272,
+    longitude: -70.4042,
 
-latitude: 21.0365,
-longitude: 105.7833,
+    address: "Cerro Paranal, Atacama Desert",
+    city: "Antofagasta",
+    province: "Antofagasta",
+    country: "Chile",
 
-address: "18 Hoàng Quốc Việt, Cầu Giấy",
-city: "Hà Nội",
-province: "Hà Nội",
+    elevation: 2635,
 
-elevation: 15,
+    equipment: [
+      "Very Large Telescope",
+      "Four 8.2 m Unit Telescopes",
+      "Auxiliary Telescopes",
+      "VISTA survey telescope",
+      "VLT Survey Telescope",
+    ],
 
-equipment: [
-  "Kính thiên văn quang học",
-  "Anten theo dõi vệ tinh",
-],
+    openingHours: "ESO visitor schedule",
 
-openingHours: "Theo lịch sự kiện",
+    website: "https://www.eso.org/public/teles-instr/paranal-observatory/",
 
-website: "https://vnsc.org.vn",
+    imageUrl:
+      "https://images.unsplash.com/photo-1516339901601-2e1b62dc0c45?auto=format&fit=crop&w=1400&q=85",
 
-imageUrl:
-  "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa",
+    rating: 4.9,
+    reviewCount: 1200,
 
-rating: 4.7,
-reviewCount: 210,
+    lightPollutionScore: 5,
+    skyQualityScore: 98,
 
-lightPollutionScore: 80,
-skyQualityScore: 45,
+    isFeatured: true,
+  },
 
-isFeatured: true,
+  {
+    name: "La Silla Observatory",
+    slug: "la-silla-observatory",
+    description:
+      "ESO's first observatory, located 600 km north of Santiago de Chile at 2400 m altitude. La Silla is known for very dark skies and productive 4-metre class telescopes.",
 
+    type: "PUBLIC",
 
-},
+    latitude: -29.2567,
+    longitude: -70.7346,
 
-{
-name: "Đài Quan sát Đà Lạt",
-slug: "dai-quan-sat-da-lat",
+    address: "La Silla, Atacama Desert",
+    city: "La Serena",
+    province: "Coquimbo",
+    country: "Chile",
 
-description:
-  "Điểm quan sát thiên văn nổi bật tại cao nguyên Lâm Viên với điều kiện bầu trời rất tốt cho quan sát sao.",
+    elevation: 2400,
 
-type: "PUBLIC",
+    equipment: [
+      "3.58 m New Technology Telescope",
+      "ESO 3.6 m telescope",
+      "HARPS spectrograph",
+      "MPG/ESO 2.2 m telescope",
+      "BlackGEM",
+      "ExTrA",
+    ],
 
-latitude: 11.9465,
-longitude: 108.4419,
+    openingHours: "ESO visitor schedule",
 
-address: "Phường 4, Thành phố Đà Lạt",
-city: "Đà Lạt",
-province: "Lâm Đồng",
+    website: "https://www.eso.org/public/teles-instr/lasilla/",
 
-elevation: 1500,
+    imageUrl:
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=85",
 
-equipment: [
-  "Kính thiên văn 200mm",
-  "Camera CCD",
-  "Bộ lọc quang phổ",
-],
+    rating: 4.8,
+    reviewCount: 780,
 
-openingHours: "19:30 - 23:00 cuối tuần",
+    lightPollutionScore: 8,
+    skyQualityScore: 96,
 
-rating: 4.9,
-reviewCount: 420,
+    isFeatured: true,
+  },
 
-lightPollutionScore: 25,
-skyQualityScore: 92,
+  {
+    name: "ALMA Observatory",
+    slug: "alma-observatory",
+    description:
+      "The Atacama Large Millimeter/submillimeter Array is an international radio observatory on the Chajnantor Plateau. ALMA studies cold cosmic gas, star formation and the early Universe.",
 
-isFeatured: true,
+    type: "PUBLIC",
 
-},
+    latitude: -23.029,
+    longitude: -67.755,
 
-{
-name: "Vườn Quốc gia Cúc Phương",
-slug: "vqg-cuc-phuong-quan-sat-sao",
+    address: "Chajnantor Plateau, Atacama Desert",
+    city: "San Pedro de Atacama",
+    province: "Antofagasta",
+    country: "Chile",
 
-description:
-  "Một trong những địa điểm quan sát bầu trời đêm đẹp nhất miền Bắc với ô nhiễm ánh sáng thấp.",
+    elevation: 5000,
 
-type: "PUBLIC",
+    equipment: [
+      "66 high-precision antennas",
+      "Fifty 12 m antennas",
+      "Four 12 m compact-array antennas",
+      "Twelve 7 m compact-array antennas",
+      "Millimetre/submillimetre interferometer",
+    ],
 
-latitude: 20.3249,
-longitude: 105.6684,
+    openingHours: "Science facility - check ALMA visits policy",
 
-address: "Vườn Quốc gia Cúc Phương",
-city: "Nho Quan",
-province: "Ninh Bình",
+    website: "https://www.almaobservatory.org/en/about-alma/",
 
-elevation: 220,
+    imageUrl:
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=85",
 
-equipment: [
-  "Kính thiên văn dã ngoại",
-  "Ống nhòm thiên văn",
-],
+    rating: 4.9,
+    reviewCount: 930,
 
-openingHours: "Theo sự kiện",
+    lightPollutionScore: 4,
+    skyQualityScore: 99,
 
-website: "https://cucphuongnationalpark.com",
+    isFeatured: true,
+  },
 
-rating: 4.8,
-reviewCount: 173,
+  {
+    name: "Royal Observatory Greenwich",
+    slug: "royal-observatory-greenwich",
+    description:
+      "Historic public observatory in London, home of Greenwich Mean Time and the Prime Meridian Line, with astronomy galleries and the Great Equatorial Telescope.",
 
-lightPollutionScore: 20,
-skyQualityScore: 90,
+    type: "PUBLIC",
 
-isFeatured: true,
+    latitude: 51.4769,
+    longitude: -0.0005,
 
-},
+    address: "Blackheath Avenue, Greenwich",
+    city: "London",
+    province: "England",
+    country: "United Kingdom",
 
-{
-name: "CLB Thiên văn Nghiệp dư TP.HCM",
-slug: "clb-thien-van-nghiep-du-tphcm",
-description:
-  "Câu lạc bộ thiên văn dành cho cộng đồng yêu thích quan sát bầu trời tại TP.HCM.",
+    elevation: 47,
 
-type: "PUBLIC",
+    equipment: [
+      "Great Equatorial Telescope",
+      "Prime Meridian Line",
+      "Astronomy galleries",
+      "Octagon Room",
+    ],
 
-latitude: 10.7769,
-longitude: 106.7009,
+    openingHours: "Ticketed public opening hours",
 
-address: "Công viên Tao Đàn, Quận 1",
-city: "Hồ Chí Minh",
-province: "Hồ Chí Minh",
+    website: "https://www.rmg.co.uk/royal-observatory",
 
-elevation: 5,
+    imageUrl:
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=85",
 
-equipment: [
-  "Kính 80mm ED",
-  "Dobsonian 8 inch",
-],
+    rating: 4.6,
+    reviewCount: 21000,
 
-openingHours: "Theo lịch sinh hoạt CLB",
+    lightPollutionScore: 90,
+    skyQualityScore: 35,
 
-rating: 4.5,
-reviewCount: 95,
+    isFeatured: false,
+  },
 
-lightPollutionScore: 88,
-skyQualityScore: 30,
+  {
+    name: "W. M. Keck Observatory",
+    slug: "wm-keck-observatory",
+    description:
+      "Maunakea-based observatory operating two of the world's most scientifically productive optical and infrared telescopes for frontier astronomy research.",
 
-isFeatured: false,
-},
+    type: "PRIVATE",
 
-{
-name: "Đèo Hải Vân Stargazing Point",
-slug: "deo-hai-van-quan-sat-sao",
-description:
-  "Địa điểm lý tưởng để quan sát dải Ngân Hà và bầu trời đêm khu vực miền Trung.",
+    latitude: 19.8263,
+    longitude: -155.4744,
 
-type: "PUBLIC",
+    address: "Maunakea summit",
+    city: "Kamuela",
+    province: "Hawaii",
+    country: "United States",
 
-latitude: 16.1833,
-longitude: 108.1167,
+    elevation: 4145,
 
-address: "Đỉnh đèo Hải Vân",
-city: "Đà Nẵng",
-province: "Đà Nẵng",
+    equipment: [
+      "Keck I 10 m telescope",
+      "Keck II 10 m telescope",
+      "Optical instruments",
+      "Infrared instruments",
+      "Adaptive optics",
+    ],
 
-elevation: 500,
+    openingHours: "Research facility - outreach events vary",
 
-equipment: [],
+    website: "https://keckobservatory.org/",
 
-openingHours: "24/7",
+    imageUrl:
+      "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1400&q=85",
 
-rating: 4.8,
-reviewCount: 320,
+    rating: 4.9,
+    reviewCount: 860,
 
-lightPollutionScore: 30,
-skyQualityScore: 85,
+    lightPollutionScore: 6,
+    skyQualityScore: 97,
 
-isFeatured: true,
-},
+    isFeatured: true,
+  },
+  {
+    name: "Cuc Phuong Stargazing Site",
+    slug: "cuc-phuong-stargazing-site",
+    description:
+      "A forest and karst national park in Ninh Binh. This is not a formal observatory, but its distance from dense city lighting makes it useful as a public stargazing and night-sky education location during the dry season.",
 
-{
-name: "Vườn Quốc gia Bạch Mã Stargazing Point",
-slug: "vqg-bach-ma-quan-sat-sao",
-description:
-  "Địa điểm quan sát thiên văn chất lượng cao tại miền Trung với bầu trời rất tối.",
+    type: "STARGAZING_SITE",
 
-type: "PUBLIC",
+    latitude: 20.3508,
+    longitude: 105.5969,
 
-latitude: 16.19,
-longitude: 107.85,
+    address: "Cuc Phuong National Park",
+    city: "Nho Quan",
+    province: "Ninh Binh",
+    country: "Vietnam",
 
-address: "Vườn Quốc gia Bạch Mã",
-city: "Phú Lộc",
-province: "Thừa Thiên Huế",
+    elevation: 350,
 
-elevation: 1450,
+    equipment: [
+      "Portable telescope recommended",
+      "Binoculars recommended",
+      "Tripod recommended",
+    ],
 
-equipment: [
-  "Kính thiên văn dã ngoại",
-],
+    openingHours: "Check park visitor regulations before night access",
 
-openingHours: "Theo mùa khô",
+    website: "https://en.wikipedia.org/wiki/C%C3%BAc_Ph%C6%B0%C6%A1ng_National_Park",
 
-website: "https://bachma.gov.vn",
+    imageUrl:
+      "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1400&q=85",
 
-rating: 4.9,
-reviewCount: 118,
+    rating: 4.6,
+    reviewCount: 360,
 
-lightPollutionScore: 15,
-skyQualityScore: 95,
+    lightPollutionScore: 25,
+    skyQualityScore: 84,
 
-isFeatured: true,
+    isFeatured: true,
+  },
+  {
+    name: "Bach Ma Stargazing Site",
+    slug: "bach-ma-stargazing-site",
+    description:
+      "Highland national park near Hue and Da Nang. It is a stargazing site rather than an observatory, with high elevation, cooler air and good horizons when weather is clear.",
 
-},
+    type: "STARGAZING_SITE",
+
+    latitude: 16.1955,
+    longitude: 107.853,
+
+    address: "Bach Ma National Park",
+    city: "Phu Loc",
+    province: "Thua Thien Hue",
+    country: "Vietnam",
+
+    elevation: 1250,
+
+    equipment: [
+      "Portable telescope recommended",
+      "Wide-angle camera",
+      "Red flashlight",
+    ],
+
+    openingHours: "Check Bach Ma National Park visitor regulations before night access",
+
+    website: "http://bachmapark.com.vn/index.php",
+
+    imageUrl:
+      "https://images.unsplash.com/photo-1475274047050-1d0c0975c63e?auto=format&fit=crop&w=1400&q=85",
+
+    rating: 4.7,
+    reviewCount: 420,
+
+    lightPollutionScore: 18,
+    skyQualityScore: 90,
+
+    isFeatured: true,
+  },
+  {
+    name: "Bidoup Nui Ba Stargazing Site",
+    slug: "bidoup-nui-ba-stargazing-site",
+    description:
+      "A highland national park on the Langbiang Plateau in Lam Dong. It is suitable for dark-sky trips and Milky Way photography when camping or night access is legally arranged.",
+
+    type: "STARGAZING_SITE",
+
+    latitude: 12.176,
+    longitude: 108.633,
+
+    address: "Bidoup Nui Ba National Park",
+    city: "Lac Duong",
+    province: "Lam Dong",
+    country: "Vietnam",
+
+    elevation: 1600,
+
+    equipment: [
+      "Portable telescope recommended",
+      "Milky Way camera setup",
+      "Warm clothing",
+    ],
+
+    openingHours: "Check park tour and camping regulations",
+
+    website: "http://bidoupnuiba.gov.vn/",
+
+    imageUrl:
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=85",
+
+    rating: 4.8,
+    reviewCount: 260,
+
+    lightPollutionScore: 15,
+    skyQualityScore: 92,
+
+    isFeatured: true,
+  },
+  {
+    name: "Phuoc Binh Stargazing Site",
+    slug: "phuoc-binh-stargazing-site",
+    description:
+      "A mountainous national park in Ninh Thuan, one of Vietnam's drier provinces. It is modeled as a stargazing site because it offers darker rural skies, not fixed observatory equipment.",
+
+    type: "STARGAZING_SITE",
+
+    latitude: 11.975,
+    longitude: 108.732,
+
+    address: "Phuoc Binh National Park",
+    city: "Bac Ai",
+    province: "Ninh Thuan",
+    country: "Vietnam",
+
+    elevation: 900,
+
+    equipment: [
+      "Portable telescope recommended",
+      "Binoculars recommended",
+      "Star tracker",
+    ],
+
+    openingHours: "Check park visitor and camping regulations",
+
+    website: "https://en.wikipedia.org/wiki/Ph%C6%B0%E1%BB%9Bc_B%C3%ACnh_National_Park",
+
+    imageUrl:
+      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1400&q=85",
+
+    rating: 4.5,
+    reviewCount: 180,
+
+    lightPollutionScore: 20,
+    skyQualityScore: 88,
+
+    isFeatured: false,
+  },
+  {
+    name: "Ba Vi Stargazing Site",
+    slug: "ba-vi-stargazing-site",
+    description:
+      "Mountain national park west of Hanoi. It is convenient for public skywatching near the capital, though sky quality is more limited by Hanoi's light pollution.",
+
+    type: "STARGAZING_SITE",
+
+    latitude: 21.067,
+    longitude: 105.373,
+
+    address: "Ba Vi National Park",
+    city: "Ba Vi",
+    province: "Hanoi",
+    country: "Vietnam",
+
+    elevation: 1000,
+
+    equipment: [
+      "Binoculars recommended",
+      "Portable telescope recommended",
+      "Moon and planet viewing",
+    ],
+
+    openingHours: "Check Ba Vi National Park visitor regulations before night access",
+
+    website: "https://en.wikipedia.org/wiki/Ba_V%C3%AC_National_Park",
+
+    imageUrl:
+      "https://images.unsplash.com/photo-1488866022504-f2584929ca5f?auto=format&fit=crop&w=1400&q=85",
+
+    rating: 4.3,
+    reviewCount: 520,
+
+    lightPollutionScore: 62,
+    skyQualityScore: 58,
+
+    isFeatured: false,
+  },
 ];
 
+
+const officialObservatorySlugs = observatories.map((obs) => obs.slug);
+
+await prisma.savedObservatory.deleteMany({
+  where: {
+    observatory: {
+      slug: {
+        notIn: officialObservatorySlugs,
+      },
+    },
+  },
+});
+
+await prisma.observatory.deleteMany({
+  where: {
+    slug: {
+      notIn: officialObservatorySlugs,
+    },
+  },
+});
 
 for (const obs of observatories) {
   await prisma.observatory.upsert({
@@ -861,4 +1077,3 @@ main()
     await prisma.$disconnect()
   })
 
- 

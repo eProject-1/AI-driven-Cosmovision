@@ -55,3 +55,33 @@ export const getDashboardHighlights = async (limit = 5) => {
   const { data } = await api.get("/news/dashboard/highlights", { params: { limit } });
   return data.data;
 };
+
+export const generateNewsAiSummary = async (id, options = {}) => {
+  const { data } = await api.post(`/news/${id}/ai/summary`, options);
+  return data.data;
+};
+
+export const generateNewsImportance = async (id, options = {}) => {
+  const { data } = await api.post(`/news/${id}/ai/importance`, options);
+  return data.data;
+};
+
+export const generateNewsAiCategory = async (id, options = {}) => {
+  const { data } = await api.post(`/news/${id}/ai/category`, options);
+  return data.data;
+};
+
+export const generateNewsAiTags = async (id, options = {}) => {
+  const { data } = await api.post(`/news/${id}/ai/tags`, options);
+  return data.data;
+};
+
+export const explainNewsArticle = async (id) => {
+  const { data } = await api.post(`/news/${id}/ai/explain`);
+  return data.data;
+};
+
+export const askNewsQuestion = async (id, question) => {
+  const { data } = await api.post(`/news/${id}/ai/question`, { question });
+  return data.data;
+};

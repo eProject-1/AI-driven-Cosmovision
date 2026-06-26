@@ -4,10 +4,10 @@ const tone = {
   table: "border-white/10 bg-slate-950/35 shadow-[0_20px_70px_rgba(0,0,0,0.2)]",
 };
 
-export function SectionPanel({ children, className = "", variant = "panel", ...props }) {
+export function SectionPanel({ children, className = "", variant = "panel", allowOverflow = false, ...props }) {
   return (
     <section
-      className={`overflow-hidden rounded-2xl border ${tone[variant] ?? tone.panel} backdrop-blur-md ${className}`}
+      className={`${allowOverflow ? "overflow-visible" : "overflow-hidden"} rounded-2xl border ${tone[variant] ?? tone.panel} backdrop-blur-md ${className}`}
       {...props}
     >
       {children}
@@ -33,9 +33,9 @@ export function DataGrid({ children, className = "", columns = "sm:grid-cols-2 l
   );
 }
 
-export function DividerList({ children, as: Component = "div", className = "" }) {
+export function DividerList({ children, as: Component = "div", className = "", allowOverflow = false }) {
   return (
-    <SectionPanel variant="quiet" className={className}>
+    <SectionPanel variant="quiet" className={className} allowOverflow={allowOverflow}>
       <Component className="divide-y divide-white/10">{children}</Component>
     </SectionPanel>
   );

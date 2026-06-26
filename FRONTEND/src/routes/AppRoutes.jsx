@@ -9,6 +9,7 @@ import LovablePlanets from "../pages/Planets";
 import LovablePlanetDetail from "../pages/PlanetDetail";
 import LovableConstellations from "../pages/Constellations";
 import LovableObservatory from "../pages/Observatory";
+import ObservatoryDetail from "../pages/ObservatoryDetail";
 import LovableNews from "../pages/News";
 import LovableDashboard from "../pages/Dashboard";
 import LovableAssistant from "../pages/Assistant";
@@ -45,6 +46,7 @@ export default function AppRoutes() {
       <Route path="/constellation" element={<LovableConstellations />} />
       <Route path="/constellations" element={<LovableConstellations />} />
       <Route path="/observatory" element={<LovableObservatory />} />
+      <Route path="/observatory/:slug" element={<ObservatoryDetail />} />
       <Route path="/news" element={<LovableNews />} />
       <Route path="/dashboard" element={<LovableDashboard />} />
       <Route path="/assistant" element={<LovableAssistant />} />
