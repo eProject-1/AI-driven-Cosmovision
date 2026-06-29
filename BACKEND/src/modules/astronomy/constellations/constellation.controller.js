@@ -1,12 +1,15 @@
 // modules/astronomy/constellations/constellation.controller.js
 import { asyncHandler } from "../../../utils/asyncHandler.js";
 import { sendSuccess } from "../../../utils/response.util.js";
+import { buildUploadedFileUrl } from "../../../middlewares/upload.middleware.js";
 import {
   getAllConstellations as fetchAllConstellations,
   getConstellationBySlug as fetchConstellationBySlug,
   getConstellationAIContent as fetchAIContent,
   getRelatedConstellations,
   getConstellationsByMonth,
+  recognizeConstellationImage as recognizeUploadedImage,
+  getUserConstellationUploads as fetchUserUploads,
 } from "./constellation.service.js";
 
 export const getAllConstellations = asyncHandler(async (req, res) => {
@@ -38,5 +41,21 @@ export const getRelatedConstellation = asyncHandler(async (req, res) => {
 
 export const getByMonth = asyncHandler(async (req, res) => {
   const data = await getConstellationsByMonth(req.params.month);
+  return sendSuccess(res, data);
+});
+
+export const recognizeConstellationImage = asyncHandler(async (req, res) => {
+  const data = await recognizeUploadedImage({
+    userId: req.user?.id,
+    file: req.file,
+    fileUrl: req.file ? buildUploadedFileUrl(req, req.file) : null,
+    hint: req.body?.hint,
+  });
+
+  return sendSuccess(res, data, "Constellation image processed successfully", 201);
+});
+
+export const getMyConstellationUploads = asyncHandler(async (req, res) => {
+  const data = await fetchUserUploads(req.user?.id, { limit: req.query.limit });
   return sendSuccess(res, data);
 });

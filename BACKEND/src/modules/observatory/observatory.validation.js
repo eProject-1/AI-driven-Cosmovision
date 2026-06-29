@@ -16,7 +16,6 @@ export const listQuerySchema = z.object({
   city: z.string().trim().optional(),
   country: z.string().trim().optional(),
   isFeatured: z.enum(["true", "false"]).optional(),
-  isPublic: z.enum(["true", "false"]).optional(),
   page: z
     .string()
     .optional()

@@ -30,6 +30,7 @@ import { AppError } from "../../utils/AppError.js";
 import { getWeatherByCoords, roundCoord } from "../../services/external/weather.service.js";
 import { getApod, getNearEarthObjects } from "../../services/external/nasa.service.js";
 import { reverseGeocode, calculateDistance } from "../../services/external/maps.service.js";
+import { trackAnalyticsEvent } from "../../services/analytics/analytics.service.js";
 
 const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
 
@@ -163,7 +164,7 @@ async function getNearbyObservatories(lat, lon, radiusKm = OBSERVATORY_SEARCH_RA
 
   const candidates = await prisma.observatory.findMany({
     where: {
-      isPublic: true,
+      isActive: true,
       latitude:  { gte: lat - latDelta, lte: lat + latDelta },
       longitude: { gte: lon - lonDelta, lte: lon + lonDelta },
     },
@@ -525,6 +526,22 @@ export async function createRecommendation({ userId, latitude, longitude, locati
   });
 
   // Bước 6: Trả về kết quả đầy đủ cho frontend
+  trackAnalyticsEvent({
+    userId,
+    event: "RECOMMENDATION_REQUEST",
+    entityType: "recommendation",
+    entityId: recommendation.id,
+    entityName: resolvedLocationName || locationKey,
+    metadata: {
+      skyVisibilityScore,
+      weatherCondition: weatherData.condition,
+      visiblePlanets: planetNames,
+      visibleConstellations: constellations,
+      observatoriesFound: observatories.length,
+      aiGenerated: skyVisibilityScore >= SKY_SCORE_AI_THRESHOLD,
+    },
+  }).catch((error) => console.error("[analytics] recommendation track failed:", error.message));
+
   return {
     ...recommendation,
     fromCache: false,

@@ -2,6 +2,7 @@
 import { Router } from "express";
 import { authenticate } from "../../../middlewares/auth.middleware.js";
 import { roleMiddleware } from "../../../middlewares/role.middleware.js";
+import { uploadConstellationImage } from "../../../middlewares/upload.middleware.js";
 import {
   getAllConstellations,
   getConstellationBySlug,
@@ -9,6 +10,8 @@ import {
   refreshConstellationAIContent,
   getRelatedConstellation,
   getByMonth,
+  recognizeConstellationImage,
+  getMyConstellationUploads,
 } from "./constellation.controller.js";
 
 const router = Router();
@@ -21,6 +24,15 @@ router.get("/", getAllConstellations);
 
 // GET /api/astronomy/constellations/month/:month   (1–12)
 router.get("/month/:month", getByMonth);
+
+router.get("/uploads/me", authenticate, getMyConstellationUploads);
+
+router.post(
+  "/recognize",
+  authenticate,
+  uploadConstellationImage,
+  recognizeConstellationImage
+);
 
 // GET /api/astronomy/constellations/:slug/ai-content
 // Query: ?refresh=true (chỉ có tác dụng với ADMIN)

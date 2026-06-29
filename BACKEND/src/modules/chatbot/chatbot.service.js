@@ -17,6 +17,7 @@ import {
 import { buildChatMessages } from "../../services/chatbot/prompt.service.js";
 
 import { getPersonalizedRecommendations } from "../../services/chatbot/recommendation.service.js";
+import { trackAnalyticsEvent } from "../../services/analytics/analytics.service.js";
 
 // ==================== CONFIG & CONSTANTS ====================
 const DEFAULT_MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
@@ -175,6 +176,19 @@ async function sendMessage({ userId, message, sessionId }) {
     intent: intentType,   
     modelUsed: DEFAULT_MODEL,
   });
+
+  trackAnalyticsEvent({
+    userId,
+    event: "CHATBOT_MESSAGE",
+    entityType: "chat_session",
+    entityId: resolvedSessionId,
+    entityName: intentType,
+    metadata: {
+      intent,
+      model: DEFAULT_MODEL,
+      messageLength: cleanMessage.length,
+    },
+  }).catch((error) => console.error("[analytics] chatbot track failed:", error.message));
 
   return {
     reply: assistantMessage,

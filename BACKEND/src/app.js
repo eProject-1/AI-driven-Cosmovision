@@ -11,6 +11,8 @@ import observatoryRoutes from "./modules/observatory/observatory.routes.js";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
 import newsRoutes from "./modules/news/news.routes.js";
 import userRoutes from "./modules/user/user.routes.js";
+import searchRoutes from "./modules/search/search.routes.js";
+import analyticsRoutes from "./modules/analytics/analytics.routes.js";
 
 const app = express();
 
@@ -41,6 +43,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static(path.join(process.cwd(), "src", "uploads")));
 
 // Health check
 app.get("/health", (req, res) => res.json({ status: "ok", timestamp: new Date() }));
@@ -60,6 +63,8 @@ app.use("/api/observatory", observatoryRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/search", searchRoutes);
+app.use("/api/analytics", analyticsRoutes);
 // Public dashboard (no auth) to support anonymous clients that pass lat/lng
 app.use("/api/dashboard-public", (await import("./modules/dashboard/public.routes.js")).default);
 

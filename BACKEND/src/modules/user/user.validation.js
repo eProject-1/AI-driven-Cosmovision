@@ -21,3 +21,5 @@ export const updatePreferencesSchema = z.object({
   distanceUnit: z.enum(["km", "mi"]).optional(),
   timeFormat: z.enum(["12h", "24h"]).optional(),
 });
+
+export const favoriteTypeSchema = z.enum(["planets", "constellations"]);
