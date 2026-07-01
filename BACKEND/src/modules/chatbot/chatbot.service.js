@@ -11,6 +11,7 @@ import {
   getConversationHistory as fetchConversationHistory,
   saveConversation,
   createSession,
+  getSessionById,
   deleteSession,
 } from "../../services/chatbot/memory.service.js";
 
@@ -27,6 +28,7 @@ const DEFAULT_MAX_TOKENS = Number(process.env.GROQ_MAX_TOKENS || 800);
 const MAX_MESSAGE_LENGTH = 4000;
 const DEFAULT_HISTORY_LIMIT = 25;
 const DEFAULT_CHAT_HISTORY_LIMIT = 20;
+const MAX_CHAT_HISTORY_LIMIT = 50;
 
 // ==================== VALIDATION ====================
 function assertValidChatMessage(message) {
@@ -114,7 +116,14 @@ async function createGroqCompletion(messages) {
  * Resolve sessionId: dùng sessionId có sẵn hoặc tạo mới
  */
 async function resolveSession(userId, sessionId) {
-  if (sessionId) return sessionId;
+  if (!userId) throw new AppError("User authentication is required.", 401);
+
+  if (sessionId) {
+    const session = await getSessionById(sessionId);
+    if (!session) throw new AppError("Chat session not found.", 404);
+    if (session.userId !== userId) throw new AppError("You do not have access to this chat session.", 403);
+    return sessionId;
+  }
 
   const session = await createSession(userId);
   if (!session) throw new AppError("Failed to create chat session.", 500);
@@ -209,7 +218,14 @@ async function getConversationHistory({ userId, sessionId, limit = DEFAULT_CHAT_
   if (!userId) throw new AppError("User authentication is required.", 401);
   if (!sessionId) throw new AppError("sessionId is required.", 400);
 
-  return fetchConversationHistory(sessionId, Number(limit)); 
+  await resolveSession(userId, sessionId);
+  return fetchConversationHistory(sessionId, clampLimit(limit, DEFAULT_CHAT_HISTORY_LIMIT));
+}
+
+function clampLimit(value, fallback = DEFAULT_CHAT_HISTORY_LIMIT, max = MAX_CHAT_HISTORY_LIMIT) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+  return Math.min(parsed, max);
 }
 
 /**
@@ -221,6 +237,7 @@ async function clearConversationHistory({ userId, sessionId }) {
   if (!userId) throw new AppError("User authentication is required.", 401);
   if (!sessionId) throw new AppError("sessionId is required.", 400);
 
+  await resolveSession(userId, sessionId);
   const deleted = await deleteSession(sessionId); // cascade delete messages theo session
   if (!deleted) throw new AppError("Failed to clear chat history.", 500);
 

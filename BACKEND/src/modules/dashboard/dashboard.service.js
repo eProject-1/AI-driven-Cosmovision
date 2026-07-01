@@ -10,7 +10,20 @@ import {
   getDashboardNewsHighlights,
 } from "../news/news.service.js";
 
+const DEFAULT_SECTION_LIMIT = 5;
+const MAX_SECTION_LIMIT = 20;
+
+function clampLimit(value, fallback = DEFAULT_SECTION_LIMIT, max = MAX_SECTION_LIMIT) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+  return Math.min(parsed, max);
+}
+
 function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+  if (![lat1, lon1, lat2, lon2].every((value) => Number.isFinite(Number(value)))) {
+    return null;
+  }
+
   const radius = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
@@ -114,7 +127,7 @@ async function resolveUserLocation(userId, query = {}) {
     where: { userId },
   });
 
-  if (!profile?.latitude || !profile?.longitude) {
+  if (!Number.isFinite(Number(profile?.latitude)) || !Number.isFinite(Number(profile?.longitude))) {
     throw new AppError("User location is not available. Please update your profile location.", 400);
   }
 
@@ -128,6 +141,7 @@ async function resolveUserLocation(userId, query = {}) {
 }
 
 async function getNearestObservatories(latitude, longitude, limit = 5) {
+  const safeLimit = clampLimit(limit);
   const observatories = await prisma.observatory.findMany({
     where: {
       isActive: true,
@@ -154,15 +168,19 @@ async function getNearestObservatories(latitude, longitude, limit = 5) {
   });
 
   return observatories
-    .map((item) => ({
-      ...item,
-      distanceKm: Number(calculateDistanceKm(latitude, longitude, item.latitude, item.longitude).toFixed(2)),
-    }))
+    .map((item) => {
+      const distanceKm = calculateDistanceKm(latitude, longitude, item.latitude, item.longitude);
+      return distanceKm === null
+        ? null
+        : { ...item, distanceKm: Number(distanceKm.toFixed(2)) };
+    })
+    .filter(Boolean)
     .sort((a, b) => a.distanceKm - b.distanceKm)
-    .slice(0, Number(limit));
+    .slice(0, safeLimit);
 }
 
 async function getUpcomingEvents(limit = 5) {
+  const safeLimit = clampLimit(limit);
   return prisma.celestialEvent.findMany({
     where: {
       startDate: {
@@ -172,7 +190,7 @@ async function getUpcomingEvents(limit = 5) {
     orderBy: {
       startDate: "asc",
     },
-    take: Number(limit),
+    take: safeLimit,
     select: {
       id: true,
       title: true,

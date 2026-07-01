@@ -82,6 +82,10 @@ export const loginUser = async ({ email, password }) => {
     throw new AppError("Email or password is incorrect", 401);
   }
 
+  if (!user.isActive) {
+    throw new AppError("Account is disabled", 403);
+  }
+
   const token = signToken({ userId: user.id, role: user.role });
   return { user: toAuthUser(user), token };
 };

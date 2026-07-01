@@ -49,6 +49,10 @@ const STOPWORDS = new Set([
   "with", "xem", "tim", "la", "nhat", "tot",
 ]);
 
+const NEWS_DISCOVERY_TOKENS = new Set([
+  "news", "latest", "new", "recent", "tin", "tuc", "moi",
+]);
+
 const TARGET_KEYWORDS = {
   planets: ["planet", "planets", "hanh tinh", "rings", "moons", "atmosphere", "venus", "mars", "jupiter", "saturn"],
   constellations: ["constellation", "constellations", "chom sao", "zodiac", "orion", "ursa", "scorpius", "visible"],
@@ -75,7 +79,14 @@ function normalizeSearchText(value = "") {
 
 function includesAny(text, keywords) {
   const normalizedText = normalizeSearchText(text);
-  return keywords.some((keyword) => normalizedText.includes(normalizeSearchText(keyword)));
+  const words = normalizedText.split(/\s+/).filter(Boolean);
+
+  return keywords.some((keyword) => {
+    const normalizedKeyword = normalizeSearchText(keyword);
+    if (!normalizedKeyword) return false;
+    if (normalizedKeyword.includes(" ")) return normalizedText.includes(normalizedKeyword);
+    return words.includes(normalizedKeyword);
+  });
 }
 
 function tokenize(normalizedQuery) {
@@ -159,6 +170,10 @@ function scoreTextMatch(item, tokens, fields) {
 }
 
 function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+  if (![lat1, lon1, lat2, lon2].every((value) => Number.isFinite(Number(value)))) {
+    return null;
+  }
+
   const radius = 6371;
   const toRad = (value) => (value * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
@@ -210,15 +225,18 @@ async function searchPlanets({ tokens, filters, limit }) {
       score += 3;
       reasons.push("has rings");
     }
-    if (filters.hasMoons && Number(planet.numberOfMoons) > 0) {
+    if (filters.hasMoons) {
+      if (Number(planet.numberOfMoons) <= 0) return { ...planet, _score: 0, _matchReasons: [] };
       score += 1.5;
       reasons.push("has moons");
     }
-    if (filters.gasGiant && normalizeSearchText(planet.type).includes("gas")) {
+    if (filters.gasGiant) {
+      if (!normalizeSearchText(planet.type).includes("gas")) return { ...planet, _score: 0, _matchReasons: [] };
       score += 2;
       reasons.push("gas giant type");
     }
-    if (filters.rocky && includesAny(normalizeSearchText(planet.type), ["rocky", "terrestrial"])) {
+    if (filters.rocky) {
+      if (!includesAny(planet.type, ["rocky", "terrestrial"])) return { ...planet, _score: 0, _matchReasons: [] };
       score += 2;
       reasons.push("rocky/terrestrial type");
     }
@@ -338,6 +356,7 @@ async function searchObservatories({ tokens, filters, limit }) {
 
     if (filters.nearMe && filters.lat != null && filters.lon != null) {
       const distanceKm = calculateDistanceKm(filters.lat, filters.lon, observatory.latitude, observatory.longitude);
+      if (distanceKm === null) return { ...observatory, _score: 0, _matchReasons: [] };
       score += Math.max(0, 5 - distanceKm / 40);
       reasons.push(`${Number(distanceKm.toFixed(1))}km away`);
       return { ...observatory, distanceKm: Number(distanceKm.toFixed(1)), _score: score, _matchReasons: reasons };
@@ -351,9 +370,10 @@ async function searchObservatories({ tokens, filters, limit }) {
 }
 
 async function searchNews({ tokens, filters, limit }) {
-  const where = tokens.length
+  const searchableTokens = tokens.filter((token) => !NEWS_DISCOVERY_TOKENS.has(token));
+  const where = searchableTokens.length
     ? {
-        OR: tokens.flatMap((token) => [
+        OR: searchableTokens.flatMap((token) => [
           { title: { contains: token, mode: "insensitive" } },
           { source: { contains: token, mode: "insensitive" } },
           { summary: { contains: token, mode: "insensitive" } },

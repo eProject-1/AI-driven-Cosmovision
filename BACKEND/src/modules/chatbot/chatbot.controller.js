@@ -9,7 +9,7 @@ import {
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
 function getUserIdFromRequest(req) {
-  return req.user?.userId || req.user?.id || req.body?.userId || null;
+  return req.user?.id || req.user?.userId || null;
 }
 
 // ─── Controllers ──────────────────────────────────────────────────────────────

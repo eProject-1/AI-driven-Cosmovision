@@ -24,15 +24,22 @@
  */
 
 import prisma from "../../config/db.js";
-import groq from "../../config/groq.js";
 import { AppError } from "../../utils/AppError.js";
 
 import { getWeatherByCoords, roundCoord } from "../../services/external/weather.service.js";
 import { getApod, getNearEarthObjects } from "../../services/external/nasa.service.js";
-import { reverseGeocode, calculateDistance } from "../../services/external/maps.service.js";
+import { reverseGeocode } from "../../services/external/maps.service.js";
 import { trackAnalyticsEvent } from "../../services/analytics/analytics.service.js";
-
-const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+import {
+  deriveNasaInfluence,
+  getNearbyObservatories,
+  getVisibleConstellations,
+  getVisiblePlanets,
+} from "./recommendation-sources.service.js";
+import {
+  buildRuleBasedSuggestion,
+  generateAiSuggestion,
+} from "./recommendation-suggestion.service.js";
 
 // Cache TTL cho cả recommendation (không chỉ weather) — theo quyết định dự án
 const RECOMMENDATION_CACHE_TTL_MIN = parseInt(process.env.RECOMMENDATION_CACHE_TTL_MINUTES || "30");
@@ -41,7 +48,11 @@ const RECOMMENDATION_CACHE_TTL_MIN = parseInt(process.env.RECOMMENDATION_CACHE_T
 const SKY_SCORE_AI_THRESHOLD = parseInt(process.env.SKY_SCORE_AI_THRESHOLD || "40");
 
 // Bán kính tìm observatory quanh user (km)
-const OBSERVATORY_SEARCH_RADIUS_KM = parseInt(process.env.OBSERVATORY_SEARCH_RADIUS_KM || "150");
+function clampLimit(value, fallback = 10, max = 50) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+  return Math.min(parsed, max);
+}
 
 // ─── Sky Visibility Score ──────────────────────────────────────────────────────
 
@@ -100,288 +111,6 @@ function calculateBestTimeWindow(skyScore, sunset = null) {
   if (endHour >= 24) bestTimeEnd.setDate(bestTimeEnd.getDate() + 1);
 
   return { bestTimeStart, bestTimeEnd };
-}
-
-// ─── Visible Planets (từ DB) ───────────────────────────────────────────────────
-
-async function getVisiblePlanets() {
-  return prisma.planet.findMany({
-    where: { isVisible: true, NOT: { slug: "earth" } },
-    select: {
-      name: true,
-      slug: true,
-      type: true,
-      distanceFromSunAu: true,
-      hasRings: true,
-      numberOfMoons: true,
-    },
-    orderBy: { distanceFromSunAu: "asc" },
-    take: 5,
-  });
-}
-
-// ─── Visible Constellations (rule-based theo tháng) ───────────────────────────
-
-const MONTHLY_CONSTELLATIONS = {
-  1:  ["Orion", "Taurus", "Gemini"],
-  2:  ["Orion", "Canis Major", "Gemini"],
-  3:  ["Leo", "Virgo", "Cancer"],
-  4:  ["Leo", "Virgo", "Hydra"],
-  5:  ["Virgo", "Scorpius", "Bootes"],
-  6:  ["Scorpius", "Sagittarius", "Hercules"],
-  7:  ["Scorpius", "Sagittarius", "Lyra"],
-  8:  ["Sagittarius", "Aquila", "Cygnus"],
-  9:  ["Aquarius", "Pisces", "Pegasus"],
-  10: ["Pegasus", "Andromeda", "Perseus"],
-  11: ["Andromeda", "Perseus", "Aries"],
-  12: ["Orion", "Taurus", "Perseus"],
-};
-
-function getVisibleConstellations() {
-  const month = new Date().getMonth() + 1;
-  return MONTHLY_CONSTELLATIONS[month] || ["Orion", "Ursa Major"];
-}
-
-// ─── Observatory gần user (DB, KHÔNG gọi Overpass) ────────────────────────────
-
-/**
- * Tìm đài quan sát gần tọa độ user, dùng dữ liệu DB tự quản lý
- * (model Observatory đã có lightPollutionScore/skyQualityScore sẵn).
- *
- * Lý do thay Overpass:
- *  - Overpass phụ thuộc dữ liệu cộng đồng OSM — nhiều khu vực VN không có tag
- *    man_made=observatory nên trả về rỗng, không đáng tin cho production.
- *  - DB tự quản lý cho phép admin nhập tay các điểm "vùng tối" (dark sky spots)
- *    thực tế dù không phải đài thiên văn chính thức (VD: Ba Vì, Tam Đảo).
- *  - Không rate-limit, không phụ thuộc bên thứ 3, không cần network call thêm.
- *
- * Dùng bounding-box thô để giảm số dòng cần tính Haversine, sau đó lọc chính xác.
- */
-async function getNearbyObservatories(lat, lon, radiusKm = OBSERVATORY_SEARCH_RADIUS_KM) {
-  // ~1 độ vĩ độ ≈ 111km — tính bounding box thô để query nhanh trước khi lọc chính xác
-  const latDelta = radiusKm / 111;
-  const lonDelta = radiusKm / (111 * Math.cos((lat * Math.PI) / 180) || 1);
-
-  const candidates = await prisma.observatory.findMany({
-    where: {
-      isActive: true,
-      latitude:  { gte: lat - latDelta, lte: lat + latDelta },
-      longitude: { gte: lon - lonDelta, lte: lon + lonDelta },
-    },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      city: true,
-      country: true,
-      latitude: true,
-      longitude: true,
-      lightPollutionScore: true,
-      skyQualityScore: true,
-      rating: true,
-      isFeatured: true,
-    },
-    take: 30, // giới hạn ứng viên trước khi lọc Haversine chính xác
-  });
-
-  return candidates
-    .map((obs) => ({
-      ...obs,
-      distanceKm: calculateDistance({ lat, lon }, { lat: obs.latitude, lon: obs.longitude }),
-    }))
-    .filter((obs) => obs.distanceKm <= radiusKm)
-    .sort((a, b) => {
-      // Ưu tiên: featured trước, rồi tới skyQualityScore cao, rồi tới gần nhất
-      if (a.isFeatured !== b.isFeatured) return a.isFeatured ? -1 : 1;
-      const scoreDiff = (b.skyQualityScore ?? 0) - (a.skyQualityScore ?? 0);
-      if (Math.abs(scoreDiff) > 5) return scoreDiff;
-      return a.distanceKm - b.distanceKm;
-    })
-    .slice(0, 3);
-}
-
-// ─── NASA NEO/APOD ẢNH HƯỞNG LOGIC (không chỉ nhét vào prompt) ────────────────
-
-/**
- * Quyết định "sự kiện đặc biệt" từ dữ liệu NASA thật, dùng để:
- *  - Chèn thêm vào visiblePlanets/sự kiện nếu liên quan
- *  - Đánh dấu mức độ ưu tiên cho prompt AI (thay vì chỉ liệt kê thụ động)
- *
- * Quy tắc:
- *  1. Nếu có NEO "potentially hazardous" và missDistance < 5 triệu km
- *     → đây là sự kiện đáng chú ý, ưu tiên cao nhất trong gợi ý.
- *  2. Nếu APOD title trùng tên 1 hành tinh đang có trong danh sách visible
- *     → đẩy hành tinh đó lên đầu danh sách (vì NASA đang "hot" về nó hôm nay).
- */
-function deriveNasaInfluence({ apod, neoList, planets }) {
-  const influence = {
-    priorityEvent: null,       // sự kiện ưu tiên cao nhất (asteroid gần, nếu có)
-    boostedPlanetSlug: null,   // hành tinh được đẩy lên đầu do trùng APOD
-    reorderedPlanets: planets, // danh sách hành tinh sau khi áp dụng influence
-  };
-
-  // Quy tắc 1: NEO nguy hiểm + khoảng cách gần → priority event
-  if (Array.isArray(neoList) && neoList.length > 0) {
-    const closeHazard = neoList
-      .filter((n) => n.isPotentiallyHazardous && n.missDistanceKm != null)
-      .sort((a, b) => a.missDistanceKm - b.missDistanceKm)[0];
-
-    if (closeHazard && closeHazard.missDistanceKm < 5_000_000) {
-      influence.priorityEvent = {
-        type: "NEAR_EARTH_ASTEROID",
-        name: closeHazard.name,
-        missDistanceKm: Math.round(closeHazard.missDistanceKm),
-        isPotentiallyHazardous: true,
-      };
-    } else if (neoList.length > 0) {
-      // Không nguy hiểm nhưng vẫn là tin đáng nói nếu khoảng cách gần nhất < 1 triệu km
-      const nearest = [...neoList].sort(
-        (a, b) => (a.missDistanceKm ?? Infinity) - (b.missDistanceKm ?? Infinity)
-      )[0];
-      if (nearest?.missDistanceKm != null && nearest.missDistanceKm < 1_000_000) {
-        influence.priorityEvent = {
-          type: "NEAR_EARTH_ASTEROID",
-          name: nearest.name,
-          missDistanceKm: Math.round(nearest.missDistanceKm),
-          isPotentiallyHazardous: false,
-        };
-      }
-    }
-  }
-
-  // Quy tắc 2: APOD trùng tên hành tinh → đẩy hành tinh đó lên đầu danh sách
-  if (apod?.title && Array.isArray(planets) && planets.length > 0) {
-    const apodTitleLower = apod.title.toLowerCase();
-    const matchedIndex = planets.findIndex((p) =>
-      apodTitleLower.includes(p.name.toLowerCase())
-    );
-
-    if (matchedIndex > 0) {
-      const reordered = [...planets];
-      const [matched] = reordered.splice(matchedIndex, 1);
-      reordered.unshift(matched);
-      influence.boostedPlanetSlug = matched.slug;
-      influence.reorderedPlanets = reordered;
-    } else if (matchedIndex === 0) {
-      influence.boostedPlanetSlug = planets[0].slug;
-    }
-  }
-
-  return influence;
-}
-
-// ─── Rule-based suggestion (KHÔNG gọi Groq) ───────────────────────────────────
-
-/**
- * Sinh gợi ý hoàn toàn rule-based — dùng khi skyScore quá thấp để tiết kiệm token Groq,
- * hoặc khi Groq lỗi (fallback).
- */
-function buildRuleBasedSuggestion({ locationLabel, skyScore, tier, planets, constellations, nasaInfluence }) {
-  const firstPlanet = planets[0]?.name || "các hành tinh";
-  const firstConstellation = constellations[0];
-
-  const nasaNote = nasaInfluence.priorityEvent
-    ? ` NASA cũng ghi nhận tiểu hành tinh ${nasaInfluence.priorityEvent.name} đang tiếp cận Trái Đất.`
-    : "";
-
-  if (tier.tier === "POOR") {
-    return `Điều kiện quan sát tại ${locationLabel} hôm nay không thuận lợi (điểm ${skyScore}/100 - ${tier.label}). Mây dày hoặc độ ẩm cao có thể che khuất bầu trời. Bạn có thể thử ứng dụng Stellarium để mô phỏng bầu trời, hoặc lên kế hoạch cho đêm trời quang hơn.${nasaNote}`;
-  }
-  if (tier.tier === "BELOW_FAIR") {
-    return `Bầu trời ${locationLabel} hôm nay ở mức ${tier.label.toLowerCase()} (điểm ${skyScore}/100). Vẫn có thể thử quan sát ${firstPlanet} nếu tìm được điểm ít mây, nhưng đừng kỳ vọng quá cao.${nasaNote}`;
-  }
-  if (tier.tier === "FAIR") {
-    return `Bầu trời ${locationLabel} hôm nay ở mức trung bình (điểm ${skyScore}/100). Bạn vẫn có thể thấy ${firstPlanet} nếu tìm điểm ít mây. Chòm sao ${firstConstellation} cũng đáng thử.${nasaNote}`;
-  }
-  // GOOD / EXCELLENT
-  return `Tối nay bầu trời ${locationLabel} khá quang đãng (điểm ${skyScore}/100 - ${tier.label}) - điều kiện lý tưởng để quan sát! Hãy để ý ${firstPlanet} và chòm sao ${firstConstellation}. Thời điểm tốt nhất là sau khi trời tối hẳn.${nasaNote}`;
-}
-
-// ─── Groq AI Suggestion ───────────────────────────────────────────────────────
-
-async function generateAiSuggestion({
-  locationInfo,
-  weather,
-  skyScore,
-  tier,
-  planets,
-  constellations,
-  apod,
-  nearbyNeo,
-  nasaInfluence,
-  observatories,
-}) {
-  const locationLabel =
-    locationInfo?.city
-      ? `${locationInfo.city}${locationInfo.country ? ", " + locationInfo.country : ""}`
-      : locationInfo?.displayName || "vi tri cua ban";
-
-  const planetList = planets
-    .map((p) => {
-      const tags = [];
-      if (p.hasRings) tags.push("co vanh dai");
-      if (p.numberOfMoons) tags.push(`${p.numberOfMoons} mat trang`);
-      const boosted = nasaInfluence.boostedPlanetSlug === p.slug ? " [NASA dang chu y hom nay]" : "";
-      return tags.length > 0 ? `${p.name}${boosted} (${tags.join(", ")})` : `${p.name}${boosted}`;
-    })
-    .join(", ");
-
-  const neoInfo = nasaInfluence.priorityEvent
-    ? `${nasaInfluence.priorityEvent.name} (cach Trai Dat ${Math.round(nasaInfluence.priorityEvent.missDistanceKm / 1000)} nghin km${nasaInfluence.priorityEvent.isPotentiallyHazardous ? ", duoc theo doi do tiep can gan" : ""})`
-    : null;
-
-  const apodInfo = apod ? `Anh thien van NASA hom nay: "${apod.title}"` : null;
-
-  const observatoryInfo =
-    observatories && observatories.length > 0
-      ? observatories.map((o) => `${o.name} (${o.distanceKm}km, ${o.city || o.country})`).join("; ")
-      : null;
-
-  const sunsetStr = weather.sunset instanceof Date
-    ? weather.sunset.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
-    : null;
-
-  const prompt = `Ban la CosmoBot, tro ly thien van cua CosmoVision. Hay tao mot goi y quan sat bau troi ngan gon, than thien va thuc te (4-6 cau) cho nguoi dung tai ${locationLabel}.
-
-DU LIEU THUC TE HOM NAY:
-- Thoi tiet: ${weather.label || weather.condition}, ${weather.temperature}°C, do am ${weather.humidity}%
-- Do phu may: ${weather.cloudCover}%, tam nhin: ${weather.visibility} km, gio: ${weather.windSpeed} km/h
-- Diem quan sat bau troi: ${skyScore}/100 (${tier.label})
-${sunsetStr ? `- Hoang hon luc: ${sunsetStr}` : ""}
-${apodInfo ? `- ${apodInfo}` : ""}
-${neoInfo ? `- SU KIEN UU TIEN (NASA): ${neoInfo}` : ""}
-${observatoryInfo ? `- Dia diem quan sat gan day: ${observatoryInfo}` : ""}
-
-DOI TUONG CO THE QUAN SAT (da sap xep theo do uu tien tu du lieu NASA):
-- Hanh tinh: ${planetList || "khong co thong tin"}
-- Chom sao thang nay: ${constellations.join(", ")}
-
-YEU CAU:
-- Tra loi BANG TIENG VIET.
-- Neu co [NASA dang chu y hom nay] o hanh tinh nao, UU TIEN nhac den hanh tinh do dau tien.
-- Neu co SU KIEN UU TIEN (NASA), nhac den ro rang vi day la tin dang chu y nhat hom nay.
-- Neu co dia diem quan sat gan day, goi y 1 dia diem cu the.
-- Giu duoi 120 tu, giong van than thien va truyen cam hung.`;
-
-  try {
-    const response = await groq.chat.completions.create({
-      model: GROQ_MODEL,
-      messages: [
-        {
-          role: "system",
-          content: "Ban la CosmoBot, tro ly thien van cua CosmoVision. Luon tra loi bang tieng Viet, ngan gon va truyen cam hung.",
-        },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.75,
-      max_tokens: 350,
-    });
-
-    return response.choices[0]?.message?.content?.trim() || null;
-  } catch (error) {
-    console.error("[recommendation] Groq suggestion error:", error.message);
-    return buildRuleBasedSuggestion({ locationLabel, skyScore, tier, planets, constellations, nasaInfluence });
-  }
 }
 
 // ─── Recommendation cache (tầng riêng, KHÔNG phải weather cache) ──────────────
@@ -580,10 +309,12 @@ export async function createRecommendation({ userId, latitude, longitude, locati
  * Lấy lịch sử recommendation của user.
  */
 export async function getUserRecommendations(userId, { limit = 10 } = {}) {
+  const safeLimit = clampLimit(limit);
+
   return prisma.recommendation.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
-    take: Math.min(limit, 50),
+    take: safeLimit,
     select: {
       id: true,
       locationName: true,

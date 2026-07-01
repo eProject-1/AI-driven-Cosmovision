@@ -41,10 +41,12 @@ export const authenticate = async (req, res, next) => {
         username: true, 
         displayName: true,
         role: true,
+        isActive: true,
       },
     });
 
     if (!user) return sendError(res, "User does not exist", 401);
+    if (!user.isActive) return sendError(res, "Account is disabled", 403);
 
     req.user = { ...user, name: user.displayName || user.username };
     next();
@@ -68,11 +70,15 @@ export const tryAuthenticate = async (req, res, next) => {
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { id: true, email: true, username: true, displayName: true, role: true },
+      select: { id: true, email: true, username: true, displayName: true, role: true, isActive: true },
     });
 
     if (!user) {
       writeDebug('tryAuthenticate user not found for token');
+      return next();
+    }
+    if (!user.isActive) {
+      writeDebug('tryAuthenticate inactive user ignored');
       return next();
     }
 

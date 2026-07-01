@@ -1,6 +1,12 @@
 import prisma from "../../config/db.js";
 import { AppError } from "../../utils/AppError.js";
 
+function clampLimit(value, fallback = 10, max = 50) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+  return Math.min(parsed, max);
+}
+
 function toUserResponse(user) {
   if (!user) return null;
 
@@ -188,7 +194,7 @@ export async function getUserRecommendations(userId, limit = 10) {
   return prisma.recommendation.findMany({
     where: { userId },
     orderBy: { requestedAt: "desc" },
-    take: Number(limit),
+    take: clampLimit(limit),
   });
 }
 
@@ -269,7 +275,7 @@ export async function getUserImageUploads(userId, limit = 10) {
   return prisma.imageUpload.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
-    take: Math.min(Number(limit) || 10, 50),
+    take: clampLimit(limit),
     include: {
       constellation: {
         select: {
