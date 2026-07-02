@@ -49,7 +49,7 @@ function sanitizeHistory(history = [], maxTurns = DEFAULT_MAX_HISTORY_TURNS) {
 function buildBaseSystemPrompt(lang = "en") {
   const isVietnamese = lang === "vi";
   const languageRule = isVietnamese
-    ? "Luôn trả lời bằng tiếng Việt. Sử dụng giọng điệu thân thiện, lịch sự và dễ hiểu."
+    ? "Always answer in natural Vietnamese with proper accents. Use a friendly, polite, easy-to-understand tone."
     : "Always answer in English. Keep answers concise, helpful, engaging and accurate.";
 
   return `

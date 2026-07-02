@@ -28,7 +28,7 @@ import { AppError } from "../../utils/AppError.js";
 
 import { getWeatherByCoords, roundCoord } from "../../services/external/weather.service.js";
 import { getApod, getNearEarthObjects } from "../../services/external/nasa.service.js";
-import { reverseGeocode } from "../../services/external/maps.service.js";
+import { geocode, reverseGeocode } from "../../services/external/maps.service.js";
 import { trackAnalyticsEvent } from "../../services/analytics/analytics.service.js";
 import {
   deriveNasaInfluence,
@@ -119,6 +119,33 @@ function buildLocationKey(lat, lon) {
   return `${roundCoord(lat)}_${roundCoord(lon)}`;
 }
 
+async function resolveRecommendationLocation({ latitude, longitude, locationName }) {
+  const hasCoords = Number.isFinite(Number(latitude)) && Number.isFinite(Number(longitude));
+  if (hasCoords) {
+    return {
+      latitude: Number(latitude),
+      longitude: Number(longitude),
+      locationName: locationName?.trim() || null,
+    };
+  }
+
+  if (!locationName?.trim()) {
+    throw new AppError("Enter a location name or provide both latitude and longitude.", 400);
+  }
+
+  const matches = await geocode(locationName.trim(), 1);
+  const firstMatch = matches[0];
+  if (!firstMatch) {
+    throw new AppError("Could not find coordinates for that location. Try a more specific place name.", 404);
+  }
+
+  return {
+    latitude: firstMatch.lat,
+    longitude: firstMatch.lon,
+    locationName: firstMatch.displayName || locationName.trim(),
+  };
+}
+
 /**
  * Tìm recommendation còn hạn (theo locationKey + userId) để tránh chạy lại
  * toàn bộ pipeline (4 API external + Groq) khi user request liên tục.
@@ -153,6 +180,11 @@ async function getCachedRecommendation(userId, locationKey) {
  * @param {boolean} [params.forceRefresh] - bỏ qua cache, luôn tạo mới (dùng cho nút "Làm mới")
  */
 export async function createRecommendation({ userId, latitude, longitude, locationName, forceRefresh = false }) {
+  const resolvedLocation = await resolveRecommendationLocation({ latitude, longitude, locationName });
+  latitude = resolvedLocation.latitude;
+  longitude = resolvedLocation.longitude;
+  locationName = resolvedLocation.locationName;
+
   const locationKey = buildLocationKey(latitude, longitude);
 
   // Bước 0: Kiểm tra cache recommendation trước — tránh gọi lại toàn bộ pipeline

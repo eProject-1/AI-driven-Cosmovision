@@ -29,6 +29,8 @@ const MAX_MESSAGE_LENGTH = 4000;
 const DEFAULT_HISTORY_LIMIT = 25;
 const DEFAULT_CHAT_HISTORY_LIMIT = 20;
 const MAX_CHAT_HISTORY_LIMIT = 50;
+const VIETNAMESE_ACCENT_RE = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
+const VIETNAMESE_WORD_RE = /\b(toi|tôi|ban|bạn|minh|mình|hay|hãy|la|là|gi|gì|sao|vi sao|vì sao|nhu the nao|như thế nào|khi nao|khi nào|o dau|ở đâu|co gi|có gì|quan sat|quan sát|chom sao|chòm sao|hanh tinh|hành tinh|mua sao bang|mưa sao băng|bau troi|bầu trời|dem nay|đêm nay|thoi tiet|thời tiết)\b/i;
 
 // ==================== VALIDATION ====================
 function assertValidChatMessage(message) {
@@ -41,6 +43,11 @@ function assertValidChatMessage(message) {
       400
     );
   }
+}
+
+function detectResponseLanguage(message) {
+  const text = String(message || "").toLowerCase();
+  return VIETNAMESE_ACCENT_RE.test(text) || VIETNAMESE_WORD_RE.test(text) ? "vi" : "en";
 }
 
 // ==================== HELPER FUNCTIONS ====================
@@ -142,6 +149,7 @@ async function resolveSession(userId, sessionId) {
 async function sendMessage({ userId, message, sessionId }) {
   assertValidChatMessage(message);
   const cleanMessage = message.trim();
+  const responseLanguage = detectResponseLanguage(cleanMessage);
 
   const resolvedSessionId = await resolveSession(userId, sessionId);
 
@@ -169,11 +177,14 @@ async function sendMessage({ userId, message, sessionId }) {
       recommendations,
       extra: {
         assistantName: "CosmoBot",
-        language: "English",
+        language: responseLanguage === "vi" ? "Vietnamese" : "English",
         instruction:
-          "Always answer in English. Be clear, helpful, concise, and focused on astronomy.",
+          responseLanguage === "vi"
+            ? "The user is asking in Vietnamese. Answer in natural Vietnamese with proper accents. Be clear, helpful, concise, and focused on astronomy."
+            : "The user is asking in English. Answer in English. Be clear, helpful, concise, and focused on astronomy.",
       },
     },
+    lang: responseLanguage,
   });
 
   const assistantMessage = await createGroqCompletion(messages);

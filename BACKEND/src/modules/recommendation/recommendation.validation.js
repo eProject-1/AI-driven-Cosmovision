@@ -1,30 +1,47 @@
 import { z } from "zod";
 
-export const createRecommendationSchema = z.object({
-  latitude: z
-    .number({ required_error: "Vĩ độ (latitude) là bắt buộc" })
-    .min(-90, "Vĩ độ phải từ -90 đến 90")
-    .max(90, "Vĩ độ phải từ -90 đến 90"),
+const optionalNumber = z.preprocess(
+  (value) => {
+    if (value === "" || value === null || value === undefined) return undefined;
+    return Number(value);
+  },
+  z.number().optional()
+);
 
-  longitude: z
-    .number({ required_error: "Kinh độ (longitude) là bắt buộc" })
-    .min(-180, "Kinh độ phải từ -180 đến 180")
-    .max(180, "Kinh độ phải từ -180 đến 180"),
+export const createRecommendationSchema = z
+  .object({
+    latitude: optionalNumber.refine((value) => value === undefined || (value >= -90 && value <= 90), {
+      message: "Latitude must be between -90 and 90.",
+    }),
+    longitude: optionalNumber.refine((value) => value === undefined || (value >= -180 && value <= 180), {
+      message: "Longitude must be between -180 and 180.",
+    }),
+    locationName: z.string().trim().min(2, "Location name must be at least 2 characters.").max(100, "Location name must be at most 100 characters.").optional(),
+  })
+  .superRefine((value, ctx) => {
+    const hasLatitude = value.latitude !== undefined;
+    const hasLongitude = value.longitude !== undefined;
+    const hasCoords = hasLatitude && hasLongitude;
+    const hasPartialCoords = hasLatitude !== hasLongitude;
+    const hasLocationName = Boolean(value.locationName?.trim());
 
-  locationName: z
-    .string()
-    .trim()
-    .max(100, "Tên địa điểm tối đa 100 ký tự")
-    .optional(),
-});
+    if (hasPartialCoords) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: hasLatitude ? ["longitude"] : ["latitude"],
+        message: "Latitude and longitude must be provided together.",
+      });
+    }
 
-/**
- * Validate :id trong route POST /api/recommendations/:id/refresh
- * cuid của Prisma có độ dài cố định 25 ký tự, bắt đầu bằng "c".
- * Dùng regex đơn giản để chặn id rác sớm, tránh query DB vô ích.
- */
+    if (!hasCoords && !hasLocationName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["locationName"],
+        message: "Enter a location name or provide both latitude and longitude.",
+      });
+    }
+  });
+
 export const refreshRecommendationParamsSchema = z.object({
-  id: z
-    .string({ required_error: "id là bắt buộc" })
-    .min(1, "id không được để trống"),
+  id: z.string({ required_error: "id is required." }).min(1, "id cannot be empty."),
 });
