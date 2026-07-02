@@ -177,7 +177,7 @@ export default function LovableObservatory() {
     <PageShell
       eyebrow="Chapter III"
       title="Observatory"
-      lead="Danh sach dai quan sat, diem ngam sao, thoi tiet va dieu kien quan sat duoc lay tu database."
+      lead="A database-backed catalog of observatories, stargazing sites, weather, and observing conditions."
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Total sites" value={stats?.total ?? pagination?.total} />

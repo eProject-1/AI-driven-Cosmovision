@@ -6,9 +6,9 @@ import ChatInput from "./ChatInput";
 import MessageList from "./MessageList";
 
 const STARTER_MESSAGES = [
-  "Sao Hoa co gi dac biet?",
-  "Toi nen quan sat Orion khi nao?",
-  "Giai thich mua sao bang la gi",
+  "What makes Mars special?",
+  "When should I observe Orion?",
+  "Explain meteor showers",
 ];
 
 const CHAT_SESSION_STORAGE_KEY = "cosmovision_chat_session_id";
@@ -21,7 +21,7 @@ const getUserChatSessionKey = (user) => {
 const welcomeMessage = {
   id: "welcome",
   role: "assistant",
-  content: "Xin chao, minh la CosmoBot. Hay hoi minh ve hanh tinh, chom sao hoac cach quan sat bau troi dem.",
+  content: "Hi, I'm CosmoBot. Ask me about planets, constellations, or how to observe the night sky.",
 };
 
 export default function ChatWindow({ onClose }) {
@@ -70,10 +70,10 @@ export default function ChatWindow({ onClose }) {
           localStorage.removeItem(sessionStorageKey);
           setSessionId(null);
           setMessages([welcomeMessage]);
-          setError("Phien chat cu khong thuoc tai khoan nay. Minh da tao lai phien moi, ban hay gui cau hoi tiep theo.");
+          setError("The previous chat session belongs to another account. I reset it, so you can send a new question.");
           return;
         }
-        setError("Khong tai duoc lich su chat. Ban van co the gui cau hoi moi.");
+        setError("Could not load chat history. You can still send a new question.");
       })
       .finally(() => {
         if (alive) setHistoryLoading(false);
@@ -85,9 +85,9 @@ export default function ChatWindow({ onClose }) {
   }, [canChat, sessionId, sessionStorageKey]);
 
   const statusText = useMemo(() => {
-    if (authLoading) return "Dang kiem tra dang nhap";
-    if (!canChat) return "Can dang nhap de chat voi backend";
-    if (historyLoading) return "Dang tai lich su";
+    if (authLoading) return "Checking your session";
+    if (!canChat) return "Login required";
+    if (historyLoading) return "Loading history";
     return "Online";
   }, [authLoading, canChat, historyLoading]);
 
@@ -121,16 +121,16 @@ export default function ChatWindow({ onClose }) {
       if ([403, 404].includes(err.response?.status)) {
         localStorage.removeItem(sessionStorageKey);
         setSessionId(null);
-        setError("Phien chat cu khong thuoc tai khoan nay. Minh da reset phien chat, hay gui lai cau hoi.");
+        setError("The previous chat session belongs to another account. I reset it, please send your question again.");
       } else {
-        setError(err.response?.data?.message || "Khong ket noi duoc chatbot backend.");
+        setError(err.response?.data?.message || "Could not connect to the chatbot backend.");
       }
       setMessages((current) => [
         ...current,
         {
           id: `assistant-error-${Date.now()}`,
           role: "assistant",
-          content: "Minh chua ket noi duoc backend. Hay kiem tra backend dang chay va ban da dang nhap.",
+          content: "I could not reach the backend yet. Please make sure the backend is running and you are logged in.",
         },
       ]);
     } finally {
@@ -153,9 +153,9 @@ export default function ChatWindow({ onClose }) {
       {!canChat && !authLoading ? (
         <div className="cosmo-chat-login">
           <div className="cosmo-chat-orb">AI</div>
-          <h3>Dang nhap de demo chatbot</h3>
-          <p>Chatbot route tren backend yeu cau token. Hay dang nhap tai khoan demo roi quay lai hoi CosmoBot.</p>
-          <Link to="/login">Dang nhap</Link>
+          <h3>Login to use CosmoBot</h3>
+          <p>The chatbot route requires an authenticated account. Log in, then come back and ask CosmoBot anything about astronomy.</p>
+          <Link to="/login">Login</Link>
         </div>
       ) : (
         <>

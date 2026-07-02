@@ -35,7 +35,9 @@ export const recognizeConstellationImage = async ({ image, hint }) => {
   formData.append("image", image);
   if (hint?.trim()) formData.append("hint", hint.trim());
 
-  const { data } = await api.post("/astronomy/constellations/recognize", formData);
+  const { data } = await api.post("/astronomy/constellations/recognize", formData, {
+    timeout: 60000,
+  });
   return data.data;
 };
 

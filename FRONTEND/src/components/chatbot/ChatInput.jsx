@@ -16,11 +16,11 @@ export default function ChatInput({ onSend, disabled }) {
       <input
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        placeholder="Hoi ve Sao Hoa, Orion, mua sao bang..."
+        placeholder="Ask about Mars, Orion, meteor showers..."
         disabled={disabled}
       />
       <button type="submit" disabled={disabled || !value.trim()}>
-        Gui
+        Send
       </button>
     </form>
   );

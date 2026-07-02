@@ -4,9 +4,9 @@ import { Telescope, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 
 const NAV_LINKS = [
-  { to: "/", label: "Trang Chủ" },
-  { to: "/planets", label: "Hành Tinh" },
-  { to: "/constellations", label: "Chòm Sao" },
+  { to: "/", label: "Home" },
+  { to: "/planets", label: "Planets" },
+  { to: "/constellations", label: "Constellations" },
 ];
 
 export default function Navbar() {
@@ -23,7 +23,6 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 w-full z-50 bg-gray-950/80 backdrop-blur-md border-b border-purple-900/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group">
           <Telescope className="w-7 h-7 text-purple-400 group-hover:text-purple-300 transition-colors" />
           <span className="font-bold text-lg text-white">
@@ -31,7 +30,6 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop links */}
         <div className="hidden md:flex items-center gap-6">
           {NAV_LINKS.map((link) => (
             <Link
@@ -48,33 +46,32 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* Right side */}
         <div className="hidden md:flex items-center gap-3">
           {user ? (
             <>
-              <span className="text-sm text-gray-400">Xin chào, <span className="text-white font-medium">{user.name}</span></span>
+              <span className="text-sm text-gray-400">
+                Hello, <span className="text-white font-medium">{user.name}</span>
+              </span>
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-400 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
-                Đăng xuất
+                Logout
               </button>
             </>
           ) : (
             <Link to="/login" className="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-sm rounded-lg transition-colors">
-              Đăng nhập
+              Login
             </Link>
           )}
         </div>
 
-        {/* Mobile toggle */}
         <button className="md:hidden text-gray-400" onClick={() => setOpen(!open)}>
           {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
-      {/* Mobile menu */}
       {open && (
         <div className="md:hidden bg-gray-950 border-t border-purple-900/30 px-4 py-4 flex flex-col gap-3">
           {NAV_LINKS.map((link) => (
@@ -84,7 +81,7 @@ export default function Navbar() {
           ))}
           {user && (
             <button onClick={handleLogout} className="text-left text-red-400 text-sm">
-              Đăng xuất
+              Logout
             </button>
           )}
         </div>

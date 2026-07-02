@@ -31,6 +31,7 @@ function Metric({ label, value }) {
 
 export function StargazingPlannerPanel() {
   const { user, loading: authLoading } = useAuth();
+  const [inputMode, setInputMode] = useState("place");
   const [form, setForm] = useState({
     locationName: "",
     latitude: "",
@@ -64,6 +65,7 @@ export function StargazingPlannerPanel() {
           longitude: String(position.coords.longitude),
           locationName: current.locationName || "Current location",
         }));
+        setInputMode("coords");
         setStatus("idle");
       },
       () => {
@@ -80,11 +82,15 @@ export function StargazingPlannerPanel() {
     setError("");
 
     try {
-      const data = await createRecommendation({
-        latitude: Number(form.latitude),
-        longitude: Number(form.longitude),
-        locationName: form.locationName.trim() || "Custom location",
-      });
+      const payload = inputMode === "place"
+        ? { locationName: form.locationName.trim() }
+        : {
+            latitude: Number(form.latitude),
+            longitude: Number(form.longitude),
+            locationName: form.locationName.trim() || "Custom coordinates",
+          };
+
+      const data = await createRecommendation(payload);
       setRecommendation(data);
       const nextHistory = await getRecommendationHistory({ limit: 5 });
       setHistory(nextHistory);
@@ -124,32 +130,67 @@ export function StargazingPlannerPanel() {
 
   const weather = recommendation?.weatherDetail;
   const observatories = recommendation?.nearbyObservatoryDetail || [];
+  const canPlan = inputMode === "place"
+    ? Boolean(form.locationName.trim())
+    : Boolean(form.latitude && form.longitude);
 
   return (
     <>
       <SectionPanel className="p-5 md:p-6">
-        <form onSubmit={submit} className="grid gap-4 lg:grid-cols-[1fr_0.7fr_0.7fr_auto]">
-          <input
-            value={form.locationName}
-            onChange={(event) => setForm((current) => ({ ...current, locationName: event.target.value }))}
-            placeholder="Location name"
-            className="min-h-12 rounded-2xl border border-white/10 bg-black/25 px-4 text-sm outline-none focus:border-cyan-200/45"
-          />
-          <input
-            value={form.latitude}
-            onChange={(event) => setForm((current) => ({ ...current, latitude: event.target.value }))}
-            placeholder="Latitude"
-            className="min-h-12 rounded-2xl border border-white/10 bg-black/25 px-4 text-sm outline-none focus:border-cyan-200/45"
-          />
-          <input
-            value={form.longitude}
-            onChange={(event) => setForm((current) => ({ ...current, longitude: event.target.value }))}
-            placeholder="Longitude"
-            className="min-h-12 rounded-2xl border border-white/10 bg-black/25 px-4 text-sm outline-none focus:border-cyan-200/45"
-          />
+        <div className="mb-4 inline-flex rounded-full border border-white/10 bg-white/[0.03] p-1">
+          {[
+            ["place", "Place name"],
+            ["coords", "Coordinates"],
+          ].map(([mode, label]) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setInputMode(mode)}
+              className={[
+                "min-h-9 rounded-full px-4 text-sm transition",
+                inputMode === mode ? "bg-cyan-200/14 text-cyan-50" : "text-foreground/55 hover:text-foreground",
+              ].join(" ")}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <form onSubmit={submit} className={inputMode === "place" ? "grid gap-4 lg:grid-cols-[1fr_auto]" : "grid gap-4 lg:grid-cols-[0.9fr_0.65fr_0.65fr_auto]"}>
+          {inputMode === "place" ? (
+            <input
+              value={form.locationName}
+              onChange={(event) => setForm((current) => ({ ...current, locationName: event.target.value }))}
+              placeholder="City or observing site, e.g. Hanoi, Vietnam"
+              className="min-h-12 rounded-2xl border border-white/10 bg-black/25 px-4 text-sm outline-none focus:border-cyan-200/45"
+            />
+          ) : (
+            <>
+              <input
+                value={form.locationName}
+                onChange={(event) => setForm((current) => ({ ...current, locationName: event.target.value }))}
+                placeholder="Optional label"
+                className="min-h-12 rounded-2xl border border-white/10 bg-black/25 px-4 text-sm outline-none focus:border-cyan-200/45"
+              />
+              <input
+                value={form.latitude}
+                onChange={(event) => setForm((current) => ({ ...current, latitude: event.target.value }))}
+                placeholder="Latitude"
+                inputMode="decimal"
+                className="min-h-12 rounded-2xl border border-white/10 bg-black/25 px-4 text-sm outline-none focus:border-cyan-200/45"
+              />
+              <input
+                value={form.longitude}
+                onChange={(event) => setForm((current) => ({ ...current, longitude: event.target.value }))}
+                placeholder="Longitude"
+                inputMode="decimal"
+                className="min-h-12 rounded-2xl border border-white/10 bg-black/25 px-4 text-sm outline-none focus:border-cyan-200/45"
+              />
+            </>
+          )}
           <button
             type="submit"
-            disabled={status === "loading" || !form.latitude || !form.longitude}
+            disabled={status === "loading" || !canPlan}
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-cyan-200/20 bg-cyan-200/12 px-5 text-sm text-cyan-50 transition hover:bg-cyan-200/18 disabled:opacity-50"
           >
             <Sparkles className="h-4 w-4" />
