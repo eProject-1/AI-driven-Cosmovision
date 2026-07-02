@@ -4,6 +4,8 @@ import { PageShell } from "../components/lovable/PageShell";
 import { DataGrid, DividerList } from "../components/lovable/Framing";
 import { getDashboardData } from "../services/dashboard.api";
 import { getObservatoryImage } from "../utils/observatoryImages";
+import { useAuth } from "../context/AuthContext";
+import { getSavedEvents, removeSavedEvent, saveEvent } from "../services/user.api";
 
 const formatDate = (value) => {
   if (!value) return "—";
@@ -100,11 +102,15 @@ function DashboardNewsItem({ item }) {
 }
 
 export default function LovableDashboard() {
+  const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [now, setNow] = useState(new Date());
+  const [savedEventIds, setSavedEventIds] = useState(new Set());
+  const [eventSavingId, setEventSavingId] = useState("");
+  const [reminderMessage, setReminderMessage] = useState("");
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 1000);
@@ -132,6 +138,75 @@ export default function LovableDashboard() {
     const interval = window.setInterval(() => fetchDashboard(false), 300000);
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setSavedEventIds(new Set());
+      return;
+    }
+
+    getSavedEvents()
+      .then((items) => {
+        setSavedEventIds(new Set((items || []).map((item) => item.eventId || item.event?.id).filter(Boolean)));
+      })
+      .catch(() => setSavedEventIds(new Set()));
+  }, [user]);
+
+  async function showMockReminder(event) {
+    const title = event?.title || "Astronomy event";
+    const when = `${formatDate(event?.startDate)} ${formatTime(event?.startDate)}`;
+    const emailEnabled = user?.preferences?.emailAlerts !== false;
+    const reminderEnabled = user?.preferences?.eventReminders !== false;
+
+    if (reminderEnabled && "Notification" in window) {
+      try {
+        const permission = Notification.permission === "granted"
+          ? "granted"
+          : await Notification.requestPermission();
+        if (permission === "granted") {
+          new Notification("CosmoVision reminder saved", {
+            body: `${title} / ${when}`,
+          });
+        }
+      } catch {
+        // Browser notification support varies; the in-app message is the fallback.
+      }
+    }
+
+    setReminderMessage(
+      `${emailEnabled ? "Mock email alert" : "In-app alert"} queued for ${title} at ${when}.`
+    );
+  }
+
+  async function toggleSavedEvent(event) {
+    if (!user) {
+      setReminderMessage("Please log in to save event reminders.");
+      return;
+    }
+
+    setEventSavingId(event.id);
+    setReminderMessage("");
+
+    try {
+      if (savedEventIds.has(event.id)) {
+        await removeSavedEvent(event.id);
+        setSavedEventIds((current) => {
+          const next = new Set(current);
+          next.delete(event.id);
+          return next;
+        });
+        setReminderMessage(`Reminder removed for ${event.title}.`);
+      } else {
+        await saveEvent(event.id);
+        setSavedEventIds((current) => new Set([...current, event.id]));
+        await showMockReminder(event);
+      }
+    } catch (err) {
+      setReminderMessage(err.response?.data?.message || "Could not update event reminder.");
+    } finally {
+      setEventSavingId("");
+    }
+  }
 
   const stats = data
     ? [
@@ -246,14 +321,38 @@ export default function LovableDashboard() {
       <div className="mt-16 grid gap-8 xl:grid-cols-[1fr_1fr]">
         <section>
           <h2 className="font-sans text-[10px] font-light tracking-[0.45em] uppercase text-foreground/40">Upcoming astronomy events</h2>
+          {reminderMessage ? (
+            <div className="mt-4 rounded-2xl border border-cyan-200/20 bg-cyan-950/25 px-4 py-3 text-sm text-cyan-50/85">
+              {reminderMessage}
+            </div>
+          ) : null}
           <DividerList as="ul" className="mt-6">
             {events.length > 0 ? events.map((event) => (
               <li key={event.id} className="px-6 py-5 sm:px-8">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="font-display text-base">{event.title}</p>
-                  <span className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-foreground/40">
-                    {event.type}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-foreground/40">
+                      {event.type}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => toggleSavedEvent(event)}
+                      disabled={eventSavingId === event.id}
+                      className={[
+                        "rounded-full border px-3 py-1.5 text-xs transition disabled:opacity-50",
+                        savedEventIds.has(event.id)
+                          ? "border-emerald-300/25 bg-emerald-400/10 text-emerald-100"
+                          : "border-white/10 bg-white/[0.03] text-foreground/65 hover:bg-white/10",
+                      ].join(" ")}
+                    >
+                      {eventSavingId === event.id
+                        ? "Saving"
+                        : savedEventIds.has(event.id)
+                          ? "Reminder on"
+                          : "Save reminder"}
+                    </button>
+                  </div>
                 </div>
                 <p className="mt-2 text-sm text-foreground/60">{formatDate(event.startDate)} · {formatTime(event.startDate)}</p>
                 <p className="mt-2 text-sm text-foreground/70">{event.description || "No description available."}</p>

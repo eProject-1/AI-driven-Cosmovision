@@ -37,7 +37,7 @@ export function Footer() {
         </div>
 
         <div className="mt-16 flex flex-col gap-3 border-t border-foreground/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[10px] font-light tracking-[0.3em] uppercase text-foreground/35">© {new Date().getFullYear()} SPACEVERSE</p>
+          <p className="text-[10px] font-light tracking-[0.3em] uppercase text-foreground/35">&copy; {new Date().getFullYear()} SPACEVERSE</p>
           <p className="text-[10px] font-light tracking-[0.3em] uppercase text-foreground/35">Made under a quiet sky</p>
         </div>
       </div>

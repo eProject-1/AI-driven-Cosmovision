@@ -1,0 +1,148 @@
+.planet-cinematic-2d {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.planet-cinematic-stars {
+  position: absolute;
+  inset: 0;
+  opacity: 0.34;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.9) 0 1px, transparent 1.5px),
+    radial-gradient(circle, rgba(125, 211, 252, 0.7) 0 1px, transparent 1.5px);
+  background-position: 0 0, 52px 78px;
+  background-size: 130px 130px, 210px 210px;
+  animation: cosmoStarDrift 42s linear infinite;
+}
+
+.planet-cinematic-orbital-haze {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 72% 36%, var(--planet-glow), transparent 26rem),
+    radial-gradient(circle at 78% 58%, rgba(63, 169, 245, 0.11), transparent 34rem);
+  filter: blur(1px);
+}
+
+.planet-cinematic-wrap {
+  position: absolute;
+  top: 50%;
+  right: clamp(1rem, 7vw, 8rem);
+  width: var(--planet-size);
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+  transform-style: preserve-3d;
+  animation: planetCinematicFloat 8s ease-in-out infinite;
+}
+
+.planet-cinematic-glow {
+  position: absolute;
+  inset: -17%;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 42% 44%, var(--planet-glow), transparent 58%),
+    radial-gradient(circle, rgba(255, 255, 255, 0.08), transparent 48%);
+  filter: blur(32px);
+  opacity: 0.92;
+  animation: planetGlowPulse 6.8s ease-in-out infinite;
+}
+
+.planet-cinematic-orb {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  transform: rotate(var(--planet-tilt));
+  transform-style: preserve-3d;
+  animation: planetCinematicBreathe 11s ease-in-out infinite;
+}
+
+.planet-cinematic-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 999px;
+  filter:
+    saturate(1.04)
+    contrast(1.02)
+    drop-shadow(0 42px 70px rgba(0, 0, 0, 0.62));
+  user-select: none;
+}
+
+.planet-cinematic-highlight,
+.planet-cinematic-terminator,
+.planet-cinematic-rim,
+.planet-cinematic-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+}
+
+.planet-cinematic-highlight {
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.28), transparent 18%),
+    radial-gradient(circle at 38% 36%, rgba(255, 255, 255, 0.12), transparent 30%);
+  mix-blend-mode: screen;
+  opacity: 0.86;
+}
+
+.planet-cinematic-terminator {
+  background:
+    radial-gradient(circle at 30% 28%, transparent 0 34%, rgba(0, 0, 0, 0.1) 48%, var(--planet-shadow) 86%),
+    linear-gradient(112deg, transparent 0 36%, rgba(0, 0, 0, 0.28) 62%, rgba(0, 0, 0, 0.62) 100%);
+  opacity: 0.86;
+}
+
+.planet-cinematic-rim {
+  box-shadow:
+    inset -38px -16px 74px rgba(0, 0, 0, 0.48),
+    inset 28px 10px 52px rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 86px var(--planet-rim);
+}
+
+.planet-cinematic-sheen {
+  background: linear-gradient(105deg, transparent 0 28%, rgba(255, 255, 255, 0.12) 38%, transparent 48%);
+  opacity: 0.35;
+  transform: translateX(-18%);
+  animation: planetSheenSweep 9s ease-in-out infinite;
+}
+
+.planet-cinematic-ground-shadow {
+  position: absolute;
+  left: 18%;
+  right: 10%;
+  bottom: -12%;
+  height: 12%;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  filter: blur(20px);
+  opacity: 0.56;
+}
+
+.planet-cinematic-ring {
+  position: absolute;
+  left: -24%;
+  top: 50%;
+  width: 148%;
+  height: 28%;
+  border-radius: 999px;
+  transform: translateY(-50%) rotate(-12deg);
+  border: clamp(14px, 2.2vw, 26px) solid rgba(225, 197, 140, 0.58);
+  filter: blur(0.2px) drop-shadow(0 0 22px rgba(228, 196, 132, 0.2));
+}
+
+.planet-cinematic-ring-back {
+  z-index: -1;
+  opacity: 0.56;
+  clip-path: inset(0 0 48% 0);
+}
+
+.planet-cinematic-ring-front {
+  z-index: 2;
+  opacity: 0.82;
+  clip-path: inset(50% 0 0 0);
+}

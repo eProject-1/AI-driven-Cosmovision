@@ -33,6 +33,7 @@ pids
 *.pid
 *.seed
 *.pid.lock
+BACKEND/src/uploads/
 
 # Coverage
 coverage
@@ -62,3 +63,8 @@ out
 # cache
 .cache
 .parcel-cache
+
+# Local constellation ML dataset and trained artifacts
+BACKEND/.venv/
+BACKEND/ml/data/constellations/
+BACKEND/ml/artifacts/

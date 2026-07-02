@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageShell } from "../components/lovable/PageShell";
 import { SectionPanel } from "../components/lovable/Framing";
@@ -8,20 +8,39 @@ import { sendMessage } from "../services/chatbot.api";
 
 const CHAT_SESSION_STORAGE_KEY = "cosmovision_assistant_session_id";
 
+const getUserAssistantSessionKey = (user) => {
+  const userKey = user?.id || user?.email || user?.username;
+  return userKey ? `${CHAT_SESSION_STORAGE_KEY}:${userKey}` : CHAT_SESSION_STORAGE_KEY;
+};
+
+const welcomeMessage = {
+  role: "assistant",
+  text: "Hi, I'm NOVA - your astronomy companion. Ask me anything about planets, stars, and the universe.",
+};
+
 export default function LovableAssistant() {
   const { user, loading: authLoading } = useAuth();
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      text: "Hi, I'm NOVA - your astronomy companion. Ask me anything about planets, stars, and the universe.",
-    },
-  ]);
+  const [messages, setMessages] = useState([welcomeMessage]);
   const [input, setInput] = useState("");
-  const [sessionId, setSessionId] = useState(() => localStorage.getItem(CHAT_SESSION_STORAGE_KEY));
+  const [sessionId, setSessionId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const canChat = Boolean(user);
+  const sessionStorageKey = useMemo(() => getUserAssistantSessionKey(user), [user]);
+
+  useEffect(() => {
+    if (!canChat) {
+      setSessionId(null);
+      setMessages([welcomeMessage]);
+      setError("");
+      return;
+    }
+
+    setSessionId(localStorage.getItem(sessionStorageKey));
+    setMessages([welcomeMessage]);
+    setError("");
+  }, [canChat, sessionStorageKey]);
 
   const send = async (text) => {
     const value = (text ?? input).trim();
@@ -35,12 +54,18 @@ export default function LovableAssistant() {
     try {
       const result = await sendMessage(value, sessionId);
       if (result.sessionId && result.sessionId !== sessionId) {
-        localStorage.setItem(CHAT_SESSION_STORAGE_KEY, result.sessionId);
+        localStorage.setItem(sessionStorageKey, result.sessionId);
         setSessionId(result.sessionId);
       }
       setMessages((current) => [...current, { role: "assistant", text: result.reply }]);
     } catch (err) {
-      setError(err.response?.data?.message || "Could not connect to chatbot backend.");
+      if ([403, 404].includes(err.response?.status)) {
+        localStorage.removeItem(sessionStorageKey);
+        setSessionId(null);
+        setError("This chat session belongs to another account. I reset the session, please send your question again.");
+      } else {
+        setError(err.response?.data?.message || "Could not connect to chatbot backend.");
+      }
       setMessages((current) => [
         ...current,
         {

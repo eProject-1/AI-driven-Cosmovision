@@ -1,0 +1,40 @@
+.nasa-card,
+.feature-card,
+.planet-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+  background:
+    linear-gradient(180deg, rgba(9, 28, 56, 0.76), rgba(4, 12, 28, 0.72)) !important;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28) !important;
+  transition: transform 220ms ease, border-color 220ms ease, background 220ms ease, box-shadow 220ms ease;
+}
+
+.nasa-card::before,
+.feature-card::before,
+.planet-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(252, 61, 33, 0.55), transparent 18%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 42%);
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.nasa-card:hover,
+.feature-card:hover,
+.planet-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--line-strong) !important;
+  box-shadow: 0 30px 90px rgba(2, 7, 18, 0.46) !important;
+}
+
+.nasa-card:hover::before,
+.feature-card:hover::before,
+.planet-card:hover::before {
+  opacity: 0.16;
+}

@@ -1,0 +1,73 @@
+@media (max-width: 850px) {
+  .planet-cinematic-wrap {
+    top: 42%;
+    right: -34vw;
+    width: min(92vw, 520px);
+    opacity: 0.58;
+  }
+
+  .planet-cinematic-glow {
+    inset: -22%;
+    filter: blur(28px);
+  }
+
+  .site-nav {
+    height: auto;
+    padding: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .nav-links {
+    gap: 0.2rem;
+    font-size: 0.82rem;
+  }
+
+  .nav-links a {
+    padding: 0.45rem 0.5rem;
+  }
+
+  .hero-section {
+    min-height: 88vh;
+    padding-top: 7.5rem;
+  }
+
+  .feature-grid,
+  .planet-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .row-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .planet-cinematic-wrap {
+    top: 40%;
+    right: -48vw;
+    width: 112vw;
+    opacity: 0.42;
+  }
+
+  .planet-cinematic-ring {
+    border-width: 13px;
+  }
+
+  .site-nav {
+    position: absolute;
+  }
+
+  .brand span:last-child {
+    display: none;
+  }
+
+  .hero-content h1 {
+    font-size: 3.15rem;
+  }
+
+  .feature-grid,
+  .planet-grid {
+    grid-template-columns: 1fr;
+  }
+}

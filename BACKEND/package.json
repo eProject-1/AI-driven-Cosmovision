@@ -11,7 +11,11 @@
     "dev": "node src/server.js",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "ml:download:constellations": ".venv\\Scripts\\python.exe ml/download_commons_constellation_images.py",
+    "ml:generate:constellations": ".venv\\Scripts\\python.exe ml/generate_synthetic_constellation_images.py",
+    "ml:train:constellations": ".venv\\Scripts\\python.exe ml/train_clip_constellation.py",
+    "ml:predict:constellation": ".venv\\Scripts\\python.exe ml/predict_clip_constellation.py"
   },
   "keywords": [],
   "author": "",
@@ -29,6 +33,7 @@
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.11.0",
     "multer": "^2.2.0",
+    "sharp": "^0.35.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {

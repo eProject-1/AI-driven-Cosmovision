@@ -43,7 +43,7 @@ export function Navbar() {
             <span className="font-display text-[11px] font-medium tracking-[0.42em] uppercase text-foreground/85 group-hover:text-foreground transition-colors duration-500">SPACEVERSE</span>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-x-9 xl:gap-x-12 pointer-events-auto">
+          <nav className="hidden lg:flex items-center gap-x-5 xl:gap-x-8 pointer-events-auto">
             {links.map((l) => (
               <NavLink key={l.to} to={l.to} className={({ isActive }) => (isActive ? activeClass : `${linkBase} ${indicator}`)}>
                 {l.label}

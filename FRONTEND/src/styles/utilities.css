@@ -1,0 +1,70 @@
+.nasa-grid-bg {
+  position: relative;
+  isolation: isolate;
+}
+
+.nasa-grid-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(110, 203, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(110, 203, 255, 0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(to bottom, black, transparent 82%);
+  -webkit-mask-image: linear-gradient(to bottom, black, transparent 82%);
+}
+
+.nasa-panel,
+.glass,
+.auth-card,
+.cosmo-chat-window {
+  border: 1px solid var(--line) !important;
+  background:
+    linear-gradient(180deg, rgba(10, 31, 63, 0.72), rgba(3, 10, 24, 0.78)) !important;
+  box-shadow:
+    0 32px 90px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+  backdrop-filter: blur(22px);
+}
+
+.nasa-kicker,
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2rem;
+  border: 1px solid rgba(110, 203, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(11, 61, 145, 0.16);
+  color: #d8ecff;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.nasa-kicker::before,
+.eyebrow::before {
+  content: "";
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: var(--nasa-red);
+  box-shadow: 0 0 16px rgba(252, 61, 33, 0.78);
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  animation: skeletonSweep 1.55s infinite;
+}

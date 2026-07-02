@@ -12,6 +12,7 @@ import {
   getByMonth,
   recognizeConstellationImage,
   getMyConstellationUploads,
+  deleteMyConstellationUpload,
 } from "./constellation.controller.js";
 
 const router = Router();
@@ -26,6 +27,7 @@ router.get("/", getAllConstellations);
 router.get("/month/:month", getByMonth);
 
 router.get("/uploads/me", authenticate, getMyConstellationUploads);
+router.delete("/uploads/:uploadId", authenticate, deleteMyConstellationUpload);
 
 router.post(
   "/recognize",

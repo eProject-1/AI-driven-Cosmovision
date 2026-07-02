@@ -1,0 +1,17 @@
+:root {
+  color: #f8fafc;
+  background: #020712;
+  --nasa-blue: #0b3d91;
+  --nasa-red: #fc3d21;
+  --mission-cyan: #6ecbff;
+  --mission-gold: #f6c453;
+  --ink: #eaf2ff;
+  --muted: #94a3b8;
+  --panel: rgba(5, 16, 34, 0.72);
+  --panel-strong: rgba(7, 20, 42, 0.9);
+  --line: rgba(157, 190, 255, 0.16);
+  --line-strong: rgba(157, 190, 255, 0.28);
+  font-family: Inter, "Public Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}

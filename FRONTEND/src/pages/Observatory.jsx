@@ -9,6 +9,7 @@ import {
   getObservatoryStats,
 } from "../services/observatory.api";
 import { getObservatoryImage } from "../utils/observatoryImages";
+import { StargazingPlannerPanel } from "./StargazingPlanner";
 
 const typeFilters = [
   { value: "ALL", label: "All" },
@@ -184,6 +185,19 @@ export default function LovableObservatory() {
         <StatTile label="Avg sky" value={stats?.averages?.skyQualityScore} />
         <StatTile label="Avg light" value={stats?.averages?.lightPollutionScore} />
       </div>
+
+      <section className="mt-10">
+        <div className="mb-6 max-w-3xl">
+          <p className="font-display text-[11px] tracking-[0.34em] uppercase text-[#6ecbff]/70">Stargazing Planner</p>
+          <h2 className="mt-4 font-display text-3xl font-light tracking-[-0.025em] text-foreground md:text-4xl">
+            Plan a real observing session from this module.
+          </h2>
+          <p className="mt-4 text-sm font-light leading-relaxed text-foreground/60 md:text-base">
+            The recommendation workflow belongs with observatories because it combines location, weather, visible targets, and nearby sites.
+          </p>
+        </div>
+        <StargazingPlannerPanel />
+      </section>
 
       <SectionPanel variant="table" className="mt-8 overflow-visible">
         <div className="grid gap-4 bg-background/70 p-5 lg:grid-cols-[1.3fr_0.9fr_0.9fr_1fr]">

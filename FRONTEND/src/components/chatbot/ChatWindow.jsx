@@ -13,21 +13,40 @@ const STARTER_MESSAGES = [
 
 const CHAT_SESSION_STORAGE_KEY = "cosmovision_chat_session_id";
 
+const getUserChatSessionKey = (user) => {
+  const userKey = user?.id || user?.email || user?.username;
+  return userKey ? `${CHAT_SESSION_STORAGE_KEY}:${userKey}` : CHAT_SESSION_STORAGE_KEY;
+};
+
+const welcomeMessage = {
+  id: "welcome",
+  role: "assistant",
+  content: "Xin chao, minh la CosmoBot. Hay hoi minh ve hanh tinh, chom sao hoac cach quan sat bau troi dem.",
+};
+
 export default function ChatWindow({ onClose }) {
   const { user, loading: authLoading } = useAuth();
-  const [sessionId, setSessionId] = useState(() => localStorage.getItem(CHAT_SESSION_STORAGE_KEY));
-  const [messages, setMessages] = useState([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "Xin chao, minh la CosmoBot. Hay hoi minh ve hanh tinh, chom sao hoac cach quan sat bau troi dem.",
-    },
-  ]);
+  const [sessionId, setSessionId] = useState(null);
+  const [messages, setMessages] = useState([welcomeMessage]);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState("");
 
   const canChat = Boolean(user);
+  const sessionStorageKey = useMemo(() => getUserChatSessionKey(user), [user]);
+
+  useEffect(() => {
+    if (!canChat) {
+      setSessionId(null);
+      setMessages([welcomeMessage]);
+      setError("");
+      return;
+    }
+
+    setSessionId(localStorage.getItem(sessionStorageKey));
+    setMessages([welcomeMessage]);
+    setError("");
+  }, [canChat, sessionStorageKey]);
 
   useEffect(() => {
     if (!canChat || !sessionId) return;
@@ -45,8 +64,16 @@ export default function ChatWindow({ onClose }) {
           }))
         );
       })
-      .catch(() => {
-        if (alive) setError("Khong tai duoc lich su chat. Ban van co the gui cau hoi moi.");
+      .catch((err) => {
+        if (!alive) return;
+        if ([403, 404].includes(err.response?.status)) {
+          localStorage.removeItem(sessionStorageKey);
+          setSessionId(null);
+          setMessages([welcomeMessage]);
+          setError("Phien chat cu khong thuoc tai khoan nay. Minh da tao lai phien moi, ban hay gui cau hoi tiep theo.");
+          return;
+        }
+        setError("Khong tai duoc lich su chat. Ban van co the gui cau hoi moi.");
       })
       .finally(() => {
         if (alive) setHistoryLoading(false);
@@ -55,7 +82,7 @@ export default function ChatWindow({ onClose }) {
     return () => {
       alive = false;
     };
-  }, [canChat, sessionId]);
+  }, [canChat, sessionId, sessionStorageKey]);
 
   const statusText = useMemo(() => {
     if (authLoading) return "Dang kiem tra dang nhap";
@@ -79,7 +106,7 @@ export default function ChatWindow({ onClose }) {
     try {
       const result = await sendMessage(userMessage.content, sessionId);
       if (result.sessionId && result.sessionId !== sessionId) {
-        localStorage.setItem(CHAT_SESSION_STORAGE_KEY, result.sessionId);
+        localStorage.setItem(sessionStorageKey, result.sessionId);
         setSessionId(result.sessionId);
       }
       setMessages((current) => [
@@ -91,7 +118,13 @@ export default function ChatWindow({ onClose }) {
         },
       ]);
     } catch (err) {
-      setError(err.response?.data?.message || "Khong ket noi duoc chatbot backend.");
+      if ([403, 404].includes(err.response?.status)) {
+        localStorage.removeItem(sessionStorageKey);
+        setSessionId(null);
+        setError("Phien chat cu khong thuoc tai khoan nay. Minh da reset phien chat, hay gui lai cau hoi.");
+      } else {
+        setError(err.response?.data?.message || "Khong ket noi duoc chatbot backend.");
+      }
       setMessages((current) => [
         ...current,
         {

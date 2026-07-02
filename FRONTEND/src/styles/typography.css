@@ -1,0 +1,36 @@
+.font-light {
+  font-weight: 400 !important;
+}
+
+.font-extralight {
+  font-weight: 350 !important;
+}
+
+[class*="text-[10px]"] {
+  font-size: 0.74rem !important;
+}
+
+[class*="text-[11px]"],
+[class*="text-[10.5px]"] {
+  font-size: 0.8rem !important;
+}
+
+.text-xs {
+  font-size: 0.82rem !important;
+  line-height: 1.35rem !important;
+}
+
+.text-sm {
+  font-size: 0.98rem !important;
+  line-height: 1.6rem !important;
+}
+
+.text-base {
+  font-size: 1.08rem !important;
+  line-height: 1.75rem !important;
+}
+
+.font-display {
+  font-family: Inter, "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.015em;
+}

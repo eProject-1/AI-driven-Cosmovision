@@ -1,13 +1,35 @@
 import fs from "fs/promises";
+import path from "path";
 import prisma from "../../../config/db.js";
-import groq from "../../../config/groq.js";
 import { AppError } from "../../../utils/AppError.js";
-import { normalizeText } from "../../../utils/normalize.js";
-import { similarity } from "../../../utils/fuzzyMatch.js";
 import { trackAnalyticsEvent } from "../../../services/analytics/analytics.service.js";
+import { analyzeStarField } from "./constellation-image-analysis.service.js";
+import { runClipRecognition } from "./constellation-clip-recognition.service.js";
+import { runVisionRecognition } from "./constellation-vision-recognition.service.js";
 
-const VISION_MODEL = process.env.GROQ_VISION_MODEL || "";
 const MIN_RECOGNITION_CONFIDENCE = Number(process.env.MIN_CONSTELLATION_RECOGNITION_CONFIDENCE || 0.62);
+const MIN_AI_RECOGNITION_CONFIDENCE = Number(process.env.MIN_AI_CONSTELLATION_RECOGNITION_CONFIDENCE || 0.76);
+const MIN_CLIP_RECOGNITION_CONFIDENCE = Number(process.env.MIN_CLIP_CONSTELLATION_RECOGNITION_CONFIDENCE || 0.28);
+const MIN_CLIP_RECOGNITION_MARGIN = Number(process.env.MIN_CLIP_CONSTELLATION_RECOGNITION_MARGIN || 0.03);
+const CONSTELLATION_UPLOAD_DIR = path.join(process.cwd(), "src", "uploads", "constellations");
+const VISUAL_EVIDENCE_TERMS = {
+  orion: ["belt", "three", "hourglass", "shoulder", "foot"],
+  "ursa-major": ["big dipper", "dipper", "bowl", "handle", "seven"],
+  scorpius: ["scorpius", "scorpion", "curved", "hook", "tail", "j shaped", "antares"],
+  aries: ["aries", "hamal", "sheratan", "bent"],
+  cancer: ["cancer", "beehive", "y shaped", "inverted v"],
+  capricornus: ["capricornus", "capricorn", "triangle", "boat"],
+  aquarius: ["aquarius", "water", "jar", "y shaped"],
+  gemini: ["twin", "parallel", "castor", "pollux"],
+  leo: ["sickle", "question mark", "triangle"],
+  libra: ["libra", "scale", "scales", "quadrilateral"],
+  pisces: ["pisces", "fish", "loop", "chain", "cord"],
+  sagittarius: ["sagittarius", "teapot", "spout", "handle", "lid"],
+  cassiopeia: ["w shaped", "m shaped", "zigzag", "zig zag"],
+  taurus: ["v shaped", "hyades", "aldebaran", "pleiades"],
+  virgo: ["virgo", "spica", "maiden", "y shaped", "elongated"],
+  lyra: ["vega", "parallelogram", "lyre"],
+};
 
 function clampLimit(value, fallback = 20, max = 50) {
   const parsed = Number.parseInt(value, 10);
@@ -21,14 +43,10 @@ function clampConfidence(value) {
   return Math.max(0, Math.min(1, numeric));
 }
 
-function parseJsonObject(raw = "") {
-  const cleaned = String(raw).replace(/```json|```/g, "").trim();
-  const firstBrace = cleaned.indexOf("{");
-  const lastBrace = cleaned.lastIndexOf("}");
-  const jsonText = firstBrace >= 0 && lastBrace >= firstBrace
-    ? cleaned.slice(firstBrace, lastBrace + 1)
-    : cleaned;
-  return JSON.parse(jsonText);
+function getRecognitionThreshold(source) {
+  if (source === "clip") return MIN_CLIP_RECOGNITION_CONFIDENCE;
+  if (source === "vision") return Math.max(MIN_RECOGNITION_CONFIDENCE, MIN_AI_RECOGNITION_CONFIDENCE);
+  return MIN_RECOGNITION_CONFIDENCE;
 }
 
 async function getRecognitionCandidates() {
@@ -50,142 +68,83 @@ async function getRecognitionCandidates() {
   });
 }
 
-function scoreCandidateFromText(text, candidate) {
-  const normalized = normalizeText(text || "");
-  if (!normalized) return 0;
-
-  const aliases = [
-    candidate.name,
-    candidate.slug,
-    candidate.latinName,
-    candidate.abbreviation,
-    candidate.brightestStar,
-  ].filter(Boolean);
-
-  return aliases.reduce((best, alias) => {
-    const normalizedAlias = normalizeText(alias);
-    if (!normalizedAlias) return best;
-    if (normalized.includes(normalizedAlias)) return Math.max(best, 0.92);
-
-    const words = normalized.split(/\s+/);
-    const aliasWords = normalizedAlias.split(/\s+/);
-    const windowSize = aliasWords.length;
-
-    for (let i = 0; i <= words.length - windowSize; i += 1) {
-      const phrase = words.slice(i, i + windowSize).join(" ");
-      best = Math.max(best, similarity(phrase, normalizedAlias));
-    }
-
-    return Math.max(best, similarity(normalized, normalizedAlias) * 0.85);
-  }, 0);
-}
-
-function getBestLocalMatch({ candidates, hint, fileName }) {
-  const sourceText = [hint, fileName].filter(Boolean).join(" ");
-  if (!sourceText) return null;
-
-  const scored = candidates
-    .map((candidate) => ({
-      candidate,
-      confidence: scoreCandidateFromText(sourceText, candidate),
-    }))
-    .sort((a, b) => b.confidence - a.confidence);
-
-  const best = scored[0];
-  if (!best || best.confidence < 0.55) return null;
-
-  return {
-    slug: best.candidate.slug,
-    confidence: clampConfidence(best.confidence),
-    source: "metadata",
-    analysis: hint
-      ? "Matched the submitted hint/filename against known constellation aliases."
-      : "Matched the uploaded filename against known constellation aliases.",
-  };
-}
-
-async function runVisionRecognition({ file, candidates, hint }) {
-  if (!VISION_MODEL) return null;
-
-  const imageBuffer = await fs.readFile(file.path);
-  const imageDataUrl = `data:${file.mimetype};base64,${imageBuffer.toString("base64")}`;
-  const candidateText = candidates
-    .map((item) => `${item.slug}: ${item.name}${item.latinName ? ` / ${item.latinName}` : ""}${item.abbreviation ? ` (${item.abbreviation})` : ""}`)
-    .join("\n");
-
-  const prompt = `Identify the most likely constellation in this uploaded night-sky image.
-
-Choose only from these known candidates:
-${candidateText}
-
-Optional user hint: ${hint || "none"}
-
-Return only JSON:
-{
-  "slug": "candidate-slug-or-null",
-  "confidence": 0.0,
-  "analysis": "short factual explanation"
-}
-
-Use null and a low confidence if the image is unclear, contains no star pattern, or does not match the candidates.`;
-
-  try {
-    const response = await groq.chat.completions.create({
-      model: VISION_MODEL,
-      messages: [
-        {
-          role: "system",
-          content: "You are an astronomy image recognition assistant. Be conservative and return valid JSON only.",
-        },
-        {
-          role: "user",
-          content: [
-            { type: "text", text: prompt },
-            { type: "image_url", image_url: { url: imageDataUrl } },
-          ],
-        },
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.1,
-      max_tokens: 220,
-    });
-
-    const parsed = parseJsonObject(response.choices?.[0]?.message?.content || "");
-    return {
-      slug: parsed.slug || null,
-      confidence: clampConfidence(parsed.confidence),
-      source: "vision",
-      analysis: String(parsed.analysis || "Vision model returned a candidate."),
-    };
-  } catch (error) {
-    console.error("[constellation-recognition] Vision provider failed:", error.message);
-    return null;
-  }
-}
-
 function resolveRecognizedCandidate(candidates, match) {
   if (!match?.slug) return null;
   return candidates.find((candidate) => candidate.slug === match.slug) || null;
 }
 
-function chooseBestRecognition({ visionMatch, localMatch, candidates }) {
-  const validVisionCandidate = resolveRecognizedCandidate(candidates, visionMatch);
-  const validLocalCandidate = resolveRecognizedCandidate(candidates, localMatch);
+function hasVisualEvidence(match) {
+  if (!match?.slug) return false;
+  const terms = VISUAL_EVIDENCE_TERMS[match.slug];
+  if (!terms) return true;
 
-  if (validVisionCandidate && visionMatch.confidence >= MIN_RECOGNITION_CONFIDENCE) {
-    return { candidate: validVisionCandidate, match: visionMatch };
+  const text = `${match.evidence || ""} ${match.analysis || ""}`.toLowerCase();
+  return terms.some((term) => text.includes(term));
+}
+
+function isClipMatchAcceptable(clipMatch) {
+  if (!clipMatch?.slug) return false;
+  const confidence = clampConfidence(clipMatch.confidence);
+  const secondBestConfidence = clampConfidence(clipMatch.top?.[1]?.confidence);
+  return confidence >= MIN_CLIP_RECOGNITION_CONFIDENCE ||
+    confidence - secondBestConfidence >= MIN_CLIP_RECOGNITION_MARGIN;
+}
+
+function chooseRecognition({ clipMatch, visionMatch, candidates }) {
+  const clipCandidate = resolveRecognizedCandidate(candidates, clipMatch);
+  const visionCandidate = resolveRecognizedCandidate(candidates, visionMatch);
+
+  if (clipCandidate) {
+    const clipConfidence = clampConfidence(clipMatch.confidence);
+    const secondBestConfidence = clampConfidence(clipMatch.top?.[1]?.confidence);
+    const clipMargin = clipConfidence - secondBestConfidence;
+    const visionAgreementBoost =
+      visionCandidate?.slug === clipCandidate.slug && visionMatch?.confidence >= MIN_RECOGNITION_CONFIDENCE
+        ? 0.08
+        : 0;
+    const confidence = clampConfidence(clipConfidence + visionAgreementBoost);
+
+    if (isClipMatchAcceptable(clipMatch)) {
+      return {
+        candidate: clipCandidate,
+        match: {
+          slug: clipCandidate.slug,
+          confidence,
+          source: "clip",
+          accepted: true,
+          analysis: [
+            clipMatch.analysis,
+            visionAgreementBoost
+              ? `Vision model agreed with CLIP on ${clipCandidate.slug}, so confidence was increased.`
+              : null,
+            clipMargin >= MIN_CLIP_RECOGNITION_MARGIN
+              ? `CLIP top match margin was ${clipMargin.toFixed(3)}.`
+              : null,
+          ].filter(Boolean).join(" "),
+        },
+      };
+    }
   }
 
-  if (validLocalCandidate && localMatch.confidence >= MIN_RECOGNITION_CONFIDENCE) {
-    return { candidate: validLocalCandidate, match: localMatch };
-  }
-
-  if (validVisionCandidate && !validLocalCandidate) {
-    return { candidate: null, match: visionMatch };
-  }
-
-  if (validLocalCandidate && !validVisionCandidate) {
-    return { candidate: null, match: localMatch };
+  if (visionCandidate) {
+    const evidencePenalty = hasVisualEvidence(visionMatch) ? 0 : 0.45;
+    const confidence = clampConfidence(visionMatch.confidence - evidencePenalty);
+    const threshold = Math.max(MIN_RECOGNITION_CONFIDENCE, MIN_AI_RECOGNITION_CONFIDENCE);
+    return {
+      candidate: confidence >= threshold ? visionCandidate : null,
+      match: {
+        slug: visionCandidate.slug,
+        confidence,
+        source: "vision",
+        accepted: confidence >= threshold,
+        analysis: [
+          visionMatch.analysis,
+          evidencePenalty
+            ? `The AI did not provide required visual evidence for ${visionCandidate.slug}, so confidence was reduced.`
+            : null,
+        ].filter(Boolean).join(" "),
+      },
+    };
   }
 
   return {
@@ -193,10 +152,9 @@ function chooseBestRecognition({ visionMatch, localMatch, candidates }) {
     match: {
       slug: null,
       confidence: 0,
-      source: VISION_MODEL ? "vision" : "metadata",
-      analysis: VISION_MODEL
-        ? "No confident constellation match was found."
-        : "No vision model is configured. Set GROQ_VISION_MODEL to enable image-based recognition.",
+      source: "vision",
+      accepted: false,
+      analysis: "No confident AI image recognition match was found.",
     },
   };
 }
@@ -209,6 +167,22 @@ async function removeUploadedFileSafely(filePath) {
     if (error.code !== "ENOENT") {
       console.error("[constellation-recognition] Failed to cleanup uploaded file:", error.message);
     }
+  }
+}
+
+function getConstellationUploadPathFromUrl(originalUrl) {
+  if (!originalUrl) return null;
+
+  try {
+    const urlPath = new URL(originalUrl).pathname;
+    const marker = "/uploads/constellations/";
+    if (!urlPath.includes(marker)) return null;
+
+    const fileName = path.basename(decodeURIComponent(urlPath));
+    if (!fileName || fileName === "." || fileName === "..") return null;
+    return path.join(CONSTELLATION_UPLOAD_DIR, fileName);
+  } catch {
+    return null;
   }
 }
 
@@ -234,20 +208,31 @@ export async function recognizeConstellationImage({ userId, file, fileUrl, hint 
   }
 
   const candidates = await getRecognitionCandidates();
-  const localMatch = getBestLocalMatch({
+  const imageAnalysis = await analyzeStarField(file);
+  const clipMatch = await runClipRecognition({ file });
+  const visionMatch = isClipMatchAcceptable(clipMatch)
+    ? null
+    : await runVisionRecognition({
+      file,
+      candidates,
+      hint,
+      imageAnalysis,
+    });
+  const { candidate, match } = chooseRecognition({
+    clipMatch,
+    visionMatch,
     candidates,
-    hint,
-    fileName: file.originalname || file.filename,
   });
-  const visionMatch = await runVisionRecognition({ file, candidates, hint });
-  const { candidate, match } = chooseBestRecognition({ visionMatch, localMatch, candidates });
 
   const confidence = clampConfidence(match?.confidence);
-  const isConfident = Boolean(candidate && confidence >= MIN_RECOGNITION_CONFIDENCE);
+  const recognitionThreshold = getRecognitionThreshold(match?.source);
+  const isConfident = Boolean(candidate && (match?.accepted || confidence >= recognitionThreshold));
   const aiAnalysis = [
+    `Star detection: ${imageAnalysis.starCount} star-like points (${imageAnalysis.quality}).`,
     match?.analysis,
-    visionMatch ? `Vision source confidence: ${visionMatch.confidence}.` : null,
-    localMatch ? `Metadata source confidence: ${localMatch.confidence}.` : null,
+    clipMatch ? `CLIP: ${clipMatch.slug || "none"} (${clipMatch.confidence}).` : "CLIP: unavailable or not trained.",
+    visionMatch?.evidence ? `Evidence: ${visionMatch.evidence}.` : null,
+    visionMatch ? `Vision: ${visionMatch.slug || "none"} (${visionMatch.confidence}).` : "Vision: unavailable.",
   ].filter(Boolean).join(" ");
 
   const updatedUpload = await prisma.imageUpload.update({
@@ -289,6 +274,16 @@ export async function recognizeConstellationImage({ userId, file, fileUrl, hint 
       fileSize: updatedUpload.fileSize,
       mimeType: updatedUpload.mimeType,
       recognized: isConfident,
+      detectedStars: imageAnalysis.starCount,
+      rawComponents: imageAnalysis.rawComponentCount,
+      rejectedComponents: imageAnalysis.rejectedComponents,
+      clipSlug: clipMatch?.slug || null,
+      clipConfidence: clipMatch?.confidence || null,
+      clipTop: clipMatch?.top || null,
+      visionSlug: visionMatch?.slug || null,
+      visionConfidence: visionMatch?.confidence || null,
+      visionEvidence: visionMatch?.evidence || null,
+      source: match?.source || "unknown",
     },
   }).catch((error) => console.error("[analytics] image upload track failed:", error.message));
 
@@ -297,10 +292,27 @@ export async function recognizeConstellationImage({ userId, file, fileUrl, hint 
     recognition: {
       status: isConfident ? "RECOGNIZED" : "UNRECOGNIZED",
       confidence,
-      threshold: MIN_RECOGNITION_CONFIDENCE,
-      source: match?.source || "unknown",
+      threshold: recognitionThreshold,
+      source: match?.source || "vision",
       constellation: updatedUpload.constellation,
       analysis: aiAnalysis,
+      diagnostics: {
+        detectedStars: imageAnalysis.starCount,
+        rawComponents: imageAnalysis.rawComponentCount,
+        rejectedComponents: imageAnalysis.rejectedComponents,
+        imageQuality: imageAnalysis.quality,
+        clip: clipMatch ? {
+          slug: clipMatch.slug,
+          confidence: clipMatch.confidence,
+          top: clipMatch.top || [],
+        } : null,
+        vision: visionMatch ? {
+          slug: visionMatch.slug,
+          confidence: visionMatch.confidence,
+          evidence: visionMatch.evidence,
+          hasRequiredEvidence: hasVisualEvidence(visionMatch),
+        } : null,
+      },
     },
   };
 }
@@ -324,4 +336,23 @@ export async function getUserConstellationUploads(userId, { limit = 20 } = {}) {
       },
     },
   });
+}
+
+export async function deleteUserConstellationUpload(userId, uploadId) {
+  if (!userId) throw new AppError("User authentication is required.", 401);
+  if (!uploadId) throw new AppError("Upload id is required.", 400);
+
+  const upload = await prisma.imageUpload.findFirst({
+    where: { id: uploadId, userId },
+    select: { id: true, originalUrl: true },
+  });
+
+  if (!upload) throw new AppError("Scan history item not found.", 404);
+
+  await prisma.imageUpload.delete({ where: { id: upload.id } });
+
+  const uploadedFilePath = getConstellationUploadPathFromUrl(upload.originalUrl);
+  await removeUploadedFileSafely(uploadedFilePath);
+
+  return { id: upload.id };
 }

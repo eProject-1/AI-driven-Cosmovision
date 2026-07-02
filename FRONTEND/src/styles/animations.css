@@ -1,0 +1,72 @@
+@keyframes cosmoTyping {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+@keyframes skeletonSweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes planetCinematicFloat {
+  0%,
+  100% {
+    transform: translate3d(0, calc(-50% - 8px), 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-10px, calc(-50% + 12px), 0) scale(1.022);
+  }
+}
+
+@keyframes planetCinematicBreathe {
+  0%,
+  100% {
+    transform: rotate(var(--planet-tilt)) scale(1);
+  }
+  50% {
+    transform: rotate(var(--planet-tilt)) scale(1.018);
+  }
+}
+
+@keyframes planetGlowPulse {
+  0%,
+  100% {
+    opacity: 0.76;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes planetSheenSweep {
+  0%,
+  42%,
+  100% {
+    transform: translateX(-28%);
+    opacity: 0.18;
+  }
+  58% {
+    transform: translateX(34%);
+    opacity: 0.36;
+  }
+}
+
+@keyframes cosmoStarDrift {
+  from {
+    background-position: 0 0, 52px 78px;
+  }
+  to {
+    background-position: 260px 180px, 352px 338px;
+  }
+}

@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { HyperspaceTransition } from "../components/lovable/HyperspaceTransition";
 import { Button } from "../components/lovable/ui/button";
 import { ArrowRight, CalendarDays, FileText, Orbit, Radio, Satellite, Telescope } from "lucide-react";
+import starfieldImage from "../assets/starfield.jpg";
+import earthImage from "../assets/earth.png";
+import jupiterImage from "../assets/jupiter.png";
+import saturnImage from "../assets/saturn.png";
 
 const signalCards = [
   {
@@ -60,33 +64,34 @@ export default function LovableHome() {
 
   return (
     <>
-      <section aria-label="Hero" className="relative min-h-screen w-full overflow-hidden" style={{ background: "radial-gradient(ellipse at 50% 110%, #10162B 0%, #0B1020 45%, #050816 100%)" }}>
-        <div aria-hidden className="absolute inset-0 opacity-[0.18]" style={{ backgroundImage: "linear-gradient(to right, rgba(140,170,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(140,170,255,0.08) 1px, transparent 1px)", backgroundSize: "64px 64px", maskImage: "radial-gradient(ellipse at 50% 40%, black 30%, transparent 80%)", WebkitMaskImage: "radial-gradient(ellipse at 50% 40%, black 30%, transparent 80%)" }} />
+      <section aria-label="Hero" className="nasa-grid-bg relative min-h-screen w-full overflow-hidden" style={{ background: "radial-gradient(ellipse at 50% 110%, #0b1b35 0%, #07111f 45%, #020712 100%)" }}>
+        <div aria-hidden className="absolute inset-0 opacity-[0.2]" style={{ backgroundImage: "linear-gradient(to right, rgba(110,203,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(110,203,255,0.08) 1px, transparent 1px)", backgroundSize: "72px 72px", maskImage: "radial-gradient(ellipse at 50% 40%, black 28%, transparent 80%)", WebkitMaskImage: "radial-gradient(ellipse at 50% 40%, black 28%, transparent 80%)" }} />
         <HeroStars />
-        <div aria-hidden className="absolute -top-40 left-1/2 -translate-x-1/2 w-[120vw] h-[60vh] pointer-events-none" style={{ background: "radial-gradient(ellipse at center, rgba(100,140,255,0.18) 0%, transparent 60%)", filter: "blur(40px)" }} />
-        <div aria-hidden className="absolute left-1/2 -translate-x-1/2 pointer-events-none" style={{ bottom: "-65vw", width: "150vw", height: "150vw", borderRadius: "50%", background: "radial-gradient(circle at 50% 18%, #2a4d8f 0%, #18305f 22%, #0d1a3a 45%, #070c1f 65%, transparent 75%)", boxShadow: "0 -40px 120px rgba(80,140,255,0.35), inset 0 80px 120px rgba(180,210,255,0.12)" }} />
-        <div aria-hidden className="absolute left-0 right-0 pointer-events-none" style={{ bottom: "calc(-65vw + 150vw - 8px)", height: "120px", background: "linear-gradient(to top, rgba(120,170,255,0.45), rgba(120,170,255,0.08) 40%, transparent 100%)", filter: "blur(18px)" }} />
+        <div aria-hidden className="absolute -top-40 left-1/2 h-[58vh] w-[120vw] -translate-x-1/2 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, rgba(11,61,145,0.28) 0%, transparent 62%)", filter: "blur(42px)" }} />
+        <div aria-hidden className="absolute left-1/2 -translate-x-1/2 pointer-events-none" style={{ bottom: "-65vw", width: "150vw", height: "150vw", borderRadius: "50%", background: "radial-gradient(circle at 50% 18%, #19427d 0%, #102a55 22%, #081b3b 45%, #040a18 66%, transparent 75%)", boxShadow: "0 -40px 120px rgba(11,61,145,0.35), inset 0 80px 120px rgba(210,232,255,0.1)" }} />
+        <div aria-hidden className="absolute left-0 right-0 pointer-events-none" style={{ bottom: "calc(-65vw + 150vw - 8px)", height: "120px", background: "linear-gradient(to top, rgba(110,203,255,0.38), rgba(110,203,255,0.07) 40%, transparent 100%)", filter: "blur(18px)" }} />
 
         <div className="relative z-10 mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 text-center pt-24">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 backdrop-blur-md">
-            <span className="h-1.5 w-1.5 rounded-full bg-sky-400 shadow-[0_0_10px_rgba(120,180,255,0.9)]" />
-            <span className="font-display text-[11px] tracking-[0.32em] uppercase text-foreground/70">AI-Driven Astronomy Exploration</span>
+          <div className="nasa-kicker px-4 py-1.5 backdrop-blur-md">
+            <span className="font-display text-[11px] tracking-[0.28em] uppercase text-foreground/76">CosmoVision Public Mission Interface</span>
           </div>
 
           <h1 className="mt-8 font-display font-extralight tracking-[-0.035em] text-foreground" style={{ fontSize: "clamp(2.8rem, 7vw, 6.25rem)", lineHeight: 1.02 }}>
-            Explore the Universe
+            Explore verified
             <br />
-            <span style={{ backgroundImage: "linear-gradient(180deg, #ffffff 0%, #b9c8ff 60%, #6f8bd8 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>Like Never Before</span>
+            <span style={{ backgroundImage: "linear-gradient(180deg, #ffffff 0%, #cfe9ff 58%, #6ecbff 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>astronomy data</span>
           </h1>
 
-          <p className="mt-7 max-w-xl text-base sm:text-lg font-light leading-relaxed text-foreground/65">Travel through planets, constellations, observatories, and real-time cosmic discoveries.</p>
+          <p className="mt-7 max-w-2xl text-base sm:text-lg font-light leading-relaxed text-foreground/66">
+            A mission-control view for planets, constellations, observatories, sky events, and AI-assisted stargazing recommendations.
+          </p>
 
           <div className="mt-10 flex items-center gap-4">
-            <Button onClick={handleLaunch} size="lg" className="group h-12 rounded-full px-7 text-sm font-medium bg-white text-[#050816] hover:bg-white/90 shadow-[0_10px_40px_-10px_rgba(140,180,255,0.6)]">Get Started <ArrowRight className="ml-1 size-4 transition-transform group-hover:translate-x-0.5" /></Button>
+            <Button onClick={handleLaunch} size="lg" className="mission-button group h-12 px-7 text-sm font-medium">Open Solar System <ArrowRight className="ml-1 size-4 transition-transform group-hover:translate-x-0.5" /></Button>
           </div>
 
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-foreground/40">
-            <span className="font-display text-[10px] tracking-[0.4em] uppercase">Scroll to enter</span>
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-foreground/38">
+            <span className="font-display text-[10px] tracking-[0.36em] uppercase">Scroll for mission brief</span>
             <span className="h-8 w-px bg-gradient-to-b from-foreground/40 to-transparent animate-pulse" />
           </div>
         </div>
@@ -94,12 +99,12 @@ export default function LovableHome() {
 
       <HyperspaceTransition active={stage === "warp"} durationMs={2600} onDone={() => navigate("/planets")} />
 
-      <section className="relative py-28 bg-[#070b1c]" aria-labelledby="stories-title">
+      <section className="relative border-t border-white/10 bg-[#040b18] py-28" aria-labelledby="stories-title">
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-16 max-w-3xl">
-            <p className="font-display text-[11px] tracking-[0.4em] uppercase text-foreground/45 mb-4">Chapter II</p>
+            <p className="font-display text-[11px] tracking-[0.34em] uppercase text-[#6ecbff]/70 mb-4">Mission Brief</p>
             <h2 id="stories-title" className="font-display text-4xl md:text-6xl font-light tracking-[-0.025em] leading-tight text-foreground mb-5">
-              Stories from the edge of the cosmos
+              Signals worth tracking.
             </h2>
             <p className="text-foreground/58 max-w-2xl text-base font-light leading-relaxed">
               Hand-picked discoveries, missions, and observatories - the moments that are quietly rewriting our map of the universe.
@@ -112,6 +117,7 @@ export default function LovableHome() {
               label="Latest discovery"
               title="JWST resolves a galaxy 290M years after the Big Bang."
               body="New deep-field observations push the cosmic frontier earlier than any prior survey, suggesting galaxy formation accelerated within the first 300 million years of cosmic history."
+              imageSrc={starfieldImage}
               imageLabel="JWST Deep Field"
               imageClassName="md:h-96"
             />
@@ -122,6 +128,7 @@ export default function LovableHome() {
               label="Active mission"
               title="Europa Clipper begins its long cruise to Jupiter."
               body="NASA's flagship ice-moon mission is en route to a world whose subsurface ocean may hold twice the water of all Earth's oceans combined. Arrival: April 2030."
+              imageSrc={jupiterImage}
               imageLabel="Europa Clipper Mission"
               textClassName="md:col-start-2"
               layoutClassName="md:grid-cols-[1.15fr_0.9fr] md:gap-16"
@@ -132,6 +139,7 @@ export default function LovableHome() {
               label="Featured observatory"
               title="Vera C. Rubin: a 3.2-gigapixel survey of the southern sky."
               body="Beginning its decade-long Legacy Survey of Space and Time, Rubin will image the entire visible sky every few nights, cataloging billions of moving objects in unprecedented detail."
+              imageSrc={earthImage}
               imageLabel="Vera C. Rubin Observatory"
               layoutClassName="md:grid-cols-[0.85fr_1.15fr]"
             />
@@ -142,6 +150,7 @@ export default function LovableHome() {
               label="Education"
               title="Learn the night sky in eight short chapters."
               body="A guided path through stars, constellations, planetary motion, and the deep sky - designed for curious beginners and seasoned amateurs alike."
+              imageSrc={saturnImage}
               imageLabel="Night Sky Learning Path"
               textClassName="md:col-start-2"
               layoutClassName="md:grid-cols-[1.05fr_0.95fr] md:gap-16"
@@ -150,11 +159,11 @@ export default function LovableHome() {
         </div>
       </section>
 
-      <section className="relative py-24 bg-[#050816]" aria-labelledby="signal-title">
+      <section className="relative border-t border-white/10 bg-[#020712] py-24" aria-labelledby="signal-title">
         <div className="mx-auto max-w-6xl px-6">
           <div className="flex items-center justify-between mb-16">
             <div>
-              <p className="font-display text-xs tracking-[0.4em] uppercase text-foreground/45 mb-3">Signal</p>
+              <p className="font-display text-xs tracking-[0.34em] uppercase text-[#6ecbff]/70 mb-3">Signal</p>
               <h2 id="signal-title" className="font-display text-3xl md:text-4xl font-light tracking-[-0.02em] text-foreground">
                 This week
               </h2>
@@ -169,7 +178,7 @@ export default function LovableHome() {
             {signalCards.map((card) => {
               const Icon = card.icon;
               return (
-                <article key={card.title} className="group min-h-52 border border-white/10 bg-white/[0.025] p-5 transition-colors duration-300 hover:bg-white/[0.04]">
+                <article key={card.title} className="nasa-card group min-h-52 p-5">
                   <div className="flex items-center gap-3 mb-5">
                     <div className="w-7 h-7 flex items-center justify-center text-foreground/55">
                       <Icon className="w-4 h-4" strokeWidth={1.4} />
@@ -200,6 +209,7 @@ function StoryFeature({
   label,
   title,
   body,
+  imageSrc,
   imageLabel,
   reversed = false,
   layoutClassName = "md:grid-cols-[0.95fr_1.25fr]",
@@ -207,17 +217,28 @@ function StoryFeature({
   imageClassName = "",
 }) {
   const text = (
-    <div className={`relative border-l border-white/12 pl-6 md:pl-8 ${textClassName}`}>
-      <p className="font-display text-[11px] tracking-[0.32em] uppercase text-foreground/42 mb-4">{meta}</p>
-      <p className="text-[11px] tracking-[0.26em] uppercase text-foreground/36 mb-3">{label}</p>
+    <div className={`relative border-l border-[#fc3d21]/55 pl-6 md:pl-8 ${textClassName}`}>
+      <p className="font-display text-[11px] tracking-[0.28em] uppercase text-[#6ecbff]/65 mb-4">{meta}</p>
+      <p className="text-[11px] tracking-[0.24em] uppercase text-foreground/38 mb-3">{label}</p>
       <h3 className="font-display text-3xl md:text-4xl font-light tracking-[-0.018em] leading-tight text-foreground mb-5">{title}</h3>
       <p className="text-foreground/60 text-sm md:text-base font-light leading-relaxed">{body}</p>
     </div>
   );
 
   const image = (
-    <div className={`h-72 md:h-88 border border-white/10 bg-white/[0.025] flex items-end justify-start p-7 text-foreground/35 font-display text-sm tracking-[0.18em] uppercase ${imageClassName}`}>
-      {imageLabel}
+    <div className={`nasa-card group relative h-72 md:h-88 flex items-end justify-start overflow-hidden p-7 text-foreground/80 font-display text-sm tracking-[0.18em] uppercase ${imageClassName}`}>
+      {imageSrc ? (
+        <img
+          src={imageSrc}
+          alt={imageLabel}
+          className="absolute inset-0 h-full w-full object-cover opacity-80 transition duration-700 group-hover:scale-105 group-hover:opacity-95"
+          loading="lazy"
+        />
+      ) : null}
+      <span className="absolute inset-0 bg-gradient-to-t from-[#020712]/88 via-[#020712]/28 to-transparent" />
+      <span className="absolute inset-0 bg-[radial-gradient(circle_at_72%_18%,rgba(110,203,255,0.28),transparent_34%)]" />
+      <span className="absolute left-0 top-0 h-1 w-24 bg-[#fc3d21]" />
+      <span className="relative z-10">{imageLabel}</span>
     </div>
   );
 

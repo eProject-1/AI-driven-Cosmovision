@@ -2,6 +2,7 @@ import prisma from "../../../config/db.js";
 import groq from "../../../config/groq.js";
 import { AppError } from "../../../utils/AppError.js";
 export {
+  deleteUserConstellationUpload,
   getUserConstellationUploads,
   recognizeConstellationImage,
 } from "./constellation-recognition.service.js";

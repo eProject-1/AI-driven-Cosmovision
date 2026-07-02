@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 
 const DEBUG_LOG = path.join(process.cwd(), "auth_debug.log");
+
 function writeDebug(...parts) {
   try {
     fs.appendFileSync(DEBUG_LOG, `[${new Date().toISOString()}] ${parts.join(" ")}\n`);

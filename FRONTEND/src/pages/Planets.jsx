@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { planets as localPlanets, getPlanet, mergePlanetsFromApi } from "../lib/planets";
 import { SolarSystemStage } from "../components/lovable/SolarSystemStage";
 import { Starfield } from "../components/lovable/Starfield";
 import { ArrowUpRight } from "lucide-react";
 import { getPlanets } from "../services/astronomy.api";
+import { SmartSearchPanel } from "./SmartSearch";
 
 export default function LovablePlanets() {
   const navigate = useNavigate();
@@ -34,10 +35,10 @@ export default function LovablePlanets() {
   }, []);
 
   return (
-    <main className="relative min-h-screen bg-background text-foreground">
+    <main className="relative min-h-screen bg-[#020712] text-foreground">
       <Starfield />
 
-      <section aria-label="Solar System spotlight" className="relative w-full overflow-hidden" style={{ height: "92vh", minHeight: "640px", background: "radial-gradient(ellipse at center, #0B1020 0%, #050816 70%, #000 100%)" }}>
+      <section aria-label="Solar System spotlight" className="nasa-grid-bg relative w-full overflow-hidden" style={{ height: "92vh", minHeight: "640px", background: "radial-gradient(ellipse at center, #071a35 0%, #020712 72%, #000 100%)" }}>
         <SolarSystemStage
           contained
           focusSlug={focusSlug}
@@ -49,15 +50,15 @@ export default function LovablePlanets() {
         <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)" }} />
 
         <div className="absolute top-28 left-1/2 -translate-x-1/2 z-10 text-center pointer-events-none transition-opacity duration-500 px-6" style={{ opacity: focusing ? 0 : 1 }}>
-          <div className="font-display text-[10px] tracking-[0.6em] uppercase text-foreground/45">Section I - The Solar System</div>
-          <h1 className="mt-4 font-display font-extralight tracking-[-0.04em] text-foreground/95" style={{ fontSize: "clamp(2rem, 4.5vw, 3.6rem)", textShadow: "0 4px 60px rgba(0,0,0,0.7)" }}>Choose a world. Fly there.</h1>
-          <p className="mt-3 text-sm text-foreground/55">{planets.length.toString().padStart(2, "0")} worlds - {status === "ready" ? "database powered" : "live orbital simulation"}</p>
+          <div className="font-display text-[10px] tracking-[0.45em] uppercase text-[#6ecbff]/70">Solar System Atlas</div>
+          <h1 className="mt-4 font-display font-extralight tracking-[-0.035em] text-foreground/95" style={{ fontSize: "clamp(2rem, 4.5vw, 3.6rem)", textShadow: "0 4px 60px rgba(0,0,0,0.7)" }}>Select a planetary target.</h1>
+          <p className="mt-3 text-sm text-foreground/55">{planets.length.toString().padStart(2, "0")} worlds / {status === "ready" ? "database linked" : "local orbital simulation"}</p>
         </div>
 
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 pointer-events-none text-center transition-all duration-500" style={{ opacity: labelPlanet ? 1 : 0, transform: `translate(-50%, ${labelPlanet ? 0 : 12}px)` }}>
           {labelPlanet && (
             <>
-              <div className="font-display text-[10px] tracking-[0.6em] uppercase text-foreground/45">{labelPlanet.distance} from the Sun</div>
+              <div className="font-display text-[10px] tracking-[0.45em] uppercase text-[#6ecbff]/70">{labelPlanet.distance} from the Sun</div>
               <div className="mt-2 font-display font-extralight tracking-[-0.04em] text-foreground/95" style={{ fontSize: "clamp(1.6rem, 3vw, 2.4rem)" }}>{labelPlanet.name}</div>
               <div className="mt-1 font-display italic text-xs text-foreground/55">{labelPlanet.tagline}</div>
             </>
@@ -67,12 +68,27 @@ export default function LovablePlanets() {
         <div className="absolute inset-0 z-20 pointer-events-none transition-opacity duration-700" style={{ opacity: focusing ? 0.55 : 0, background: "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.9) 100%)" }} />
       </section>
 
-      <section aria-label="Planet directory" className="relative w-full bg-[#070b1c] py-28 border-t border-white/5">
+      <section aria-label="Planet smart search" className="relative w-full bg-[#020712] py-24 border-t border-white/10">
+        <div className="mx-auto max-w-6xl px-6 md:px-10">
+          <header className="mb-10 max-w-3xl">
+            <p className="font-display text-[11px] tracking-[0.34em] uppercase text-[#6ecbff]/70">Planet Module Search</p>
+            <h2 className="mt-4 font-display font-extralight tracking-[-0.03em] text-foreground/95" style={{ fontSize: "clamp(2rem, 4vw, 3.2rem)", lineHeight: 1.05 }}>
+              Search the astronomy knowledge base.
+            </h2>
+            <p className="mt-5 max-w-2xl text-base font-light leading-relaxed text-foreground/60">
+              Natural-language search is integrated here so planet exploration, observatory links, events, and related sky data stay in one discovery workflow.
+            </p>
+          </header>
+          <SmartSearchPanel />
+        </div>
+      </section>
+
+      <section aria-label="Planet directory" className="relative w-full bg-[#040b18] py-28 border-t border-white/10">
         <div className="mx-auto max-w-6xl px-6 md:px-10">
           <header className="max-w-2xl">
-            <p className="font-display text-[11px] tracking-[0.4em] uppercase text-foreground/45">Section II - Directory</p>
-            <h2 className="mt-4 font-display font-extralight tracking-[-0.03em] text-foreground/95" style={{ fontSize: "clamp(2rem, 4vw, 3.2rem)", lineHeight: 1.05 }}>Eight worlds, one system.</h2>
-            <p className="mt-5 max-w-xl text-base font-light leading-relaxed text-foreground/60">From the swift Mercury to the distant Neptune - a study in scale, light, and time.</p>
+            <p className="font-display text-[11px] tracking-[0.34em] uppercase text-[#6ecbff]/70">Planet Directory</p>
+            <h2 className="mt-4 font-display font-extralight tracking-[-0.03em] text-foreground/95" style={{ fontSize: "clamp(2rem, 4vw, 3.2rem)", lineHeight: 1.05 }}>Eight primary targets.</h2>
+            <p className="mt-5 max-w-xl text-base font-light leading-relaxed text-foreground/60">A compact mission catalogue of mass, motion, distance, light, and geological character across the Solar System.</p>
             {status === "error" && (
               <p className="mt-4 text-sm font-light text-red-200/80">Backend unavailable, showing local planet assets.</p>
             )}
@@ -80,9 +96,15 @@ export default function LovablePlanets() {
 
           <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {planets.map((p) => (
-              <Link key={p.slug} to={`/planets/${p.slug}`} className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-6 backdrop-blur-sm transition-colors duration-500 hover:bg-white/[0.04]">
+              <button
+                key={p.slug}
+                type="button"
+                onClick={() => navigate(`/planets/${p.slug}`)}
+                className="nasa-card group relative p-6 text-left backdrop-blur-sm"
+              >
+                <span className="absolute left-0 top-0 h-1 w-16 bg-[#fc3d21] opacity-70 transition-all duration-300 group-hover:w-28" />
                 <div className="aspect-square relative grid place-items-center">
-                  <div className="absolute inset-0 rounded-full blur-2xl opacity-30 group-hover:opacity-60 transition" style={{ background: "radial-gradient(circle, oklch(0.72 0.18 260 / 0.55), transparent 60%)" }} />
+                  <div className="absolute inset-0 rounded-full blur-2xl opacity-25 group-hover:opacity-50 transition" style={{ background: "radial-gradient(circle, rgba(110,203,255,0.32), transparent 60%)" }} />
                   <img src={p.image} alt={p.name} loading="lazy" className="relative w-full h-full object-contain" />
                 </div>
                 <div className="mt-6 flex items-end justify-between">
@@ -92,22 +114,22 @@ export default function LovablePlanets() {
                   </div>
                   <ArrowUpRight className="w-4 h-4 text-foreground/40 group-hover:text-foreground transition" />
                 </div>
-              </Link>
+              </button>
             ))}
           </div>
         </div>
       </section>
 
-      <section aria-label="Planet knowledge" className="relative w-full bg-[#070b1c] py-28 border-t border-white/5">
+      <section aria-label="Planet knowledge" className="relative w-full bg-[#040b18] py-28 border-t border-white/10">
         <div className="mx-auto max-w-6xl px-6 md:px-10">
           <header className="max-w-2xl mb-16">
-            <p className="font-display text-[11px] tracking-[0.4em] uppercase text-foreground/45">Section III - Knowledge</p>
+            <p className="font-display text-[11px] tracking-[0.34em] uppercase text-[#6ecbff]/70">Comparative Science</p>
             <h2 className="mt-4 font-display font-extralight tracking-[-0.03em] text-foreground/95" style={{ fontSize: "clamp(1.8rem, 3.6vw, 2.8rem)", lineHeight: 1.1 }}>Compare the worlds.</h2>
           </header>
 
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Size */}
-            <div className="group relative rounded-2xl border border-slate-700/25 bg-white/[0.02] p-6 backdrop-blur-sm hover:border-slate-600/45 transition-all duration-300">
+            <div className="nasa-card group relative p-6 backdrop-blur-sm">
               <div className="flex items-center gap-2 mb-3">
                 {/* subtle monochrome icon */}
                 <div className="w-7 h-7 rounded-full border border-white/10 bg-white/[0.03] grid place-items-center text-foreground/55">
@@ -125,7 +147,7 @@ export default function LovablePlanets() {
             </div>
 
             {/* Temperature */}
-            <div className="group relative rounded-2xl border border-slate-700/25 bg-white/[0.02] p-6 backdrop-blur-sm hover:border-slate-600/45 transition-all duration-300">
+            <div className="nasa-card group relative p-6 backdrop-blur-sm">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-7 h-7 rounded-full border border-white/10 bg-white/[0.03] grid place-items-center text-foreground/55">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
@@ -141,7 +163,7 @@ export default function LovablePlanets() {
             </div>
 
             {/* Orbit */}
-            <div className="group relative rounded-2xl border border-slate-700/25 bg-white/[0.02] p-6 backdrop-blur-sm hover:border-slate-600/45 transition-all duration-300">
+            <div className="nasa-card group relative p-6 backdrop-blur-sm">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-7 h-7 rounded-full border border-white/10 bg-white/[0.03] grid place-items-center text-foreground/55">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
@@ -156,7 +178,7 @@ export default function LovablePlanets() {
             </div>
 
             {/* Moons */}
-            <div className="group relative rounded-2xl border border-slate-700/25 bg-white/[0.02] p-6 backdrop-blur-sm hover:border-slate-600/45 transition-all duration-300">
+            <div className="nasa-card group relative p-6 backdrop-blur-sm">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-7 h-7 rounded-full border border-white/10 bg-white/[0.03] grid place-items-center text-foreground/55">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
@@ -170,7 +192,7 @@ export default function LovablePlanets() {
             </div>
 
             {/* Rotation */}
-            <div className="group relative rounded-2xl border border-slate-700/25 bg-white/[0.02] p-6 backdrop-blur-sm hover:border-slate-600/45 transition-all duration-300">
+            <div className="nasa-card group relative p-6 backdrop-blur-sm">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-7 h-7 rounded-full border border-white/10 bg-white/[0.03] grid place-items-center text-foreground/55">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
@@ -185,7 +207,7 @@ export default function LovablePlanets() {
             </div>
 
             {/* Winds */}
-            <div className="group relative rounded-2xl border border-slate-700/25 bg-white/[0.02] p-6 backdrop-blur-sm hover:border-slate-600/45 transition-all duration-300">
+            <div className="nasa-card group relative p-6 backdrop-blur-sm">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-7 h-7 rounded-full border border-white/10 bg-white/[0.03] grid place-items-center text-foreground/55">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
@@ -203,34 +225,34 @@ export default function LovablePlanets() {
         </div>
       </section>
 
-      <section aria-label="Exploration numbers" className="relative w-full bg-[#0B1020] py-28 border-t border-white/5">
+      <section aria-label="Exploration numbers" className="relative w-full bg-[#020712] py-28 border-t border-white/10">
         <div className="mx-auto max-w-6xl px-6 md:px-10">
           <header className="max-w-2xl mb-16">
-            <p className="font-display text-[11px] tracking-[0.4em] uppercase text-foreground/45">Section IV - Exploration</p>
+            <p className="font-display text-[11px] tracking-[0.34em] uppercase text-[#6ecbff]/70">Exploration Numbers</p>
             <h2 className="mt-4 font-display font-extralight tracking-[-0.03em] text-foreground/95" style={{ fontSize: "clamp(1.8rem, 3.6vw, 2.8rem)", lineHeight: 1.1 }}>Numbers that put us in our place.</h2>
           </header>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-16">
             {/* 4.5B years */}
-            <div className="group relative rounded-2xl border border-slate-700/25 bg-white/[0.02] p-6 backdrop-blur-sm hover:border-slate-600/40 transition-all duration-300 text-center">
+            <div className="nasa-card group relative p-6 text-center backdrop-blur-sm">
               <p className="font-display text-4xl font-light text-foreground/85 mb-2">4.5B</p>
               <p className="text-sm text-foreground/65 font-light">Years since our solar system formed from a collapsing nebula.</p>
             </div>
 
             {/* 8 planets */}
-            <div className="group relative rounded-2xl border border-slate-700/25 bg-white/[0.02] p-6 backdrop-blur-sm hover:border-slate-600/40 transition-all duration-300 text-center">
+            <div className="nasa-card group relative p-6 text-center backdrop-blur-sm">
               <p className="font-display text-4xl font-light text-foreground/85 mb-2">8</p>
               <p className="text-sm text-foreground/65 font-light">Planets in our solar system, each with a unique story to tell.</p>
             </div>
 
             {/* 200+ missions */}
-            <div className="group relative rounded-2xl border border-slate-700/25 bg-white/[0.02] p-6 backdrop-blur-sm hover:border-slate-600/40 transition-all duration-300 text-center">
+            <div className="nasa-card group relative p-6 text-center backdrop-blur-sm">
               <p className="font-display text-4xl font-light text-foreground/85 mb-2">200+</p>
               <p className="text-sm text-foreground/65 font-light">Space missions have explored our cosmic neighborhood.</p>
             </div>
 
             {/* 30 AU */}
-            <div className="group relative rounded-2xl border border-slate-700/25 bg-white/[0.02] p-6 backdrop-blur-sm hover:border-slate-600/40 transition-all duration-300 text-center">
+            <div className="nasa-card group relative p-6 text-center backdrop-blur-sm">
               <p className="font-display text-4xl font-light text-foreground/85 mb-2">30 AU</p>
               <p className="text-sm text-foreground/65 font-light">Neptune's average distance from the Sun. The edge of our planetary realm.</p>
             </div>

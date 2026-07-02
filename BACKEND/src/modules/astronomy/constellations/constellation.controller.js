@@ -10,6 +10,7 @@ import {
   getConstellationsByMonth,
   recognizeConstellationImage as recognizeUploadedImage,
   getUserConstellationUploads as fetchUserUploads,
+  deleteUserConstellationUpload as removeUserUpload,
 } from "./constellation.service.js";
 
 export const getAllConstellations = asyncHandler(async (req, res) => {
@@ -58,4 +59,9 @@ export const recognizeConstellationImage = asyncHandler(async (req, res) => {
 export const getMyConstellationUploads = asyncHandler(async (req, res) => {
   const data = await fetchUserUploads(req.user?.id, { limit: req.query.limit });
   return sendSuccess(res, data);
+});
+
+export const deleteMyConstellationUpload = asyncHandler(async (req, res) => {
+  const data = await removeUserUpload(req.user?.id, req.params.uploadId);
+  return sendSuccess(res, data, "Scan history item deleted successfully");
 });
