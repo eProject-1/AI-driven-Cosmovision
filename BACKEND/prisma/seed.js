@@ -90,7 +90,7 @@ async function main() {
       name:               'Mercury',
       slug:               'mercury',
       type:               'terrestrial',
-      description:        'Hành tinh nhỏ nhất và gần Mặt Trời nhất trong Hệ Mặt Trời.',
+      description:        'The smallest planet in the Solar System and the closest world to the Sun.',
       imageUrl:           'https://upload.wikimedia.org/wikipedia/commons/4/4a/Mercury_in_true_color.jpg',
       massKg:             3.30e23,
       diameterKm:         4879,
@@ -105,16 +105,16 @@ async function main() {
       discoveredBy:       'Known in antiquity',
       isVisible:          true,
       aiFunFacts: [
-        'Mercury có ngày dài hơn năm của nó.',
-        'Bề mặt Mercury có nhiều hố thiên thạch nhất trong Hệ Mặt Trời.',
-        'Mercury không có vệ tinh tự nhiên.',
+        'Mercury has a solar day that lasts longer than its year.',
+        'Its cratered surface records billions of years of impacts.',
+        'Mercury has no natural moons and almost no atmosphere.',
       ],
     },
     {
       name:               'Venus',
       slug:               'venus',
       type:               'terrestrial',
-      description:        'Hành tinh nóng nhất trong Hệ Mặt Trời với bầu khí quyển dày đặc CO2.',
+      description:        'The hottest planet in the Solar System, wrapped in a dense carbon dioxide atmosphere.',
       imageUrl:           'https://upload.wikimedia.org/wikipedia/commons/e/e5/Venus-real_color.jpg',
       massKg:             4.87e24,
       diameterKm:         12104,
@@ -129,16 +129,16 @@ async function main() {
       discoveredBy:       'Known in antiquity',
       isVisible:          true,
       aiFunFacts: [
-        'Venus quay ngược chiều so với hầu hết các hành tinh khác.',
-        'Một ngày trên Venus dài hơn một năm của nó.',
-        'Venus là vật thể sáng nhất trên bầu trời đêm sau Mặt Trăng.',
+        'Venus rotates backward compared with most planets.',
+        'One day on Venus is longer than one Venus year.',
+        'Venus is the brightest natural object in the night sky after the Moon.',
       ],
     },
     {
       name:               'Earth',
       slug:               'earth',
       type:               'terrestrial',
-      description:        'Hành tinh xanh — ngôi nhà duy nhất được biết đến có sự sống trong vũ trụ.',
+      description:        'The blue planet and the only known world that supports life.',
       imageUrl:           'https://upload.wikimedia.org/wikipedia/commons/9/97/The_Earth_seen_from_Apollo_17.jpg',
       massKg:             5.97e24,
       diameterKm:         12742,
@@ -152,16 +152,16 @@ async function main() {
       hasRings:           false,
       isVisible:          true,
       aiFunFacts: [
-        'Trái Đất là hành tinh duy nhất có nước lỏng trên bề mặt.',
-        'Từ trường của Trái Đất bảo vệ chúng ta khỏi bức xạ mặt trời.',
-        'Trái Đất có một vệ tinh tự nhiên lớn bất thường so với kích thước hành tinh.',
+        'Earth is the only known planet with stable liquid water on its surface.',
+        'Earth\'s magnetic field helps shield the planet from solar radiation.',
+        'Earth has one unusually large natural moon compared with its size.',
       ],
     },
     {
       name:               'Mars',
       slug:               'mars',
       type:               'terrestrial',
-      description:        'Hành tinh Đỏ với núi lửa cao nhất và hẻm núi sâu nhất Hệ Mặt Trời.',
+      description:        'The Red Planet, home to the tallest volcano and one of the deepest canyon systems in the Solar System.',
       imageUrl:           'https://upload.wikimedia.org/wikipedia/commons/0/02/OSIRIS_Mars_true_color.jpg',
       massKg:             6.39e23,
       diameterKm:         6779,
@@ -176,16 +176,16 @@ async function main() {
       discoveredBy:       'Known in antiquity',
       isVisible:          true,
       aiFunFacts: [
-        'Olympus Mons trên Mars là núi lửa lớn nhất trong Hệ Mặt Trời.',
-        'Mars có màu đỏ do oxit sắt (rỉ sét) trên bề mặt.',
-        'Valles Marineris dài bằng chiều rộng của nước Mỹ.',
+        'Olympus Mons on Mars is the largest volcano in the Solar System.',
+        'Mars looks red because iron minerals in its soil oxidize.',
+        'Valles Marineris is a canyon system thousands of kilometers long.',
       ],
     },
     {
       name:               'Jupiter',
       slug:               'jupiter',
       type:               'gas_giant',
-      description:        'Hành tinh lớn nhất Hệ Mặt Trời với Vết Đỏ Lớn huyền thoại.',
+      description:        'The largest planet in the Solar System, famous for the Great Red Spot.',
       imageUrl:           'https://upload.wikimedia.org/wikipedia/commons/2/2b/Jupiter_and_its_shrunken_Great_Red_Spot.jpg',
       massKg:             1.90e27,
       diameterKm:         139820,
@@ -200,16 +200,16 @@ async function main() {
       discoveredBy:       'Known in antiquity',
       isVisible:          true,
       aiFunFacts: [
-        'Jupiter lớn đến mức tất cả các hành tinh khác đều có thể vừa bên trong nó.',
-        'Vết Đỏ Lớn là cơn bão đã kéo dài hơn 350 năm.',
-        'Europa — một vệ tinh của Jupiter — có thể có đại dương lỏng bên dưới lớp băng.',
+        'Jupiter is so large that all the other planets could fit inside it.',
+        'The Great Red Spot is a giant storm that has lasted for centuries.',
+        'Europa, one of Jupiter\'s moons, may hide a liquid ocean beneath its ice.',
       ],
     },
     {
       name:               'Saturn',
       slug:               'saturn',
       type:               'gas_giant',
-      description:        'Hành tinh với hệ thống vành đai ngoạn mục nhất trong Hệ Mặt Trời.',
+      description:        'A gas giant with the most spectacular ring system in the Solar System.',
       imageUrl:           'https://upload.wikimedia.org/wikipedia/commons/c/c7/Saturn_during_Equinox.jpg',
       massKg:             5.68e26,
       diameterKm:         116460,
@@ -224,16 +224,16 @@ async function main() {
       discoveredBy:       'Known in antiquity',
       isVisible:          true,
       aiFunFacts: [
-        'Saturn nhẹ đến mức nó có thể nổi trên nước.',
-        'Vành đai Saturn chủ yếu được cấu tạo từ băng và đá.',
-        'Titan — vệ tinh của Saturn — có khí quyển dày hơn Trái Đất.',
+        'Saturn is less dense than water, so it would float in a large enough ocean.',
+        'Saturn\'s rings are made mostly of ice and rock particles.',
+        'Titan, Saturn\'s largest moon, has a denser atmosphere than Earth.',
       ],
     },
     {
       name:               'Uranus',
       slug:               'uranus',
       type:               'ice_giant',
-      description:        'Hành tinh băng khổng lồ quay nghiêng 98 độ so với quỹ đạo.',
+      description:        'An ice giant that rotates on its side with an extreme axial tilt.',
       imageUrl:           'https://upload.wikimedia.org/wikipedia/commons/3/3d/Uranus2.jpg',
       massKg:             8.68e25,
       diameterKm:         50724,
@@ -247,18 +247,18 @@ async function main() {
       hasRings:           true,
       discoveredBy:       'William Herschel',
       discoveryYear:      1781,
-      isVisible:          false,
+      isVisible:          true,
       aiFunFacts: [
-        'Uranus quay nghiêng đến mức các mùa kéo dài 21 năm.',
-        'Uranus là hành tinh lạnh nhất trong Hệ Mặt Trời.',
-        'Uranus có 13 vành đai mỏng màu tối.',
+        'Uranus is tilted so far that its seasons last for decades.',
+        'Uranus has the coldest planetary atmosphere measured in the Solar System.',
+        'Uranus has faint, dark rings and many icy moons.',
       ],
     },
     {
       name:               'Neptune',
       slug:               'neptune',
       type:               'ice_giant',
-      description:        'Hành tinh xa Mặt Trời nhất với những cơn gió mạnh nhất trong Hệ Mặt Trời.',
+      description:        'The farthest major planet, with some of the fastest winds in the Solar System.',
       imageUrl:           'https://upload.wikimedia.org/wikipedia/commons/5/56/Neptune_Full.jpg',
       massKg:             1.02e26,
       diameterKm:         49244,
@@ -272,11 +272,11 @@ async function main() {
       hasRings:           true,
       discoveredBy:       'Urbain Le Verrier & John Adams',
       discoveryYear:      1846,
-      isVisible:          false,
+      isVisible:          true,
       aiFunFacts: [
-        'Gió trên Neptune có thể đạt 2.100 km/h — nhanh nhất trong Hệ Mặt Trời.',
-        'Neptune mất 165 năm để hoàn thành một vòng quanh Mặt Trời.',
-        'Triton — vệ tinh của Neptune — quay ngược chiều quanh hành tinh mẹ.',
+        'Winds on Neptune can exceed 2,000 km/h, among the fastest in the Solar System.',
+        'Neptune takes about 165 Earth years to complete one orbit around the Sun.',
+        'Triton, Neptune\'s largest moon, orbits backward and may be a captured Kuiper Belt object.',
       ],
     },
   ]
@@ -284,7 +284,7 @@ async function main() {
   for (const planet of planets) {
     await prisma.planet.upsert({
       where:  { slug: planet.slug },
-      update: {},
+      update: planet,
       create: planet,
     })
   }
@@ -702,6 +702,55 @@ for (const c of constellations) {
 // Chạy: node prisma/seed_observatories.js
 // Hoặc tích hợp vào seed.js chính bằng cách import và gọi hàm seedObservatories()
 
+const realVietnamObservatoryImages = {
+  "hoa-lac-observatory":
+    "https://upload.wikimedia.org/wikipedia/commons/6/63/Vietnam%2C_Hoa_Lac_Hi-tech_Park_%289134601395%29.jpg",
+  "nha-trang-observatory":
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Nha_Trang%2C_Kh%C3%A1nh_H%C3%B2a.png/1280px-Nha_Trang%2C_Kh%C3%A1nh_H%C3%B2a.png",
+  "quy-nhon-observatory":
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Skyline_of_Quy_Nhon.jpg",
+  "cuc-phuong-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/f/fb/Parque_Nacional_de_Cuc_Phuong_%285182009321%29.jpg",
+  "bach-ma-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/6/67/Bach_Ma_NP2.jpg",
+  "bidoup-nui-ba-stargazing-site":
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Bidoup_Nui_Ba_National_Park.jpg",
+  "phuoc-binh-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/e/ef/Phuoc_Binh_from_National_Parks_office.jpg",
+  "ba-vi-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/4/40/Ao_Vua_Lake%2C_Ba_Vi_National_Park_%2849357916241%29.jpg",
+  "nui-chua-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/f/f5/Lo_O_Stream%2C_Nui_Chua_National_Park.jpg",
+  "ta-xua-stargazing-ridge":
+    "https://upload.wikimedia.org/wikipedia/commons/a/a3/T%C3%A0_X%C3%B9a_in_morning_mist.png",
+  "o-quy-ho-pass-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/1/19/O_Quy_Ho_pass.jpg",
+  "dong-van-karst-plateau-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/f/f5/B%C3%A3i_%C4%91%C3%A1_m%E1%BA%B7t_tr%C4%83ng_%C4%90%E1%BB%93ng_V%C4%83n_-_NKS.jpg",
+  "mau-son-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/d/d2/Mau_Son.JPG",
+  "pu-luong-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/1/10/Pu_Luong_National_Reserve_%2815179196484%29.jpg",
+  "phong-nha-ke-bang-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/c/c9/Phongnhakebang6.jpg",
+  "mang-den-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/4/47/Doithong_Hotel_Mang_Den_Vietnam.jpg",
+  "langbiang-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/9/9c/Langbiang_Mountain.JPG",
+  "yok-don-stargazing-site":
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Yokdon01.JPG",
+  "chu-yang-sin-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/f/f7/Chuyangsin01.JPG",
+  "mui-ne-sand-dunes-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/5/54/Mui_Ne_rough_dunes.JPG",
+  "phu-quy-island-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/6/6a/Chualinhsonphuquy.jpg",
+  "con-dao-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/5/5d/ConDao_park_dam.jpg",
+  "nam-cat-tien-stargazing-site":
+    "https://upload.wikimedia.org/wikipedia/commons/1/18/Cat_Tien_National_Park%2C_Vietnam.jpg",
+}
+
 const observatories = [
   {
     name: "Nha Trang Observatory",
@@ -733,8 +782,7 @@ const observatories = [
 
     website: "https://vietnamtourism.gov.vn/en/tags/Nha-Trang-Observatory",
 
-    imageUrl:
-      "https://images.unsplash.com/photo-1620589105774-b057272eff2c?auto=format&fit=crop&w=1400&q=85",
+    imageUrl: realVietnamObservatoryImages["nha-trang-observatory"],
 
     rating: 4.7,
     reviewCount: 260,
@@ -776,7 +824,7 @@ const observatories = [
     website: "https://www.eso.org/public/teles-instr/paranal-observatory/",
 
     imageUrl:
-      "https://images.unsplash.com/photo-1516339901601-2e1b62dc0c45?auto=format&fit=crop&w=1400&q=85",
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Paranal_Observatory.jpg",
 
     rating: 4.9,
     reviewCount: 1200,
@@ -819,7 +867,7 @@ const observatories = [
     website: "https://www.eso.org/public/teles-instr/lasilla/",
 
     imageUrl:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=85",
+      "https://commons.wikimedia.org/wiki/Special:FilePath/La_Silla_Observatory.jpg",
 
     rating: 4.8,
     reviewCount: 780,
@@ -861,7 +909,7 @@ const observatories = [
     website: "https://www.almaobservatory.org/en/about-alma/",
 
     imageUrl:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=85",
+      "https://commons.wikimedia.org/wiki/Special:FilePath/ALMA_Observatory.jpg",
 
     rating: 4.9,
     reviewCount: 930,
@@ -902,7 +950,7 @@ const observatories = [
     website: "https://www.rmg.co.uk/royal-observatory",
 
     imageUrl:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=85",
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Royal_Observatory_Greenwich.jpg",
 
     rating: 4.6,
     reviewCount: 21000,
@@ -944,7 +992,7 @@ const observatories = [
     website: "https://keckobservatory.org/",
 
     imageUrl:
-      "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1400&q=85",
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Keck_Observatory.jpg",
 
     rating: 4.9,
     reviewCount: 860,
@@ -982,8 +1030,7 @@ const observatories = [
 
     website: "https://en.wikipedia.org/wiki/C%C3%BAc_Ph%C6%B0%C6%A1ng_National_Park",
 
-    imageUrl:
-      "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1400&q=85",
+    imageUrl: realVietnamObservatoryImages["cuc-phuong-stargazing-site"],
 
     rating: 4.6,
     reviewCount: 360,
@@ -1021,8 +1068,7 @@ const observatories = [
 
     website: "http://bachmapark.com.vn/index.php",
 
-    imageUrl:
-      "https://images.unsplash.com/photo-1475274047050-1d0c0975c63e?auto=format&fit=crop&w=1400&q=85",
+    imageUrl: realVietnamObservatoryImages["bach-ma-stargazing-site"],
 
     rating: 4.7,
     reviewCount: 420,
@@ -1060,8 +1106,7 @@ const observatories = [
 
     website: "http://bidoupnuiba.gov.vn/",
 
-    imageUrl:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=85",
+    imageUrl: realVietnamObservatoryImages["bidoup-nui-ba-stargazing-site"],
 
     rating: 4.8,
     reviewCount: 260,
@@ -1099,8 +1144,7 @@ const observatories = [
 
     website: "https://en.wikipedia.org/wiki/Ph%C6%B0%E1%BB%9Bc_B%C3%ACnh_National_Park",
 
-    imageUrl:
-      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1400&q=85",
+    imageUrl: realVietnamObservatoryImages["phuoc-binh-stargazing-site"],
 
     rating: 4.5,
     reviewCount: 180,
@@ -1138,8 +1182,7 @@ const observatories = [
 
     website: "https://en.wikipedia.org/wiki/Ba_V%C3%AC_National_Park",
 
-    imageUrl:
-      "https://images.unsplash.com/photo-1488866022504-f2584929ca5f?auto=format&fit=crop&w=1400&q=85",
+    imageUrl: realVietnamObservatoryImages["ba-vi-stargazing-site"],
 
     rating: 4.3,
     reviewCount: 520,
@@ -1151,8 +1194,170 @@ const observatories = [
   },
 ];
 
+const slugifySite = (value) =>
+  value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
 
-const officialObservatorySlugs = observatories.map((obs) => obs.slug);
+const imageSubjectOverrides = {
+  "nui-chua-stargazing-site": "Nui Chua National Park",
+  "dong-van-karst-plateau-stargazing-site": "Dong Van Karst Plateau Geopark",
+  "pu-luong-stargazing-site": "Pu Luong Nature Reserve",
+  "phong-nha-ke-bang-stargazing-site": "Phong Nha-Ke Bang National Park",
+  "langbiang-stargazing-site": "Langbiang Mountain",
+  "ta-dung-stargazing-site": "Ta Dung National Park",
+  "yok-don-stargazing-site": "Yok Don National Park",
+  "chu-yang-sin-stargazing-site": "Chu Yang Sin National Park",
+  "mui-ne-sand-dunes-stargazing-site": "Mui Ne sand dunes",
+  "phu-quy-island-stargazing-site": "Phu Quy island",
+  "hon-ba-stargazing-site": "Hon Ba Nature Reserve",
+  "nam-cat-tien-stargazing-site": "Cat Tien National Park",
+  "thai-national-observatory-public-site": "National Astronomical Research Institute of Thailand",
+  "chiang-dao-stargazing-site": "Doi Chiang Dao",
+  "huai-nam-dang-stargazing-site": "Huai Nam Dang National Park",
+  "khao-yai-stargazing-site": "Khao Yai National Park",
+  "angkor-rural-stargazing-site": "Angkor Wat",
+  "el-nido-stargazing-site": "El Nido, Palawan",
+  "mulu-national-park-stargazing-site": "Gunung Mulu National Park",
+  "south-african-astronomical-observatory-sutherland": "South African Astronomical Observatory",
+  "meerkat-radio-observatory": "MeerKAT",
+}
+
+const cleanImageSubject = (name) =>
+  String(name || "")
+    .replace(/\bStargazing\s+(Site|Ridge)\b/gi, "")
+    .replace(/\bHighland\s+Stargazing\s+Site\b/gi, "")
+    .replace(/\bPublic\s+Site\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim()
+
+const buildCommonsImageUrl = (subject) =>
+  `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(`${subject.replace(/\s+/g, "_")}.jpg`)}`
+
+const buildCatalogRecord = (site, index) => {
+  const [name, type, latitude, longitude, city, province, country, elevation, lightPollutionScore, skyQualityScore, isFeatured = false, website = null] = site
+  const isStargazing = type === "STARGAZING_SITE"
+  const slug = slugifySite(name)
+  const imageSubject = imageSubjectOverrides[slug] || cleanImageSubject(name)
+
+  return {
+    name,
+    slug,
+    description: isStargazing
+      ? `${name} is a real geographic destination selected as a stargazing recommendation for its elevation, rural setting, dark coastline or wide night-sky horizon. Check local access and weather before visiting at night.`
+      : `${name} is a real astronomy observatory, science facility or public astronomy destination selected for telescope research, public observing or night-sky education.`,
+    type,
+    latitude,
+    longitude,
+    address: name,
+    city,
+    province,
+    country,
+    elevation,
+    website,
+    imageUrl: realVietnamObservatoryImages[slug] || buildCommonsImageUrl(imageSubject),
+    equipment: isStargazing
+      ? ["Portable telescope recommended", "Binoculars recommended", "Tripod or star tracker"]
+      : ["Research telescope", "Imaging instruments", "Spectrograph or visitor exhibits"],
+    openingHours: isStargazing
+      ? "Check local access, park and weather conditions"
+      : "Check official visitor schedule",
+    rating: isStargazing ? 4.5 : 4.7,
+    reviewCount: isStargazing ? 180 + index * 7 : 320 + index * 11,
+    lightPollutionScore,
+    skyQualityScore,
+    isFeatured,
+    isActive: true,
+  }
+}
+
+const extendedObservatoryCatalog = [
+  ["Hoa Lac Observatory", "PUBLIC", 21.008, 105.531, "Hoa Lac", "Hanoi", "Vietnam", 35, 58, 64, true, "https://vnsc.org.vn/"],
+  ["Quy Nhon Observatory", "PUBLIC", 13.756, 109.217, "Quy Nhon", "Binh Dinh", "Vietnam", 35, 48, 72, true, "https://explorasience.vn/"],
+  ["Nui Chua Stargazing Site", "STARGAZING_SITE", 11.704, 109.148, "Ninh Hai", "Ninh Thuan", "Vietnam", 700, 16, 91, true],
+  ["Ta Xua Stargazing Ridge", "STARGAZING_SITE", 21.308, 104.504, "Bac Yen", "Son La", "Vietnam", 1800, 18, 88, true],
+  ["Y Ty Highland Stargazing Site", "STARGAZING_SITE", 22.615, 103.686, "Bat Xat", "Lao Cai", "Vietnam", 1900, 15, 90, true],
+  ["O Quy Ho Pass Stargazing Site", "STARGAZING_SITE", 22.354, 103.775, "Sa Pa", "Lao Cai", "Vietnam", 2000, 24, 84],
+  ["Dong Van Karst Plateau Stargazing Site", "STARGAZING_SITE", 23.277, 105.36, "Dong Van", "Ha Giang", "Vietnam", 1400, 16, 91, true],
+  ["Mau Son Stargazing Site", "STARGAZING_SITE", 21.846, 106.924, "Loc Binh", "Lang Son", "Vietnam", 1500, 22, 85],
+  ["Pu Luong Stargazing Site", "STARGAZING_SITE", 20.467, 105.171, "Ba Thuoc", "Thanh Hoa", "Vietnam", 900, 24, 83],
+  ["Phong Nha Ke Bang Stargazing Site", "STARGAZING_SITE", 17.537, 106.151, "Bo Trach", "Quang Binh", "Vietnam", 400, 20, 87],
+  ["Mang Den Stargazing Site", "STARGAZING_SITE", 14.599, 108.292, "Kon Plong", "Kon Tum", "Vietnam", 1200, 18, 89],
+  ["Langbiang Stargazing Site", "STARGAZING_SITE", 12.047, 108.441, "Da Lat", "Lam Dong", "Vietnam", 2167, 34, 80],
+  ["Ta Dung Stargazing Site", "STARGAZING_SITE", 11.893, 107.974, "Dak Glong", "Dak Nong", "Vietnam", 900, 18, 88],
+  ["Yok Don Stargazing Site", "STARGAZING_SITE", 12.885, 107.77, "Buon Don", "Dak Lak", "Vietnam", 250, 22, 85],
+  ["Chu Yang Sin Stargazing Site", "STARGAZING_SITE", 12.414, 108.354, "Krong Bong", "Dak Lak", "Vietnam", 1400, 16, 90],
+  ["Mui Ne Sand Dunes Stargazing Site", "STARGAZING_SITE", 11.045, 108.304, "Phan Thiet", "Binh Thuan", "Vietnam", 40, 34, 78],
+  ["Phu Quy Island Stargazing Site", "STARGAZING_SITE", 10.517, 108.94, "Phu Quy", "Binh Thuan", "Vietnam", 80, 20, 86],
+  ["Con Dao Stargazing Site", "STARGAZING_SITE", 8.686, 106.608, "Con Dao", "Ba Ria Vung Tau", "Vietnam", 220, 18, 88],
+  ["Hon Ba Stargazing Site", "STARGAZING_SITE", 12.104, 108.985, "Cam Lam", "Khanh Hoa", "Vietnam", 1578, 24, 85],
+  ["Nam Cat Tien Stargazing Site", "STARGAZING_SITE", 11.423, 107.428, "Tan Phu", "Dong Nai", "Vietnam", 160, 35, 76],
+  ["Doi Inthanon National Observatory", "PUBLIC", 18.588, 98.486, "Chom Thong", "Chiang Mai", "Thailand", 2457, 12, 92, true, "https://www.narit.or.th/"],
+  ["Thai National Observatory Public Site", "PUBLIC", 18.795, 98.951, "Chiang Mai", "Chiang Mai", "Thailand", 330, 48, 68, false, "https://www.narit.or.th/"],
+  ["Phu Chi Fa Stargazing Site", "STARGAZING_SITE", 19.85, 100.45, "Thoeng", "Chiang Rai", "Thailand", 1628, 20, 87],
+  ["Chiang Dao Stargazing Site", "STARGAZING_SITE", 19.395, 98.922, "Chiang Dao", "Chiang Mai", "Thailand", 1200, 22, 85],
+  ["Huai Nam Dang Stargazing Site", "STARGAZING_SITE", 19.303, 98.602, "Mae Taeng", "Chiang Mai", "Thailand", 1500, 19, 87],
+  ["Khao Yai Stargazing Site", "STARGAZING_SITE", 14.439, 101.372, "Pak Chong", "Nakhon Ratchasima", "Thailand", 700, 38, 76],
+  ["Vang Vieng Stargazing Site", "STARGAZING_SITE", 18.924, 102.449, "Vang Vieng", "Vientiane", "Laos", 260, 26, 82],
+  ["Nong Khiaw Stargazing Site", "STARGAZING_SITE", 20.571, 102.616, "Nong Khiaw", "Luang Prabang", "Laos", 390, 18, 88],
+  ["Plain of Jars Stargazing Site", "STARGAZING_SITE", 19.43, 103.154, "Phonsavan", "Xiangkhouang", "Laos", 1100, 18, 88],
+  ["Bolaven Plateau Stargazing Site", "STARGAZING_SITE", 15.12, 106.09, "Paksong", "Champasak", "Laos", 1200, 19, 87],
+  ["Koh Rong Samloem Stargazing Site", "STARGAZING_SITE", 10.62, 103.302, "Koh Rong Samloem", "Preah Sihanouk", "Cambodia", 20, 18, 86],
+  ["Cardamom Mountains Stargazing Site", "STARGAZING_SITE", 11.995, 103.13, "Chi Phat", "Koh Kong", "Cambodia", 500, 14, 90],
+  ["Phnom Kulen Stargazing Site", "STARGAZING_SITE", 13.558, 104.107, "Siem Reap", "Siem Reap", "Cambodia", 480, 30, 78],
+  ["Angkor Rural Stargazing Site", "STARGAZING_SITE", 13.412, 103.867, "Siem Reap", "Siem Reap", "Cambodia", 30, 42, 72],
+  ["Manila Observatory", "PUBLIC", 14.64, 121.077, "Quezon City", "Metro Manila", "Philippines", 80, 88, 38, false, "https://www.observatory.ph/"],
+  ["PAGASA Astronomical Observatory", "PUBLIC", 14.646, 121.044, "Quezon City", "Metro Manila", "Philippines", 70, 88, 38, false, "https://www.pagasa.dost.gov.ph/"],
+  ["Mount Pulag Stargazing Site", "STARGAZING_SITE", 16.598, 120.891, "Kabayan", "Benguet", "Philippines", 2926, 16, 90, true],
+  ["Batanes Stargazing Site", "STARGAZING_SITE", 20.448, 121.97, "Basco", "Batanes", "Philippines", 120, 18, 88],
+  ["El Nido Stargazing Site", "STARGAZING_SITE", 11.202, 119.416, "El Nido", "Palawan", "Philippines", 40, 24, 84],
+  ["Bosscha Observatory", "PUBLIC", -6.824, 107.616, "Lembang", "West Java", "Indonesia", 1310, 55, 66, true, "https://bosscha.itb.ac.id/"],
+  ["Timau National Observatory", "PUBLIC", -9.584, 123.943, "Amfoang Tengah", "East Nusa Tenggara", "Indonesia", 1300, 8, 95, true],
+  ["Mount Bromo Stargazing Site", "STARGAZING_SITE", -7.942, 112.953, "Probolinggo", "East Java", "Indonesia", 2329, 20, 87],
+  ["Mount Rinjani Stargazing Site", "STARGAZING_SITE", -8.411, 116.457, "Lombok", "West Nusa Tenggara", "Indonesia", 2500, 15, 91],
+  ["Dieng Plateau Stargazing Site", "STARGAZING_SITE", -7.204, 109.908, "Dieng", "Central Java", "Indonesia", 2000, 25, 83],
+  ["Ijen Crater Stargazing Site", "STARGAZING_SITE", -8.058, 114.242, "Banyuwangi", "East Java", "Indonesia", 2386, 18, 88],
+  ["Komodo National Park Stargazing Site", "STARGAZING_SITE", -8.55, 119.489, "Labuan Bajo", "East Nusa Tenggara", "Indonesia", 200, 16, 90],
+  ["Singapore Science Centre Observatory", "PUBLIC", 1.333, 103.736, "Singapore", "Singapore", "Singapore", 15, 95, 30, false, "https://www.science.edu.sg/"],
+  ["Taman Negara Stargazing Site", "STARGAZING_SITE", 4.385, 102.401, "Kuala Tahan", "Pahang", "Malaysia", 120, 18, 87],
+  ["Mount Kinabalu Stargazing Site", "STARGAZING_SITE", 6.075, 116.558, "Ranau", "Sabah", "Malaysia", 3000, 16, 90, true],
+  ["Mulu National Park Stargazing Site", "STARGAZING_SITE", 4.047, 114.813, "Mulu", "Sarawak", "Malaysia", 100, 14, 90],
+  ["Cameron Highlands Stargazing Site", "STARGAZING_SITE", 4.47, 101.38, "Tanah Rata", "Pahang", "Malaysia", 1500, 34, 78],
+  ["Tioman Island Stargazing Site", "STARGAZING_SITE", 2.79, 104.169, "Tioman", "Pahang", "Malaysia", 50, 18, 87],
+  ["Lowell Observatory", "PUBLIC", 35.203, -111.664, "Flagstaff", "Arizona", "United States", 2210, 18, 86, true, "https://lowell.edu/"],
+  ["Griffith Observatory", "PUBLIC", 34.119, -118.3, "Los Angeles", "California", "United States", 346, 92, 36, false, "https://griffithobservatory.org/"],
+  ["Palomar Observatory", "PRIVATE", 33.356, -116.865, "Palomar Mountain", "California", "United States", 1713, 30, 82, true, "https://sites.astro.caltech.edu/palomar/"],
+  ["Kitt Peak National Observatory", "PUBLIC", 31.958, -111.596, "Tucson", "Arizona", "United States", 2096, 20, 88, true, "https://kpno.noirlab.edu/"],
+  ["Mount Wilson Observatory", "PUBLIC", 34.225, -118.057, "Los Angeles County", "California", "United States", 1742, 64, 60, false, "https://www.mtwilson.edu/"],
+  ["Lick Observatory", "PUBLIC", 37.341, -121.642, "Mount Hamilton", "California", "United States", 1283, 45, 72, false, "https://www.lickobservatory.org/"],
+  ["Green Bank Observatory", "PUBLIC", 38.433, -79.839, "Green Bank", "West Virginia", "United States", 807, 14, 88, true, "https://greenbankobservatory.org/"],
+  ["Cerro Tololo Inter-American Observatory", "PUBLIC", -30.169, -70.806, "Vicuna", "Coquimbo", "Chile", 2200, 8, 96, true, "https://noirlab.edu/public/programs/ctio/"],
+  ["Vera C. Rubin Observatory", "PRIVATE", -30.244, -70.749, "Vicuna", "Coquimbo", "Chile", 2663, 8, 96, true, "https://rubinobservatory.org/"],
+  ["Las Campanas Observatory", "PRIVATE", -29.015, -70.692, "La Serena", "Atacama", "Chile", 2380, 8, 96, true, "https://www.lco.cl/"],
+  ["Gemini South Observatory", "PRIVATE", -30.241, -70.736, "Vicuna", "Coquimbo", "Chile", 2722, 8, 96, false, "https://www.gemini.edu/"],
+  ["Gemini North Observatory", "PRIVATE", 19.823, -155.469, "Maunakea", "Hawaii", "United States", 4213, 6, 97, false, "https://www.gemini.edu/"],
+  ["Subaru Telescope", "PRIVATE", 19.825, -155.476, "Maunakea", "Hawaii", "United States", 4139, 6, 97, false, "https://subarutelescope.org/"],
+  ["Canada France Hawaii Telescope", "PRIVATE", 19.826, -155.47, "Maunakea", "Hawaii", "United States", 4204, 6, 97, false, "https://www.cfht.hawaii.edu/"],
+  ["Roque de los Muchachos Observatory", "PUBLIC", 28.762, -17.879, "La Palma", "Canary Islands", "Spain", 2396, 8, 95, true, "https://www.iac.es/en/observatorios-de-canarias/roque-de-los-muchachos-observatory"],
+  ["Teide Observatory", "PUBLIC", 28.3, -16.51, "Tenerife", "Canary Islands", "Spain", 2390, 12, 91, false, "https://www.iac.es/en/observatorios-de-canarias/teide-observatory"],
+  ["Pic du Midi Observatory", "PUBLIC", 42.936, 0.142, "Bagneres-de-Bigorre", "Occitanie", "France", 2877, 18, 88, false, "https://www.picdumidi.com/"],
+  ["Jodrell Bank Observatory", "PUBLIC", 53.236, -2.307, "Macclesfield", "Cheshire", "United Kingdom", 77, 62, 58, false, "https://www.jodrellbank.net/"],
+  ["Siding Spring Observatory", "PUBLIC", -31.273, 149.064, "Coonabarabran", "New South Wales", "Australia", 1165, 14, 91, true, "https://www.sidingspringobservatory.com.au/"],
+  ["Parkes Observatory", "PUBLIC", -32.998, 148.263, "Parkes", "New South Wales", "Australia", 415, 22, 84, false, "https://www.csiro.au/en/about/facilities-collections/atnf/parkes-radio-telescope"],
+  ["South African Astronomical Observatory Sutherland", "PUBLIC", -32.379, 20.811, "Sutherland", "Northern Cape", "South Africa", 1798, 10, 94, true, "https://www.saao.ac.za/"],
+  ["MeerKAT Radio Observatory", "PRIVATE", -30.713, 21.443, "Carnarvon", "Northern Cape", "South Africa", 1086, 8, 94, false, "https://www.sarao.ac.za/"],
+].map(buildCatalogRecord)
+
+const expandedObservatories = [
+  ...observatories,
+  ...extendedObservatoryCatalog,
+]
+
+
+const officialObservatorySlugs = expandedObservatories.map((obs) => obs.slug);
 
 await prisma.savedObservatory.deleteMany({
   where: {
@@ -1172,7 +1377,7 @@ await prisma.observatory.deleteMany({
   },
 });
 
-for (const obs of observatories) {
+for (const obs of expandedObservatories) {
   await prisma.observatory.upsert({
     where: { slug: obs.slug },
     update: obs,
@@ -1180,7 +1385,7 @@ for (const obs of observatories) {
   })
 }
 
-console.log(`✅ Seeded ${observatories.length} observatories`)
+console.log(`✅ Seeded ${expandedObservatories.length} observatories`)
 
 
   // -----------------------------------------------------------
@@ -1228,4 +1433,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect()
   })
-

@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { UserPlus } from "lucide-react";
+import { AuthField, AuthPanel, AuthSubmitButton, PasswordField } from "../components/auth/AuthPanel";
 import { register } from "../services/auth.api";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/authState";
 
 export default function LovableRegister() {
   const navigate = useNavigate();
@@ -25,8 +27,16 @@ export default function LovableRegister() {
 
     setLoading(true);
     try {
-      await register(form.name, form.email, form.password);
-      navigate("/login", { replace: true, state: { registered: true } });
+      const result = await register(form.name, form.email, form.password);
+      navigate("/verify-email-sent", {
+        replace: true,
+        state: {
+          email: form.email,
+          verificationUrl: result?.verificationUrl,
+          verificationEmailSent: result?.verificationEmailSent,
+          justRegistered: true,
+        },
+      });
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Registration failed. Please try again.");
     } finally {
@@ -35,89 +45,66 @@ export default function LovableRegister() {
   };
 
   return (
-    <main className="auth-page">
-      <div className="auth-stars" aria-hidden="true" />
-      <section className="auth-shell">
-        <Link to="/" className="auth-brand">
-          <span>CV</span>
-          CosmoVision
-        </Link>
+    <AuthPanel
+      eyebrow="New explorer"
+      title="Register"
+      description="Create an account, then verify your email before signing in."
+      error={error}
+      footer={
+        <p>
+          Already have an account?{" "}
+          <Link to="/login" className="font-semibold text-cyan-200 hover:text-white">
+            Login
+          </Link>
+        </p>
+      }
+    >
+      <form onSubmit={handleSubmit} className="grid gap-4">
+        <AuthField
+          label="Display name"
+          value={form.name}
+          onChange={(name) => setForm((current) => ({ ...current, name }))}
+          placeholder="Your name"
+          minLength={2}
+          maxLength={50}
+        />
 
-        <div className="auth-card">
-          <div className="auth-header">
-            <p>New Explorer</p>
-            <h1>Register</h1>
-            <span>Create an account to unlock NOVA chat and your user profile.</span>
-          </div>
+        <AuthField
+          label="Email"
+          type="email"
+          value={form.email}
+          onChange={(email) => setForm((current) => ({ ...current, email }))}
+          placeholder="you@example.com"
+        />
 
-          {error && <div className="auth-error">{error}</div>}
+        <PasswordField
+          value={form.password}
+          onChange={(password) => setForm((current) => ({ ...current, password }))}
+          visible={showPass}
+          onToggle={() => setShowPass((value) => !value)}
+          placeholder="At least 8 characters"
+          minLength={8}
+        />
 
-          <form onSubmit={handleSubmit} className="auth-form">
-            <label>
-              Display name
-              <input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Your name"
-                minLength={2}
-                maxLength={50}
-                required
-              />
-            </label>
+        <PasswordField
+          label="Confirm password"
+          value={confirmPassword}
+          onChange={setConfirmPassword}
+          visible={showPass}
+          onToggle={() => setShowPass((value) => !value)}
+          placeholder="Repeat your password"
+          minLength={8}
+        />
 
-            <label>
-              Email
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="you@example.com"
-                required
-              />
-            </label>
-
-            <label>
-              Password
-              <div className="password-field">
-                <input
-                  type={showPass ? "text" : "password"}
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="At least 8 characters"
-                  minLength={8}
-                  required
-                />
-                <button type="button" onClick={() => setShowPass((value) => !value)}>
-                  {showPass ? "Hide" : "Show"}
-                </button>
-              </div>
-            </label>
-
-            <label>
-              Confirm password
-              <input
-                type={showPass ? "text" : "password"}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Repeat your password"
-                minLength={8}
-                required
-              />
-            </label>
-
-            <button type="submit" disabled={loading || authLoading} className="auth-submit">
-              {loading ? "Creating account..." : "Create account"}
-            </button>
-          </form>
-
-          <p className="mt-5 text-center text-sm text-slate-400">
-            Already have an account?{" "}
-            <Link to="/login" className="font-semibold text-cyan-200 hover:text-white">
-              Login
-            </Link>
-          </p>
-        </div>
-      </section>
-    </main>
+        <AuthSubmitButton
+          icon={<UserPlus className="h-4 w-4" />}
+          loading={loading}
+          loadingText="Creating account..."
+          disabled={authLoading}
+        >
+          Create account
+        </AuthSubmitButton>
+      </form>
+    </AuthPanel>
   );
 }

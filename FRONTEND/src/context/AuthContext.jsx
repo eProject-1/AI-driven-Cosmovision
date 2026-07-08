@@ -1,7 +1,6 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { AuthContext } from "./authState";
 import { login as loginApi, getMe } from "../services/auth.api.js";
-
-export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -11,7 +10,12 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem("cosmovision_token");
     if (token) {
       getMe()
-        .then(setUser)
+        .then((currentUser) => {
+          setUser(currentUser);
+          if (currentUser) {
+            localStorage.setItem("cosmovision_user", JSON.stringify(currentUser));
+          }
+        })
         .catch(() => {
           localStorage.removeItem("cosmovision_token");
           localStorage.removeItem("cosmovision_user");
@@ -42,5 +46,3 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
-
-export const useAuth = () => useContext(AuthContext);

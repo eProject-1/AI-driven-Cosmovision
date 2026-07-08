@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { PageShell } from "../components/lovable/PageShell";
 import { getObservatoryBySlug, toggleSaveObservatory } from "../services/observatory.api";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/authState";
 import { getObservatoryImage } from "../utils/observatoryImages";
 
 const mapUrl = (site) =>

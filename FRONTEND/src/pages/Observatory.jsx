@@ -1,30 +1,51 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Filter, LocateFixed, MapPin, Search, Star } from "lucide-react";
+import { Filter, LocateFixed, MapPin } from "lucide-react";
+import { AdminResourceActions } from "../components/admin/AdminResourceActions";
+import { FilterPill } from "../components/common/FilterControls";
+import { Pagination } from "../components/common/Pagination";
+import { SearchField } from "../components/common/SearchField";
 import { PageShell } from "../components/lovable/PageShell";
 import { SectionPanel } from "../components/lovable/Framing";
+import { useAuth } from "../context/authState";
 import {
   getNearbyObservatories,
   getObservatories,
   getObservatoryStats,
 } from "../services/observatory.api";
-import { getObservatoryImage } from "../utils/observatoryImages";
+import { getDefaultObservatoryImage, getObservatoryImage } from "../utils/observatoryImages";
 import { StargazingPlannerPanel } from "./StargazingPlanner";
 
 const typeFilters = [
   { value: "ALL", label: "All" },
-  { value: "PUBLIC", label: "Observatory" },
-  { value: "STARGAZING_SITE", label: "Stargazing" },
-  { value: "UNIVERSITY", label: "University" },
-  { value: "PRIVATE", label: "Private" },
+  { value: "PUBLIC", label: "Public Observatory" },
+  { value: "PRIVATE", label: "Research Observatory" },
+  { value: "STARGAZING_SITE", label: "Stargazing Site" },
 ];
+const observatoryCreateTemplate = {
+  name: "New Observatory",
+  slug: "new-observatory",
+  description: "Write a clear observatory description.",
+  country: "Vietnam",
+  province: "Hanoi",
+  address: "Hanoi, Vietnam",
+  type: "PUBLIC",
+  latitude: 21.0278,
+  longitude: 105.8342,
+};
 
 function mapEmbedUrl(site) {
   if (!site?.latitude || !site?.longitude) return null;
   const lat = Number(site.latitude);
   const lon = Number(site.longitude);
-  const delta = 0.08;
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${lon - delta}%2C${lat - delta}%2C${lon + delta}%2C${lat + delta}&layer=mapnik&marker=${lat}%2C${lon}`;
+  return `https://maps.google.com/maps?q=${lat},${lon}&z=9&output=embed`;
+}
+
+function typeLabel(value) {
+  if (value === "PUBLIC") return "Public observatory";
+  if (value === "PRIVATE") return "Research observatory";
+  if (value === "STARGAZING_SITE") return "Stargazing site";
+  return value;
 }
 
 function StatTile({ label, value }) {
@@ -36,62 +57,65 @@ function StatTile({ label, value }) {
   );
 }
 
-function ObservatoryCard({ site, compact = false }) {
-  const condition = site.observingCondition;
+function ObservatoryCard({ site, compact = false, onPreview, adminActions }) {
+  const cardLayout = compact
+    ? "grid gap-4 sm:grid-cols-[120px_1fr_auto]"
+    : "flex h-[420px] flex-col overflow-hidden";
+  const imageClass = compact
+    ? "h-32 w-full object-cover sm:h-24"
+    : "h-[235px] w-full object-cover";
 
   return (
-    <Link
-      to={`/observatory/${site.slug}`}
-      className="group grid gap-4 border-b border-white/10 bg-background/70 px-5 py-5 transition duration-300 hover:bg-white/[0.07] sm:grid-cols-[150px_1fr_auto]"
-    >
-      <img
-        src={getObservatoryImage(site)}
-        alt={site.name}
-        className="h-36 w-full rounded-lg object-cover sm:h-28"
-        loading="lazy"
-      />
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-display text-xl text-foreground transition group-hover:text-aurora">
-            {site.name}
-          </h3>
-          {site.isFeatured ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2.5 py-1 text-[11px] text-emerald-100">
-              <Star className="h-3.5 w-3.5" />
-              Featured
-            </span>
+    <article className="border border-white/10 bg-background/70">
+      <Link
+        to={`/observatory/${site.slug}`}
+        onMouseEnter={() => onPreview?.(site)}
+        onFocus={() => onPreview?.(site)}
+        className={`group transition duration-300 hover:-translate-y-0.5 hover:border-aurora/40 hover:bg-white/[0.08] hover:shadow-[0_18px_60px_rgba(67,177,255,0.13)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-aurora/70 ${cardLayout}`}
+      >
+        <img
+          src={getObservatoryImage(site)}
+          alt={site.name}
+          className={imageClass}
+          loading="lazy"
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = getDefaultObservatoryImage();
+          }}
+        />
+        <div className="flex flex-1 flex-col px-5 py-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-display text-xl text-foreground transition group-hover:text-aurora">
+              {site.name}
+            </h3>
+          </div>
+          {!compact ? (
+            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-foreground/60">
+              {site.description}
+            </p>
           ) : null}
+          <div className="mt-auto flex flex-wrap gap-2 pt-4 text-[11px] uppercase tracking-[0.18em] text-foreground/45">
+            <span>{site.province}</span>
+            <span>{typeLabel(site.type)}</span>
+            {site.elevation ? <span>{site.elevation}m</span> : null}
+            {site.distanceKm ? <span>{site.distanceKm} km</span> : null}
+          </div>
         </div>
-        {!compact ? (
-          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-foreground/60">
-            {site.description}
-          </p>
-        ) : null}
-        <div className="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.18em] text-foreground/45">
-          <span>{site.province}</span>
-          <span>{site.type}</span>
-          {site.elevation ? <span>{site.elevation}m</span> : null}
-          {site.distanceKm ? <span>{site.distanceKm} km</span> : null}
-        </div>
-      </div>
-      <div className="flex flex-row gap-2 text-sm text-foreground/65 sm:flex-col sm:items-end">
-        <span>Sky {site.skyQualityScore ?? "--"}</span>
-        <span>Light {site.lightPollutionScore ?? "--"}</span>
-        {condition ? (
-          <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-black">
-            {condition.label} {condition.score}
-          </span>
-        ) : null}
-      </div>
-    </Link>
+      </Link>
+      {adminActions ? <div className="border-t border-white/10 p-4">{adminActions}</div> : null}
+    </article>
   );
 }
 
 export default function LovableObservatory() {
+  const { user } = useAuth();
   const [observatories, setObservatories] = useState([]);
   const [nearby, setNearby] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [stats, setStats] = useState(null);
+  const [page, setPage] = useState(1);
+  const [previewSite, setPreviewSite] = useState(null);
+  const listTopRef = useRef(null);
   const [status, setStatus] = useState("loading");
   const [nearbyStatus, setNearbyStatus] = useState("idle");
   const [filters, setFilters] = useState({
@@ -103,9 +127,10 @@ export default function LovableObservatory() {
     minSkyQuality: "",
     maxLightPollution: "",
   });
+  const isAdmin = user?.role === "ADMIN";
 
   const query = useMemo(() => {
-    const params = { limit: 18 };
+    const params = { page, limit: 10 };
     if (filters.search.trim()) params.search = filters.search.trim();
     if (filters.province.trim()) params.province = filters.province.trim();
     if (filters.country.trim()) params.country = filters.country.trim();
@@ -114,9 +139,9 @@ export default function LovableObservatory() {
     if (filters.minSkyQuality) params.minSkyQuality = filters.minSkyQuality;
     if (filters.maxLightPollution) params.maxLightPollution = filters.maxLightPollution;
     return params;
-  }, [filters]);
+  }, [filters, page]);
 
-  useEffect(() => {
+  const loadObservatories = () => {
     let active = true;
     setStatus("loading");
 
@@ -129,6 +154,7 @@ export default function LovableObservatory() {
         setObservatories(result.observatories || []);
         setPagination(result.pagination || null);
         setStats(statsResult);
+        setPreviewSite((current) => current || result.observatories?.[0] || null);
         setStatus("ready");
       })
       .catch(() => {
@@ -138,13 +164,31 @@ export default function LovableObservatory() {
     return () => {
       active = false;
     };
-  }, [query]);
+  };
 
-  const featuredSites = observatories.filter((item) => item.isFeatured).slice(0, 4);
-  const mapSite = nearby[0] || featuredSites[0] || observatories[0];
+  useEffect(loadObservatories, [query]);
+
+  const mapSite = previewSite || nearby[0] || observatories[0];
   const mapUrl = mapEmbedUrl(mapSite);
+  const firstColumnCount = Math.ceil(observatories.length / 2);
+  const leftObservatories = observatories.slice(0, firstColumnCount);
+  const rightObservatories = observatories.slice(firstColumnCount);
+
+  const scrollToObservatoryList = () => {
+    window.setTimeout(() => {
+      listTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
+  };
+
+  const goToPage = (nextPage) => {
+    setPage(nextPage);
+    setPreviewSite(null);
+    scrollToObservatoryList();
+  };
 
   const updateFilter = (key, value) => {
+    setPage(1);
+    setPreviewSite(null);
     setFilters((current) => ({ ...current, [key]: value }));
   };
 
@@ -175,16 +219,25 @@ export default function LovableObservatory() {
 
   return (
     <PageShell
-      eyebrow="Chapter III"
       title="Observatory"
       lead="A database-backed catalog of observatories, stargazing sites, weather, and observing conditions."
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Total sites" value={stats?.total ?? pagination?.total} />
-        <StatTile label="Featured" value={stats?.featured} />
+        <StatTile label="Avg elevation" value={stats?.averages?.elevation ? `${stats.averages.elevation}m` : null} />
         <StatTile label="Avg sky" value={stats?.averages?.skyQualityScore} />
         <StatTile label="Avg light" value={stats?.averages?.lightPollutionScore} />
       </div>
+      {isAdmin ? (
+        <div className="mt-6">
+          <AdminResourceActions
+            resourceName="observatory"
+            endpoint="/observatory"
+            createTemplate={observatoryCreateTemplate}
+            onCreated={loadObservatories}
+          />
+        </div>
+      ) : null}
 
       <section className="mt-10">
         <div className="mb-6 max-w-3xl">
@@ -201,15 +254,13 @@ export default function LovableObservatory() {
 
       <SectionPanel variant="table" className="mt-8 overflow-visible">
         <div className="grid gap-4 bg-background/70 p-5 lg:grid-cols-[1.3fr_0.9fr_0.9fr_1fr]">
-          <label className="relative">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/35" />
-            <input
-              value={filters.search}
-              onChange={(event) => updateFilter("search", event.target.value)}
-              placeholder="Search observatory"
-              className="h-12 w-full border border-white/10 bg-black/25 pl-11 pr-4 text-base text-foreground outline-none transition focus:border-white/35"
-            />
-          </label>
+          <SearchField
+            value={filters.search}
+            onChange={(event) => updateFilter("search", event.target.value)}
+            placeholder="Search observatory"
+            inputClassName="h-12 pl-11 focus:border-white/35"
+            iconClassName="h-4 w-4"
+          />
           <input
             value={filters.province}
             onChange={(event) => updateFilter("province", event.target.value)}
@@ -230,46 +281,24 @@ export default function LovableObservatory() {
           />
         </div>
 
-        <div className="flex flex-col gap-4 border-t border-white/10 bg-background/70 px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col gap-4 border-t border-white/10 bg-background/70 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
             <Filter className="h-4 w-4 shrink-0 text-foreground/45" />
-            {typeFilters.map((type) => {
-              const active = filters.type === type.value;
-              return (
-                <button
-                  key={type.value}
-                  type="button"
-                  onClick={() => updateFilter("type", type.value)}
-                  className={`rounded-full border px-4 py-2 text-sm uppercase tracking-[0.18em] transition duration-300 hover:scale-[1.04] ${
-                    active
-                      ? "border-white bg-white text-black"
-                      : "border-white/10 bg-black/20 text-foreground/60 hover:border-white/30 hover:text-foreground"
-                  }`}
-                >
-                  {type.label}
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              onClick={() =>
-                setFilters({
-                  search: "",
-                  province: "",
-                  country: "",
-                  type: "ALL",
-                  equipment: "",
-                  minSkyQuality: "",
-                  maxLightPollution: "",
-                })
-              }
-              className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-sm uppercase tracking-[0.18em] text-foreground/60 transition duration-300 hover:scale-[1.04] hover:border-white/30 hover:text-foreground"
-            >
-              Reset
-            </button>
+            {typeFilters.map((type) => (
+              <FilterPill
+                key={type.value}
+                active={filters.type === type.value}
+                onClick={() => updateFilter("type", type.value)}
+                className="min-h-10 whitespace-nowrap px-4 text-[11px] tracking-[0.18em] sm:px-5"
+                activeClassName="border-white bg-white text-black"
+                inactiveClassName="border-white/10 bg-black/20 text-foreground/60 hover:border-white/30 hover:text-foreground"
+              >
+                {type.label}
+              </FilterPill>
+            ))}
           </div>
 
-          <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:min-w-[270px]">
+          <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:min-w-[270px] lg:shrink-0">
             <input
               value={filters.minSkyQuality}
               onChange={(event) => updateFilter("minSkyQuality", event.target.value)}
@@ -292,103 +321,131 @@ export default function LovableObservatory() {
         </div>
       </SectionPanel>
 
-      <div className="mt-10 grid gap-8 xl:grid-cols-[1fr_0.9fr]">
-        <div>
-          <div className="mb-5 flex items-center justify-between gap-4">
-            <h2 className="text-xs uppercase tracking-[0.35em] text-foreground/40">Database Observatory List</h2>
-            {pagination ? (
-              <span className="text-xs uppercase tracking-[0.2em] text-foreground/35">
-                {observatories.length}/{pagination.total}
-              </span>
-            ) : null}
-          </div>
+      <section ref={listTopRef} className="mt-8 scroll-mt-24">
+        <div className="mb-3 flex items-center justify-between gap-4">
+          <h2 className="text-xs uppercase tracking-[0.35em] text-foreground/40">Database Observatory List</h2>
+          {pagination ? (
+            <span className="text-xs uppercase tracking-[0.2em] text-foreground/35">
+              Page {pagination.page}/{pagination.totalPages || 1} - {observatories.length}/{pagination.total}
+            </span>
+          ) : null}
+        </div>
 
-          {status === "loading" ? <p className="text-sm text-foreground/60">Loading observatories...</p> : null}
-          {status === "error" ? <p className="text-sm text-red-200/80">Could not load observatories.</p> : null}
+        {pagination && pagination.totalPages > 1 ? (
+          <Pagination
+            className="mb-10 mt-6"
+            page={pagination.page || page}
+            totalPages={pagination.totalPages || 1}
+            disabled={status === "loading"}
+            onPageChange={goToPage}
+          />
+        ) : null}
 
-          <SectionPanel variant="table">
-            <ol>
-              {observatories.map((site) => (
+        {status === "loading" ? <p className="text-sm text-foreground/60">Loading observatories...</p> : null}
+        {status === "error" ? <p className="text-sm text-red-200/80">Could not load observatories.</p> : null}
+
+        <div className="grid items-start gap-8 xl:grid-cols-2">
+          <ol className="grid content-start gap-4">
+            {leftObservatories.map((site) => (
+              <li key={site.id}>
+                <ObservatoryCard
+                  site={site}
+                  onPreview={setPreviewSite}
+                  adminActions={
+                    isAdmin ? (
+                      <AdminResourceActions
+                        resourceName="observatory"
+                        endpoint="/observatory"
+                        slug={site.slug}
+                        item={site}
+                        onUpdated={loadObservatories}
+                        onDeleted={loadObservatories}
+                      />
+                    ) : null
+                  }
+                />
+              </li>
+            ))}
+          </ol>
+
+          <div className="grid content-start gap-4">
+            <section className="flex h-[420px] flex-col">
+              <div className="mb-3 flex h-10 shrink-0 items-center justify-between gap-4">
+                <h2 className="text-xs uppercase tracking-[0.35em] text-foreground/40">Nearby & Map</h2>
+                <button
+                  type="button"
+                  onClick={loadNearby}
+                  className="inline-flex h-10 items-center gap-2 rounded-full border border-white/15 bg-white px-4 text-sm font-medium text-black transition duration-300 hover:scale-[1.04]"
+                >
+                  <LocateFixed className="h-4 w-4" />
+                  Near me
+                </button>
+              </div>
+
+              <SectionPanel variant="table" className="min-h-0 flex-1 overflow-hidden">
+                {mapUrl ? (
+                  <iframe
+                    title={mapSite?.name || "Observatory map"}
+                    src={mapUrl}
+                    className="h-[250px] w-full border-0"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-[250px] items-center justify-center text-sm text-foreground/50">
+                    Map unavailable
+                  </div>
+                )}
+                {mapSite ? (
+                  <div className="flex min-h-[116px] items-start gap-3 border-t border-white/10 bg-background/75 px-5 py-4">
+                    <MapPin className="mt-1 h-4 w-4 text-aurora" />
+                    <div className="min-w-0">
+                      <div className="font-display text-lg text-foreground">{mapSite.name}</div>
+                      <div className="line-clamp-2 text-sm text-foreground/55">{mapSite.address}, {mapSite.province}</div>
+                    </div>
+                  </div>
+                ) : null}
+              </SectionPanel>
+
+              {nearbyStatus === "loading" ? <p className="mt-4 text-sm text-foreground/60">Finding nearby sites...</p> : null}
+              {nearbyStatus === "error" ? <p className="mt-4 text-sm text-red-200/80">Could not access location or nearby API.</p> : null}
+              {nearbyStatus === "unsupported" ? <p className="mt-4 text-sm text-red-200/80">Browser does not support geolocation.</p> : null}
+            </section>
+
+            <ol className="grid content-start gap-4">
+              {rightObservatories.map((site) => (
                 <li key={site.id}>
-                  <ObservatoryCard site={site} />
+                  <ObservatoryCard
+                    site={site}
+                    onPreview={setPreviewSite}
+                    adminActions={
+                      isAdmin ? (
+                        <AdminResourceActions
+                          resourceName="observatory"
+                          endpoint="/observatory"
+                          slug={site.slug}
+                          item={site}
+                          onUpdated={loadObservatories}
+                          onDeleted={loadObservatories}
+                        />
+                      ) : null
+                    }
+                  />
                 </li>
               ))}
             </ol>
-          </SectionPanel>
+          </div>
         </div>
 
-        <aside className="space-y-8">
-          <section>
-            <div className="mb-5 flex items-center justify-between gap-4">
-              <h2 className="text-xs uppercase tracking-[0.35em] text-foreground/40">Nearby & Map</h2>
-              <button
-                type="button"
-                onClick={loadNearby}
-                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white px-4 py-2 text-sm font-medium text-black transition duration-300 hover:scale-[1.04]"
-              >
-                <LocateFixed className="h-4 w-4" />
-                Near me
-              </button>
-            </div>
-
-            <SectionPanel variant="table" className="overflow-hidden">
-              {mapUrl ? (
-                <iframe
-                  title={mapSite?.name || "Observatory map"}
-                  src={mapUrl}
-                  className="h-72 w-full border-0"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="flex h-72 items-center justify-center text-sm text-foreground/50">
-                  Map unavailable
-                </div>
-              )}
-              {mapSite ? (
-                <div className="flex items-start gap-3 border-t border-white/10 bg-background/75 px-5 py-4">
-                  <MapPin className="mt-1 h-4 w-4 text-aurora" />
-                  <div>
-                    <div className="font-display text-lg text-foreground">{mapSite.name}</div>
-                    <div className="text-sm text-foreground/55">{mapSite.address}, {mapSite.province}</div>
-                  </div>
-                </div>
-              ) : null}
-            </SectionPanel>
-
-            {nearbyStatus === "loading" ? <p className="mt-4 text-sm text-foreground/60">Finding nearby sites...</p> : null}
-            {nearbyStatus === "error" ? <p className="mt-4 text-sm text-red-200/80">Could not access location or nearby API.</p> : null}
-            {nearbyStatus === "unsupported" ? <p className="mt-4 text-sm text-red-200/80">Browser does not support geolocation.</p> : null}
-          </section>
-
-          {nearby.length ? (
-            <section>
-              <h2 className="mb-5 text-xs uppercase tracking-[0.35em] text-foreground/40">Nearest Sites</h2>
-              <SectionPanel variant="table">
-                <ol>
-                  {nearby.slice(0, 5).map((site) => (
-                    <li key={site.id}>
-                      <ObservatoryCard site={site} compact />
-                    </li>
-                  ))}
-                </ol>
-              </SectionPanel>
-            </section>
-          ) : (
-            <section>
-              <h2 className="mb-5 text-xs uppercase tracking-[0.35em] text-foreground/40">Featured Sites</h2>
-              <SectionPanel variant="table">
-                <ol>
-                  {featuredSites.map((site) => (
-                    <li key={site.id}>
-                      <ObservatoryCard site={site} compact />
-                    </li>
-                  ))}
-                </ol>
-              </SectionPanel>
-            </section>
-          )}
-        </aside>
-      </div>
+        {pagination && pagination.totalPages > 1 ? (
+          <Pagination
+            className="mt-10"
+            page={pagination.page || page}
+            totalPages={pagination.totalPages || 1}
+            disabled={status === "loading"}
+            onPageChange={goToPage}
+          />
+        ) : null}
+      </section>
     </PageShell>
   );
 }

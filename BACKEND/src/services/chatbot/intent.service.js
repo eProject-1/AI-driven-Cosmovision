@@ -1,8 +1,5 @@
-
-// service/chatbot/intent.service.js
-
-import { hasKeyword, findMatchedKeywords } from '../../utils/fuzzyMatch.js';
-import { normalizeText } from '../../utils/normalize.js';
+import { findMatchedKeywords, hasKeyword } from "../../utils/fuzzy-match.util.js";
+import { normalizeText } from "../../utils/normalize.util.js";
 
 const INTENT_TYPES = {
   GENERAL: "general",
@@ -17,56 +14,75 @@ const INTENT_TYPES = {
   FAVORITE: "favorite",
 };
 
+const PERSISTED_INTENT_TYPES = {
+  [INTENT_TYPES.PLANET]: "PLANET_INFO",
+  [INTENT_TYPES.CONSTELLATION]: "CONSTELLATION_INFO",
+  [INTENT_TYPES.RECOMMENDATION]: "STARGAZING_RECOMMENDATION",
+  [INTENT_TYPES.WEATHER]: "WEATHER_CHECK",
+  [INTENT_TYPES.ASTRONOMY]: "GENERAL_ASTRONOMY",
+  [INTENT_TYPES.GENERAL]: "GENERAL_ASTRONOMY",
+  [INTENT_TYPES.NEWS]: "NEWS",
+  [INTENT_TYPES.GUIDE]: "GUIDE",
+  [INTENT_TYPES.RECOGNITION]: "IMAGE_RECOGNITION",
+  [INTENT_TYPES.FAVORITE]: "FAVORITE",
+};
+
+const VIETNAMESE_HINTS = [
+  "toi", "ban", "minh", "hay", "la", "gi",
+  "vi sao", "nhu the nao", "khi nao", "o dau", "co gi",
+  "quan sat", "chom sao", "hanh tinh", "bau troi", "dem nay", "thoi tiet",
+];
+
 const intentConfig = [
   {
     type: INTENT_TYPES.WEATHER,
-    keywords: ["thời tiết", "weather", "nhiệt độ", "temperature", "mưa", "rain", "nắng", "sunny", "humidity", "forecast", "mây", "cloud", "gió", "wind"],
+    keywords: ["thoi tiet", "nhiet do", "mua", "nang", "may", "gio", "weather", "temperature", "rain", "sunny", "humidity", "forecast", "cloud", "wind"],
     baseConfidence: 0.88,
   },
   {
     type: INTENT_TYPES.NEWS,
-    keywords: ["tin tức", "news", "mới nhất", "latest", "tóm tắt", "summary", "nasa", "mission", "khám phá", "discovery"],
+    keywords: ["tin tuc", "moi nhat", "tom tat", "kham pha", "news", "latest", "summary", "nasa", "mission", "discovery"],
     baseConfidence: 0.86,
   },
   {
     type: INTENT_TYPES.PLANET,
-    keywords: ["hành tinh", "planet", "sao thủy", "mercury", "sao kim", "venus", "trái đất", "earth", "sao hỏa", "mars", "sao mộc", "jupiter", "sao thổ", "saturn"],
+    keywords: ["hanh tinh", "sao thuy", "sao kim", "trai dat", "sao hoa", "sao moc", "sao tho", "planet", "mercury", "venus", "earth", "mars", "jupiter", "saturn", "uranus", "neptune"],
     baseConfidence: 0.87,
   },
   {
     type: INTENT_TYPES.CONSTELLATION,
-    keywords: ["chòm sao", "constellation", "orion", "ursa", "scorpio", "gemini", "bản đồ sao", "ngôi sao"],
+    keywords: ["chom sao", "ban do sao", "ngoi sao", "constellation", "orion", "ursa", "scorpio", "gemini", "taurus", "leo"],
     baseConfidence: 0.85,
   },
   {
     type: INTENT_TYPES.RECOMMENDATION,
-    keywords: ["gợi ý", "recommend", "nên ngắm", "best time", "quan sát", "stargazing", "phù hợp", "personalized", "đêm nay"],
+    keywords: ["goi y", "nen ngam", "quan sat", "phu hop", "dem nay", "recommend", "best time", "stargazing", "personalized"],
     baseConfidence: 0.84,
   },
   {
     type: INTENT_TYPES.ASTRONOMY,
-    keywords: ["thiên văn", "astronomy", "universe", "galaxy", "black hole", "sao chổi", "meteor", "eclipse", "vũ trụ"],
+    keywords: ["thien van", "sao choi", "vu tru", "astronomy", "universe", "galaxy", "black hole", "meteor", "eclipse"],
     baseConfidence: 0.82,
   },
   {
     type: INTENT_TYPES.GUIDE,
-    keywords: ["hướng dẫn", "how to", "dùng website", "làm sao", "help", "tutorial", "hỏi đáp"],
+    keywords: ["huong dan", "lam sao", "dung website", "how to", "help", "tutorial"],
     baseConfidence: 0.83,
   },
   {
     type: INTENT_TYPES.RECOGNITION,
-    keywords: ["nhận diện", "recognize", "upload ảnh", "ảnh bầu trời", "identify constellation", "chụp sao"],
-    baseConfidence: 0.80,
+    keywords: ["nhan dien", "anh bau troi", "chup sao", "recognize", "upload anh", "identify constellation"],
+    baseConfidence: 0.8,
   },
   {
     type: INTENT_TYPES.FAVORITE,
-    keywords: ["yêu thích", "favorite", "thích", "lưu", "save", "đánh dấu"],
+    keywords: ["yeu thich", "thich", "luu", "danh dau", "favorite", "save"],
     baseConfidence: 0.75,
   },
 ];
 
-export function detectIntent(message = "") {
-  const normalizedMessage = normalizeText(message);
+function detectIntent(message = "") {
+  const normalizedMessage = normalizeForIntent(message);
 
   if (!normalizedMessage) {
     return {
@@ -78,41 +94,17 @@ export function detectIntent(message = "") {
   }
 
   const messageWords = normalizedMessage.split(/\s+/);
-  const detectedIntents = [];
+  const detectedIntents = intentConfig
+    .map((config) => buildIntentMatch(config, normalizedMessage, messageWords))
+    .filter(Boolean)
+    .sort((a, b) => b.confidence - a.confidence);
 
-  for (const config of intentConfig) {
-    const matchedKeywords = findMatchedKeywords(normalizedMessage, config.keywords);
-
-    if (matchedKeywords.length > 0) {
-      let confidence = config.baseConfidence;
-
-      if (matchedKeywords.length > 1) {
-        confidence += (matchedKeywords.length - 1) * 0.035;
-      }
-      if (normalizedMessage.length > 45) confidence += 0.04;
-      if (messageWords.length < 4) confidence -= 0.07;
-      if (messageWords.length > 12) confidence += 0.02;
-
-      confidence = Math.min(0.98, Math.max(0.65, confidence));
-
-      detectedIntents.push({
-        type: config.type,
-        confidence: parseFloat(confidence.toFixed(2)),
-        reason: `Matched ${matchedKeywords.length} keyword(s): [${matchedKeywords.join(", ")}]`,
-        matchedKeywords
-      });
-    }
-  }
-
-  detectedIntents.sort((a, b) => b.confidence - a.confidence);
-
-  const primaryIntent = detectedIntents.length > 0
-    ? detectedIntents[0]
-    : {
-        type: INTENT_TYPES.GENERAL,
-        confidence: 0.52,
-        reason: "No specific intent matched.",
-      };
+  const primaryIntent =
+    detectedIntents[0] || {
+      type: INTENT_TYPES.GENERAL,
+      confidence: 0.52,
+      reason: "No specific intent matched.",
+    };
 
   return {
     type: primaryIntent.type,
@@ -124,40 +116,80 @@ export function detectIntent(message = "") {
 }
 
 function extractPlanetName(message = "") {
-  const normalized = normalizeText(message);
+  const normalized = normalizeForIntent(message);
   const planetMap = {
-    mercury: ["mercury", "sao thủy"],
+    mercury: ["mercury", "sao thuy"],
     venus: ["venus", "sao kim"],
-    earth: ["earth", "trái đất"],
-    mars: ["mars", "sao hỏa"],
-    jupiter: ["jupiter", "sao mộc"],
-    saturn: ["saturn", "sao thổ"],
+    earth: ["earth", "trai dat"],
+    mars: ["mars", "sao hoa"],
+    jupiter: ["jupiter", "sao moc"],
+    saturn: ["saturn", "sao tho"],
     uranus: ["uranus"],
     neptune: ["neptune"],
   };
 
   for (const [planet, keywords] of Object.entries(planetMap)) {
-    if (hasKeyword(normalized, keywords)) {
-      return planet;
-    }
+    if (hasKeyword(normalized, keywords)) return planet;
   }
+
   return null;
 }
 
-function extractConstellationName(message = "") {
-  const normalized = normalizeText(message);
-  const commonConstellations = ["orion", "ursa", "scorpio", "gemini", "taurus", "leo", "chòm sao"];
+function detectResponseLanguage(message = "") {
+  const raw = String(message);
+  if (/[à-ỹđ]/i.test(raw)) return "vi";
 
-  for (const name of commonConstellations) {
-    if (hasKeyword(normalized, [name])) {
-      return name;
-    }
-  }
-  return null;
+  const normalized = normalizeForIntent(raw);
+  return VIETNAMESE_HINTS.some((hint) => hasPhrase(normalized, hint)) ? "vi" : "en";
+}
+
+function toPersistenceIntentType(intent) {
+  const type = intent?.primaryIntent?.type || intent?.type || INTENT_TYPES.GENERAL;
+  return PERSISTED_INTENT_TYPES[type] || "UNKNOWN";
+}
+
+function buildIntentMatch(config, normalizedMessage, messageWords) {
+  const matchedKeywords = findMatchedKeywords(normalizedMessage, config.keywords);
+  if (!matchedKeywords.length) return null;
+
+  let confidence = config.baseConfidence;
+  if (matchedKeywords.length > 1) confidence += (matchedKeywords.length - 1) * 0.035;
+  if (normalizedMessage.length > 45) confidence += 0.04;
+  if (messageWords.length < 4) confidence -= 0.07;
+  if (messageWords.length > 12) confidence += 0.02;
+
+  confidence = Math.min(0.98, Math.max(0.65, confidence));
+
+  return {
+    type: config.type,
+    confidence: Number(confidence.toFixed(2)),
+    reason: `Matched ${matchedKeywords.length} keyword(s): [${matchedKeywords.join(", ")}]`,
+    matchedKeywords,
+  };
+}
+
+function normalizeForIntent(text = "") {
+  return normalizeText(stripVietnameseTone(text));
+}
+
+function stripVietnameseTone(text = "") {
+  return String(text)
+    .toLowerCase()
+    .replace(/\u0111/g, "d")
+    .replace(/\u0110/g, "d")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function hasPhrase(text, phrase) {
+  return new RegExp(`(^|\\s)${phrase.replace(/\s+/g, "\\s+")}(\\s|$)`, "i").test(text);
 }
 
 export {
   INTENT_TYPES,
+  detectIntent,
+  detectResponseLanguage,
   extractPlanetName,
-  extractConstellationName,
+  normalizeForIntent,
+  toPersistenceIntentType,
 };

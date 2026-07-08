@@ -1,5 +1,6 @@
-import { asyncHandler } from "../../utils/asyncHandler.js";
-import { sendSuccess, sendError } from "../../utils/response.util.js";
+import { asyncHandler } from "../../utils/async-handler.util.js";
+import { sendSuccess } from "../../utils/response.util.js";
+import { parseOrSendError } from "../../utils/validation.util.js";
 
 import {
   getNewsQuerySchema,
@@ -11,6 +12,8 @@ import {
 } from "./news.validation.js";
 
 import {
+  createNewsArticle,
+  deleteNewsArticle,
   getNewsList,
   getNewsBySlug,
   fetchLatestNews,
@@ -26,16 +29,14 @@ import {
   generateNewsAiTags,
   explainNewsArticle,
   answerNewsQuestion,
+  updateNewsArticle,
 } from "./news.service.js";
 
 export const listNews = asyncHandler(async (req, res) => {
-  const parsed = getNewsQuerySchema.safeParse(req.query);
+  const query = parseOrSendError(getNewsQuerySchema, req.query, res);
+  if (!query) return;
 
-  if (!parsed.success) {
-    return sendError(res, "Validation failed", 400, parsed.error.flatten().fieldErrors);
-  }
-
-  const data = await getNewsList(parsed.data);
+  const data = await getNewsList(query);
   return sendSuccess(res, data, "News articles fetched successfully");
 });
 
@@ -44,25 +45,34 @@ export const getNewsDetail = asyncHandler(async (req, res) => {
   return sendSuccess(res, data, "News article fetched successfully");
 });
 
+export const createNews = asyncHandler(async (req, res) => {
+  const data = await createNewsArticle(req.body);
+  return sendSuccess(res, data, "News article created successfully", 201);
+});
+
+export const updateNews = asyncHandler(async (req, res) => {
+  const data = await updateNewsArticle(req.params.slug, req.body);
+  return sendSuccess(res, data, "News article updated successfully");
+});
+
+export const deleteNews = asyncHandler(async (req, res) => {
+  const data = await deleteNewsArticle(req.params.slug);
+  return sendSuccess(res, data, "News article deleted successfully");
+});
+
 export const fetchNews = asyncHandler(async (req, res) => {
-  const parsed = fetchNewsSchema.safeParse(req.body);
+  const body = parseOrSendError(fetchNewsSchema, req.body, res);
+  if (!body) return;
 
-  if (!parsed.success) {
-    return sendError(res, "Validation failed", 400, parsed.error.flatten().fieldErrors);
-  }
-
-  const data = await fetchLatestNews(parsed.data);
+  const data = await fetchLatestNews(body);
   return sendSuccess(res, data, "External astronomy news fetched successfully", 201);
 });
 
 export const refreshNews = asyncHandler(async (req, res) => {
-  const parsed = fetchNewsSchema.safeParse(req.body || {});
+  const body = parseOrSendError(fetchNewsSchema, req.body || {}, res);
+  if (!body) return;
 
-  if (!parsed.success) {
-    return sendError(res, "Validation failed", 400, parsed.error.flatten().fieldErrors);
-  }
-
-  const data = await runNewsMaintenance(parsed.data);
+  const data = await runNewsMaintenance(body);
   return sendSuccess(res, data, "News maintenance completed successfully", 201);
 });
 
@@ -83,24 +93,14 @@ export const fetchExoplanetNews = asyncHandler(async (req, res) => {
 });
 
 export const summarizeNews = asyncHandler(async (req, res) => {
-  const parsed = summarizeNewsSchema.safeParse(req.body);
+  const body = parseOrSendError(summarizeNewsSchema, req.body, res);
+  if (!body) return;
 
-  if (!parsed.success) {
-    return sendError(res, "Validation failed", 400, parsed.error.flatten().fieldErrors);
-  }
-
-  const data = await summarizeNewsArticle(req.params.id, parsed.data);
+  const data = await summarizeNewsArticle(req.params.id, body);
   return sendSuccess(res, data, "News article summarized successfully");
 });
 
-function parseAiRequest(req, res) {
-  const parsed = newsAiRequestSchema.safeParse(req.body || {});
-  if (!parsed.success) {
-    sendError(res, "Validation failed", 400, parsed.error.flatten().fieldErrors);
-    return null;
-  }
-  return parsed.data;
-}
+const parseAiRequest = (req, res) => parseOrSendError(newsAiRequestSchema, req.body || {}, res);
 
 export const aiSummary = asyncHandler(async (req, res) => {
   const body = parseAiRequest(req, res);
@@ -136,24 +136,18 @@ export const aiExplain = asyncHandler(async (req, res) => {
 });
 
 export const aiQuestion = asyncHandler(async (req, res) => {
-  const parsed = newsQuestionSchema.safeParse(req.body || {});
+  const body = parseOrSendError(newsQuestionSchema, req.body || {}, res);
+  if (!body) return;
 
-  if (!parsed.success) {
-    return sendError(res, "Validation failed", 400, parsed.error.flatten().fieldErrors);
-  }
-
-  const data = await answerNewsQuestion(req.params.id, parsed.data.question);
+  const data = await answerNewsQuestion(req.params.id, body.question);
   return sendSuccess(res, data, "News question answered successfully");
 });
 
 export const cleanupNews = asyncHandler(async (req, res) => {
-  const parsed = cleanupNewsSchema.safeParse(req.body || {});
+  const body = parseOrSendError(cleanupNewsSchema, req.body || {}, res);
+  if (!body) return;
 
-  if (!parsed.success) {
-    return sendError(res, "Validation failed", 400, parsed.error.flatten().fieldErrors);
-  }
-
-  const data = await cleanupOldNews(parsed.data);
+  const data = await cleanupOldNews(body);
   return sendSuccess(res, data, "Old news articles cleaned up successfully");
 });
 

@@ -1,6 +1,3 @@
-import api from "./api.js";
+import { getData } from "./api.js";
 
-export const getPlanetBySlug = async (slug) => {
-  const { data } = await api.get(`/astronomy/planets/${slug}`);
-  return data.data;
-};
+export const getPlanetBySlug = (slug) => getData(`/astronomy/planets/${slug}`);

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Compass, LocateFixed, Search, Sparkles } from "lucide-react";
+import { Compass, LocateFixed, Sparkles } from "lucide-react";
+import { SearchField } from "../components/common/SearchField";
 import { PageShell } from "../components/lovable/PageShell";
 import { DividerList, SectionPanel } from "../components/lovable/Framing";
 import { smartSearch } from "../services/search.api";
@@ -116,15 +117,12 @@ export function SmartSearchPanel() {
           }}
           className="grid gap-4"
         >
-          <label className="relative block">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground/35" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Ask for planets, constellations, observatories, news..."
-              className="min-h-14 w-full rounded-2xl border border-white/10 bg-black/25 pl-12 pr-4 text-base text-foreground outline-none transition focus:border-cyan-200/45"
-            />
-          </label>
+          <SearchField
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Ask for planets, constellations, observatories, news..."
+            inputClassName="min-h-14 rounded-2xl"
+          />
 
           <div className="flex flex-wrap items-center gap-3">
             <button

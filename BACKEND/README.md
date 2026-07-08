@@ -1,255 +1,122 @@
-## 1. Tổng quan dự án (Project Overview)
-- **Công nghệ chính**: Node.js, Prisma ORM, JavaScript, Express.js ,PostgreSQL (Neon).
-- **Mục tiêu ứng dụng**:  Ứng dụng cung cấp kiến thức thiên văn học và tích hợp Chatbot AI.
-- **Các Module đã hoàn thành**:
-  * `auth`: Quản lý xác thực, phân quyền người dùng.
-  * `chatbot`: Xử lý logic hội thoại tích hợp AI.(hiện chưa có API NASA , Weather)
+# CosmoVision AI - Backend
 
----
+Backend API for CosmoVision AI, built with Node.js, Express, Prisma, and PostgreSQL.
 
-COSMOVISION-AI
-├─ BACKEND
-│  ├─ package-lock.json
-│  ├─ package.json
-│  ├─ prisma
-│  │  ├─ migrations
-│  │  │  ├─ 20260611081449_init
-│  │  │  │  └─ migration.sql
-│  │  │  ├─ 20260617053138_add_verification_token
-│  │  │  │  └─ migration.sql
-│  │  │  ├─ 20260618173913_update_planet_schema
-│  │  │  │  └─ migration.sql
-│  │  │  ├─ 20260618175057_update_observatory_schema
-│  │  │  │  └─ migration.sql
-│  │  │  └─ migration_lock.toml
-│  │  ├─ schema.prisma
-│  │  └─ seed.js
-│  ├─ README.md
-│  ├─ render.yaml
-│  └─ src
-│     ├─ app.js
-│     ├─ config
-│     │  ├─ db.js
-│     │  ├─ env.js
-│     │  └─ groq.js
-│     ├─ middlewares
-│     │  ├─ auth.middleware.js
-│     │  ├─ error.middleware.js
-│     │  ├─ role.middleware.js
-│     │  ├─ upload.middleware.js
-│     │  └─ validate.middleware.js
-│     ├─ modules
-│     │  ├─ astronomy
-│     │  │  ├─ constellations
-│     │  │  └─ planets
-│     │  │     ├─ planet.controller.js
-│     │  │     └─ planet.service.js
-│     │  ├─ auth
-│     │  │  ├─ auth.controller.js
-│     │  │  ├─ auth.service.js
-│     │  │  └─ auth.validation.js
-│     │  ├─ chatbot
-│     │  │  ├─ chatbot.controller.js
-│     │  │  ├─ chatbot.service.js
-│     │  │  └─ chatbot.validation.js
-│     │  ├─ dashboard
-│     │  ├─ news
-│     │  ├─ observatory
-│     │  ├─ recommendation
-│     │  └─ user
-│     ├─ server.js
-│     ├─ services
-│     │  ├─ analytics
-│     │  │  └─ analytics.service.js
-│     │  ├─ chatbot
-│     │  │  ├─ intent.service.js
-│     │  │  ├─ memory.service.js
-│     │  │  ├─ prompt.service.js
-│     │  │  └─ recommendation.service.js
-│     │  └─ external
-│     │     ├─ maps.service.js
-│     │     ├─ nasa.service.js
-│     │     ├─ news.service.js
-│     │     └─ weather.service.js
-│     └─ utils
-│        ├─ AppError.js
-│        ├─ asyncHandler.js
-│        ├─ fuzzyMatch.js
-│        ├─ jwt.util.js
-│        ├─ normalize.js
-│        └─ response.util.js
-├─ DOCS
-│  └─ ProjectContext.md
-├─ FRONTEND
-│  ├─ eslint.config.js
-│  ├─ index.css
-│  ├─ index.html
-│  ├─ package-lock.json
-│  ├─ package.json
-│  ├─ public
-│  │  ├─ favicon.svg
-│  │  └─ icons.svg
-│  ├─ README.md
-│  ├─ src
-│  │  ├─ App.jsx
-│  │  ├─ assets
-│  │  │  ├─ hero.png
-│  │  │  ├─ react.svg
-│  │  │  └─ vite.svg
-│  │  ├─ components
-│  │  │  ├─ chatbot
-│  │  │  │  ├─ ChatBubble.jsx
-│  │  │  │  ├─ ChatInput.jsx
-│  │  │  │  ├─ ChatWidget.jsx
-│  │  │  │  ├─ ChatWindow.jsx
-│  │  │  │  ├─ MessageBubble.jsx
-│  │  │  │  ├─ MessageList.jsx
-│  │  │  │  └─ TypingIndicator.jsx
-│  │  │  └─ common
-│  │  │     ├─ Footer.jsx
-│  │  │     ├─ Loader.jsx
-│  │  │     └─ Navbar.jsx
-│  │  ├─ context
-│  │  │  ├─ AuthContext.jsx
-│  │  │  └─ ChatbotContext.jsx
-│  │  ├─ hooks
-│  │  │  ├─ useAuth.js
-│  │  │  ├─ useChatbot.js
-│  │  │  └─ useLocation.js
-│  │  ├─ main.jsx
-│  │  ├─ pages
-│  │  │  ├─ Constellation.jsx
-│  │  │  ├─ Dashboard.jsx
-│  │  │  ├─ Home.jsx
-│  │  │  ├─ Login.jsx
-│  │  │  ├─ News.jsx
-│  │  │  ├─ Observatory.jsx
-│  │  │  ├─ Planets.jsx
-│  │  │  ├─ Profile.jsx
-│  │  │  └─ Register.jsx
-│  │  ├─ services
-│  │  │  ├─ api.js
-│  │  │  ├─ astronomy.api.js
-│  │  │  ├─ auth.api.js
-│  │  │  ├─ chatbot.api.js
-│  │  │  ├─ dashboard.api.js
-│  │  │  ├─ news.api.js
-│  │  │  ├─ observatory.api.js
-│  │  │  └─ user.api.js
-│  │  └─ utils
-│  │     ├─ astronomyData.js
-│  │     ├─ constants.js
-│  │     ├─ formatDate.js
-│  │     └─ helper.js
-│  ├─ tailwind.config.js
-│  ├─ vercel.json
-│  └─ vite.config.js
-└─ README.md
+## Requirements
 
---------------------DATABASE--------------------
+- Node.js 20+
+- npm
+- PostgreSQL database URL
 
-generator client {
-  provider = "prisma-client-js"
-}
+## Install
 
-datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-}
+```bash
+cd BACKEND
+npm install
+```
 
-model User {
-  id                 String             @id @default(cuid())
-  email              String             @unique
-  username           String             @unique
-  passwordHash       String?
-  displayName        String?
-  avatarUrl          String?
-  role               Role               @default(USER)
-  provider           Provider           @default(LOCAL)
-  providerId         String?
-  isVerified         Boolean            @default(false)
-  verificationToken  String?            @unique
-  isActive           Boolean            @default(true)
-  lastLoginAt        DateTime?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  analytics          Analytics[]
-  chatSessions       ChatSession[]
-  imageUploads       ImageUpload[]
-  recommendations    Recommendation[]
-  refreshTokens      RefreshToken[]
-  savedEvents        SavedEvent[]
-  savedObservatories SavedObservatory[]
-  preferences        UserPreference?
-  profile            UserProfile?
+Create `BACKEND/.env` before running the app. Do not commit real secrets.
 
-  @@map("users")
-}
+```env
+NODE_ENV=development
+PORT=5000
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE?sslmode=require"
+JWT_SECRET="replace-with-a-strong-secret"
+JWT_EXPIRES_IN="7d"
+API_PUBLIC_URL="http://localhost:5000"
 
-model ChatSession {
-  id        String        @id @default(cuid())
-  userId    String
-  title     String?
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  messages  ChatMessage[]
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+GROQ_API_KEY=""
+GROQ_MODEL="llama-3.1-8b-instant"
+GROQ_VISION_MODEL="meta-llama/llama-4-scout-17b-16e-instruct"
+GROQ_TEMPERATURE=0.7
+GROQ_MAX_TOKENS=800
 
-  @@index([userId])
-  @@map("chat_sessions")
-}
+NASA_API_KEY=""
+OPENWEATHER_API_KEY=""
 
-model ChatMessage {
-  id         String      @id @default(cuid())
-  sessionId  String
-  role       String
-  content    String
-  intent     IntentType  @default(UNKNOWN)
-  tokensUsed Int?
-  modelUsed  String?     @default("llama-3.1-8b-instant")
-  createdAt  DateTime    @default(now())
-  session    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+SMTP_HOST=""
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=""
+SMTP_PASS=""
+EMAIL_FROM="CosmoVision <no-reply@cosmovision.app>"
+EMAIL_DEV_FALLBACK=true
+EMAIL_VERIFICATION_TOKEN_TTL_MINUTES=60
+```
 
-  @@index([sessionId])
-  @@map("chat_messages")
-}
+## Database
 
-model Planet {
-  id                  String   @id @default(cuid())
+```bash
+npm run db:push
+npm run db:seed
+```
 
-  name                String   @unique
-  slug                String   @unique
+Optional Prisma Studio:
 
-  type                String
-  description         String
+```bash
+npm run db:studio
+```
 
-  imageUrl            String?
+## Run
 
-  massKg              Float?
-  diameterKm          Float?
-  gravityMs2          Float?
+Development:
 
-  distanceFromSunAu   Float?
-  distanceFromEarthKm Float?
+```bash
+npm run dev
+```
 
-  orbitalPeriodDays   Float?
-  rotationPeriodHours Float?
+Default API URL:
 
-  avgTempCelsius      Float?
+```text
+http://localhost:5000/api
+```
 
-  atmosphere          String[] @default([])
+## Useful Scripts
 
-  numberOfMoons       Int?     @default(0)
-  hasRings            Boolean  @default(false)
+```bash
+npm run planets:sync
+npm run constellations:sync
+npm run ml:download:constellations
+npm run ml:generate:constellations
+npm run ml:curate:constellations
+npm run ml:train:constellations
+npm run ml:predict:constellation
+```
 
-  discoveredBy        String?
-  discoveryYear       Int?
-  
-  aiFunFacts          String[] @default([])
-  isVisible           Boolean  @default(true)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+ML scripts require the Python virtual environment under `BACKEND/.venv`.
 
-  @@map("planets")
-}
+## Naming Convention
+
+Folders:
+
+- Use lowercase names.
+- Use kebab-case for multi-word folders.
+- Group business features under `src/modules/<feature>`.
+- Put shared integrations under `src/services/<provider-or-domain>`.
+- Put shared cross-cutting helpers under `src/utils`.
+
+Backend files:
+
+- Use kebab-case.
+- Use role suffixes for module files: `<feature>.controller.js`, `<feature>.service.js`, `<feature>.routes.js`, `<feature>.validation.js`, `<feature>.helpers.js`.
+- Use `<name>.middleware.js` for middleware files.
+- Use `<name>.util.js` for shared utilities.
+- Use `<name>.api.js` only in frontend, not backend.
+
+Current utility names follow this standard:
+
+```text
+app.error.util.js
+async.handler.util.js
+email.verification.util.js
+fuzzy.match.util.js
+geo.util.js
+jwt.util.js
+logger.util.js
+normalize.util.js
+response.util.js
+service.util.js
+validation.util.js
+```
+
+Avoid adding new camelCase or PascalCase backend filenames unless the file exports a class and the existing folder already uses that convention.

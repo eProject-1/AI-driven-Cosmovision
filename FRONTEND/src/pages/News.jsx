@@ -1,7 +1,12 @@
 
 import { useEffect, useState } from "react";
+import { AdminResourceActions } from "../components/admin/AdminResourceActions";
+import { FilterPill } from "../components/common/FilterControls";
+import { Pagination } from "../components/common/Pagination";
+import { SearchField } from "../components/common/SearchField";
 import { PageShell } from "../components/lovable/PageShell";
 import { DividerList } from "../components/lovable/Framing";
+import { useAuth } from "../context/authState";
 import {
   askNewsQuestion,
   explainNewsArticle,
@@ -14,6 +19,135 @@ import {
 
 const PAGE_SIZE = 6;
 const categories = ["ALL", "GENERAL", "SPACE_EXPLORATION", "SOLAR_SYSTEM", "DEEP_SPACE", "TECHNOLOGY"];
+const newsCreateTemplate = {
+  title: "New astronomy article",
+  slug: "new-astronomy-article",
+  summary: "Write a short summary.",
+  content: "Write the article content.",
+  source: "CosmoVision",
+  sourceUrl: "https://example.com",
+  category: "GENERAL",
+  publishedAt: new Date().toISOString(),
+};
+
+function stripAiMarkdown(value = "") {
+  return String(value)
+    .replace(/\*\*/g, "")
+    .replace(/__+/g, "")
+    .replace(/`+/g, "")
+    .trim();
+}
+
+function parseJsonResult(value) {
+  const raw = String(value || "")
+    .replace(/```json|```/gi, "")
+    .trim();
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    const match = raw.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+    if (!match) return null;
+
+    try {
+      return JSON.parse(match[0]);
+    } catch {
+      return null;
+    }
+  }
+}
+
+function collectAiLines(value, lines = []) {
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectAiLines(item, lines));
+    return lines;
+  }
+
+  if (value && typeof value === "object") {
+    Object.values(value).forEach((item) => collectAiLines(item, lines));
+    return lines;
+  }
+
+  const text = stripAiMarkdown(value);
+  if (text) lines.push(text);
+  return lines;
+}
+
+function normalizeStructuredAiLine(line) {
+  return stripAiMarkdown(line)
+    .replace(/^\s*[-*.\u2022]\s*/, "")
+    .replace(/^\s*\d+[.)]\s*/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getStructuredAiType(line, text) {
+  const raw = String(line || "").trim();
+  if (text.endsWith("?")) return "question";
+  if (/^\.\s+/.test(raw) || /^\u2022\s+/.test(raw)) return "sub";
+  return "main";
+}
+
+function hasStructuredAiContent(text) {
+  return String(text)
+    .trim()
+    .split("")
+    .some((char) => !`[]{}"':,`.includes(char));
+}
+
+function toStructuredAiItems(value) {
+  const parsed = parseJsonResult(value);
+  const sourceLines = parsed ? collectAiLines(parsed) : String(value || "").split(/\n+/);
+
+  return sourceLines
+    .flatMap((line) => String(line).split(/(?=\s[-*.\u2022]\s+)/g))
+    .map((line) => {
+      const text = normalizeStructuredAiLine(line);
+      return {
+        text,
+        type: getStructuredAiType(line, text),
+      };
+    })
+    .filter((item) => item.text)
+    .filter((item) => hasStructuredAiContent(item.text));
+}
+
+function StructuredAiResult({ value }) {
+  const items = toStructuredAiItems(value);
+  if (!items.length) return null;
+
+  return (
+    <div className="mt-4 space-y-4 rounded-2xl border border-cyan-200/15 bg-cyan-950/20 p-5 text-[17px] leading-8 text-foreground/85">
+      {items.map((item, index) => {
+        const key = `${item.text}-${index}`;
+
+        if (item.type === "question") {
+          return (
+            <p key={key} className="font-bold text-white">
+              {item.text}
+            </p>
+          );
+        }
+
+        if (item.type === "sub") {
+          return (
+            <p key={key} className="ml-6 flex gap-3 text-[16px] leading-7 text-foreground/75">
+              <span className="mt-3 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-200/70" />
+              <span>{item.text}</span>
+            </p>
+          );
+        }
+
+        return (
+          <p key={key} className="flex gap-3">
+            <span className="shrink-0 text-cyan-100/90">-</span>
+            <span>{item.text}</span>
+          </p>
+        );
+      })}
+    </div>
+  );
+}
 
 function NewsAiPanel({ story, onArticleUpdate }) {
   const [loadingAction, setLoadingAction] = useState("");
@@ -122,24 +256,22 @@ function NewsAiPanel({ story, onArticleUpdate }) {
 
       {loadingAction ? <p className="mt-3 text-sm text-cyan-100/80">AI is working on {loadingAction}...</p> : null}
       {error ? <p className="mt-3 text-sm text-red-200/85">{error}</p> : null}
-      {activeResult ? (
-        <div className="mt-4 whitespace-pre-wrap rounded-2xl border border-cyan-200/15 bg-cyan-950/20 p-4 text-sm leading-relaxed text-foreground/85">
-          {activeResult}
-        </div>
-      ) : null}
+      {activeResult ? <StructuredAiResult value={activeResult} /> : null}
     </div>
   );
 }
 
 export default function LovableNews() {
+  const { user } = useAuth();
   const [stories, setStories] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("ALL");
+  const isAdmin = user?.role === "ADMIN";
 
-  useEffect(() => {
+  const loadNews = (options = {}) => {
     setLoading(true);
 
     const params = {
@@ -149,7 +281,7 @@ export default function LovableNews() {
       ...(search ? { search } : {}),
     };
 
-    getNewsList(params)
+    getNewsList(params, { skipCache: options.skipCache || isAdmin })
       .then((result) => {
         setStories(result.items || []);
         setPagination(result.pagination || null);
@@ -159,7 +291,11 @@ export default function LovableNews() {
         setPagination(null);
       })
       .finally(() => setLoading(false));
-  }, [page, category, search]);
+  };
+
+  useEffect(() => {
+    loadNews();
+  }, [page, category, search, isAdmin]);
 
   const handleRefresh = () => {
     setPage(1);
@@ -187,7 +323,6 @@ export default function LovableNews() {
 
   return (
     <PageShell
-      eyebrow="Chapter IV"
       title="News"
       lead="Dispatches from observatories, agencies, and missions across the Solar System and beyond."
     >
@@ -196,36 +331,29 @@ export default function LovableNews() {
       <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-white/10 bg-background/50 p-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           {categories.map((item) => (
-            <button
+            <FilterPill
               key={item}
-              type="button"
+              active={category === item}
               onClick={() => {
                 setPage(1);
                 setCategory(item);
               }}
-              className={[
-                "rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em]",
-                "transition duration-300 ease-out hover:scale-105 hover:border-white/40 hover:bg-white/15 hover:text-white",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50",
-                category === item
-                  ? "border-white bg-white text-black shadow-lg shadow-white/10"
-                  : "border-white/10 bg-white/[0.03] text-foreground/75",
-              ].join(" ")}
             >
               {item === "ALL" ? "All" : item.replace(/_/g, " ")}
-            </button>
+            </FilterPill>
           ))}
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <input
+          <SearchField
             value={search}
             onChange={(e) => {
               setPage(1);
               setSearch(e.target.value);
             }}
             placeholder="Search news"
-            className="rounded-full border border-white/10 bg-transparent px-3 py-2 text-sm outline-none"
+            inputClassName="min-h-10 rounded-full bg-transparent pl-10 pr-3 py-2 text-sm"
+            iconClassName="left-3 h-4 w-4"
           />
           <button
             type="button"
@@ -236,11 +364,31 @@ export default function LovableNews() {
           </button>
         </div>
       </div>
+      {isAdmin ? (
+        <div className="mb-6">
+          <AdminResourceActions
+            resourceName="news article"
+            endpoint="/news"
+            createTemplate={newsCreateTemplate}
+            onCreated={() => loadNews({ skipCache: true })}
+          />
+        </div>
+      ) : null}
 
       <div className="mb-6 flex items-center justify-between text-sm text-foreground/60">
         <span>{pagination ? `Page ${pagination.page} of ${pagination.totalPages || 1}` : "Latest updates"}</span>
         <span>{pagination ? `${pagination.total} articles` : ""}</span>
       </div>
+
+      {pagination && (
+        <Pagination
+          className="mb-10"
+          page={pagination.page || page}
+          totalPages={pagination.totalPages || 1}
+          disabled={loading}
+          onPageChange={setPage}
+        />
+      )}
 
       <DividerList>
         {stories.map((s) => {
@@ -288,6 +436,19 @@ export default function LovableNews() {
                 </a>
               </div>
 
+              {isAdmin ? (
+                <div className="mt-5">
+                  <AdminResourceActions
+                    resourceName="news article"
+                    endpoint="/news"
+                    slug={s.slug}
+                    item={s}
+                    onUpdated={() => loadNews({ skipCache: true })}
+                    onDeleted={() => loadNews({ skipCache: true })}
+                  />
+                </div>
+              ) : null}
+
               <NewsAiPanel story={s} onArticleUpdate={updateStory} />
             </article>
           );
@@ -295,27 +456,13 @@ export default function LovableNews() {
       </DividerList>
 
       {pagination && (
-        <div className="mt-8 flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-            disabled={page <= 1}
-            className="rounded-full border border-white/15 px-4 py-2 text-sm text-foreground/70 disabled:opacity-40"
-          >
-            Previous
-          </button>
-
-          <span className="text-sm text-foreground/60">Showing page {pagination.page}</span>
-
-          <button
-            type="button"
-            onClick={() => setPage((prev) => prev + 1)}
-            disabled={page >= (pagination.totalPages || 1)}
-            className="rounded-full border border-white/15 px-4 py-2 text-sm text-foreground/70 disabled:opacity-40"
-          >
-            Next
-          </button>
-        </div>
+        <Pagination
+          className="mt-10"
+          page={pagination.page || page}
+          totalPages={pagination.totalPages || 1}
+          disabled={loading}
+          onPageChange={setPage}
+        />
       )}
 
       {!loading && stories.length === 0 ? <p className="text-sm text-foreground/60">No news articles available yet.</p> : null}

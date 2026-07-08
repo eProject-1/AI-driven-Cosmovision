@@ -27,9 +27,9 @@ export const planets: Planet[] = [
   { slug: "venus", name: "Venus", tagline: "Earth's Twisted Twin.", description: "Shrouded in thick sulfuric clouds, surface temperatures hotter than Mercury. A runaway greenhouse, slowly rotating backward.", image: venus, accent: "from-amber-300 to-orange-600", diameter: "12,104 km", day: "243 days", year: "225 days", moons: 0, distance: "108.2M km" },
   { slug: "mars", name: "Mars", tagline: "The Red Frontier.", description: "Rust-red deserts, polar ice, the tallest mountain and deepest canyon in the solar system. Humanity's next destination.", image: mars, accent: "from-orange-500 to-red-700", diameter: "6,779 km", day: "24.6 hours", year: "687 days", moons: 2, distance: "227.9M km" },
   { slug: "jupiter", name: "Jupiter", tagline: "King of the Planets.", description: "A gas giant so massive it could swallow 1,300 Earths. Storms that have raged for centuries, including the Great Red Spot.", image: jupiter, accent: "from-amber-200 to-orange-700", diameter: "139,820 km", day: "9.9 hours", year: "11.9 years", moons: 95, distance: "778.5M km" },
-  { slug: "saturn", name: "Saturn", tagline: "The Jeweled Giant.", description: "Crowned by a breathtaking system of icy rings spanning 282,000 km. The lightest planet — it would float on water.", image: saturn, accent: "from-yellow-200 to-amber-600", diameter: "116,460 km", day: "10.7 hours", year: "29.5 years", moons: 146, distance: "1.43B km" },
+  { slug: "saturn", name: "Saturn", tagline: "The Jeweled Giant.", description: "Crowned by a breathtaking system of icy rings spanning 282,000 km. The lightest planet; it would float on water.", image: saturn, accent: "from-yellow-200 to-amber-600", diameter: "116,460 km", day: "10.7 hours", year: "29.5 years", moons: 146, distance: "1.43B km" },
   { slug: "uranus", name: "Uranus", tagline: "The Sideways World.", description: "An ice giant tipped on its side, rolling through space. Pale cyan from methane in its atmosphere. Coldest planetary atmosphere known.", image: uranus, accent: "from-cyan-200 to-teal-600", diameter: "50,724 km", day: "17 hours", year: "84 years", moons: 28, distance: "2.87B km" },
-  { slug: "neptune", name: "Neptune", tagline: "The Distant Storm.", description: "Deep azure ice giant with the fastest winds in the solar system — over 2,000 km/h. The last sentinel of the planetary system.", image: neptune, accent: "from-blue-400 to-indigo-800", diameter: "49,244 km", day: "16 hours", year: "165 years", moons: 16, distance: "4.5B km" },
+  { slug: "neptune", name: "Neptune", tagline: "The Distant Storm.", description: "Deep azure ice giant with the fastest winds in the solar system, over 2,000 km/h. The last sentinel of the planetary system.", image: neptune, accent: "from-blue-400 to-indigo-800", diameter: "49,244 km", day: "16 hours", year: "165 years", moons: 16, distance: "4.5B km" },
 ];
 
 export const getPlanet = (slug: string) => planets.find((p) => p.slug === slug);
@@ -69,10 +69,10 @@ export const mergePlanetFromApi = (planet: any): Planet => {
   const local = localPlanetBySlug.get(planet.slug);
 
   return {
-    slug: planet.slug,
-    name: planet.name,
+    slug: planet.slug || local?.slug || "",
+    name: local?.name || planet.name,
     tagline: taglineFor(planet, local),
-    description: planet.description || local?.description || "",
+    description: local?.description || planet.description || "",
     image: local?.image || planet.imageUrl || "",
     accent: local?.accent || "from-sky-400 to-blue-700",
     diameter: planet.diameterKm ? `${formatNumber(planet.diameterKm)} km` : local?.diameter || "Unknown",
@@ -84,6 +84,16 @@ export const mergePlanetFromApi = (planet: any): Planet => {
 };
 
 export const mergePlanetsFromApi = (apiPlanets: any[] = []) => {
-  const merged = apiPlanets.map(mergePlanetFromApi);
-  return merged.length ? merged : planets;
+  if (!apiPlanets.length) return planets;
+
+  const apiBySlug = new Map(apiPlanets.map((planet) => [planet.slug, planet]));
+  const mergedLocalPlanets = planets.map((local) => {
+    const apiPlanet = apiBySlug.get(local.slug);
+    return apiPlanet ? mergePlanetFromApi(apiPlanet) : local;
+  });
+  const extraApiPlanets = apiPlanets
+    .filter((planet) => planet.slug && !localPlanetBySlug.has(planet.slug))
+    .map(mergePlanetFromApi);
+
+  return [...mergedLocalPlanets, ...extraApiPlanets];
 };

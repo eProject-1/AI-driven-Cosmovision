@@ -7,12 +7,22 @@ export const env = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "7d",
   GROQ_API_KEY: process.env.GROQ_API_KEY,
   PORT: parseInt(process.env.PORT) || 5000,
+  API_PUBLIC_URL: process.env.API_PUBLIC_URL || `http://localhost:${parseInt(process.env.PORT) || 5000}`,
   CLIENT_URL: process.env.CLIENT_URL || "http://localhost:5173",
   CLIENT_URLS: (process.env.CLIENT_URLS || process.env.CLIENT_URL || "http://localhost:5173")
     .split(",")
     .map((url) => url.trim())
     .filter(Boolean),
   NODE_ENV: process.env.NODE_ENV || "development",
+  EMAIL_FROM: process.env.EMAIL_FROM || process.env.SMTP_USER || "CosmoVision <no-reply@cosmovision.app>",
+  EMAIL_DEV_FALLBACK: (process.env.EMAIL_DEV_FALLBACK || "false") === "true",
+  SMTP_HOST: process.env.SMTP_HOST || "smtp.gmail.com",
+  SMTP_PORT: parseInt(process.env.SMTP_PORT || "465"),
+  SMTP_SECURE: (process.env.SMTP_SECURE || "true") === "true",
+  SMTP_NO_AUTH: (process.env.SMTP_NO_AUTH || "false") === "true",
+  SMTP_USER: process.env.SMTP_USER,
+  SMTP_PASS: process.env.SMTP_PASS,
+  EMAIL_VERIFICATION_TOKEN_TTL_MINUTES: parseInt(process.env.EMAIL_VERIFICATION_TOKEN_TTL_MINUTES || "60"),
   GROQ_MODEL: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
   GROQ_VISION_MODEL: process.env.GROQ_VISION_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct",
   GROQ_TEMPERATURE: process.env.GROQ_TEMPERATURE || 0.7,

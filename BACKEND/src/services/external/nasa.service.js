@@ -7,7 +7,7 @@
  *   getMarsRoverPhotos(options) → Ảnh từ tàu thám hiểm Mars
  */
 
-import { AppError } from "../../utils/AppError.js";
+import { AppError } from "../../utils/app-error.util.js";
 
 // ─── Config ────────────────────────────────────────────────────────────────────
 
@@ -207,6 +207,47 @@ export async function getNearEarthObjects(date) {
  *   rover:       { name: string, status: string }
  * }
  */
+export async function getNearEarthObjectsRange(startDate = new Date(), endDate = new Date()) {
+  const startStr = toNasaDate(startDate);
+  const endStr = toNasaDate(endDate);
+
+  const data = await nasaFetch("/neo/rest/v1/feed", {
+    start_date: startStr,
+    end_date: endStr,
+  });
+
+  const grouped = data.near_earth_objects ?? {};
+
+  return Object.entries(grouped)
+    .flatMap(([dateStr, neoList]) =>
+      (neoList || []).map((neo) => {
+        const approach = neo.close_approach_data?.[0] ?? {};
+        const diameter = neo.estimated_diameter?.kilometers ?? {};
+
+        return {
+          id:                       neo.id,
+          name:                     neo.name,
+          nasaJplUrl:               neo.nasa_jpl_url,
+          isPotentiallyHazardous:   neo.is_potentially_hazardous_asteroid,
+          estimatedDiameterMinKm:   diameter.estimated_diameter_min ?? null,
+          estimatedDiameterMaxKm:   diameter.estimated_diameter_max ?? null,
+          closestApproachDate:      approach.close_approach_date ?? dateStr,
+          missDistanceKm:           approach.miss_distance?.kilometers
+                                      ? parseFloat(approach.miss_distance.kilometers)
+                                      : null,
+          relativeVelocityKmh:      approach.relative_velocity?.kilometers_per_hour
+                                      ? parseFloat(approach.relative_velocity.kilometers_per_hour)
+                                      : null,
+        };
+      })
+    )
+    .sort((a, b) => {
+      const dateCompare = String(a.closestApproachDate).localeCompare(String(b.closestApproachDate));
+      if (dateCompare !== 0) return dateCompare;
+      return (a.missDistanceKm ?? Infinity) - (b.missDistanceKm ?? Infinity);
+    });
+}
+
 export async function getMarsRoverPhotos({
   rover     = "curiosity",
   sol,

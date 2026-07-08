@@ -1,16 +1,20 @@
 // modules/astronomy/constellations/constellation.controller.js
-import { asyncHandler } from "../../../utils/asyncHandler.js";
+import { asyncHandler } from "../../../utils/async-handler.util.js";
 import { sendSuccess } from "../../../utils/response.util.js";
 import { buildUploadedFileUrl } from "../../../middlewares/upload.middleware.js";
 import {
+  createConstellation as createConstellationRecord,
+  deleteConstellation as deleteConstellationRecord,
   getAllConstellations as fetchAllConstellations,
   getConstellationBySlug as fetchConstellationBySlug,
   getConstellationAIContent as fetchAIContent,
+  getConstellationGallery as fetchConstellationGallery,
   getRelatedConstellations,
   getConstellationsByMonth,
   recognizeConstellationImage as recognizeUploadedImage,
   getUserConstellationUploads as fetchUserUploads,
   deleteUserConstellationUpload as removeUserUpload,
+  updateConstellation as updateConstellationRecord,
 } from "./constellation.service.js";
 
 export const getAllConstellations = asyncHandler(async (req, res) => {
@@ -30,6 +34,15 @@ export const getConstellationAIContent = asyncHandler(async (req, res) => {
   return sendSuccess(res, data);
 });
 
+export const getConstellationGallery = asyncHandler(async (req, res) => {
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const data = await fetchConstellationGallery(req.params.slug, {
+    baseUrl,
+    limit: req.query.limit,
+  });
+  return sendSuccess(res, data);
+});
+
 export const refreshConstellationAIContent = asyncHandler(async (req, res) => {
   const data = await fetchAIContent(req.params.slug, { refresh: true });
   return sendSuccess(res, data, "AI content refreshed successfully");
@@ -43,6 +56,21 @@ export const getRelatedConstellation = asyncHandler(async (req, res) => {
 export const getByMonth = asyncHandler(async (req, res) => {
   const data = await getConstellationsByMonth(req.params.month);
   return sendSuccess(res, data);
+});
+
+export const createConstellation = asyncHandler(async (req, res) => {
+  const data = await createConstellationRecord(req.body);
+  return sendSuccess(res, data, "Constellation created successfully", 201);
+});
+
+export const updateConstellation = asyncHandler(async (req, res) => {
+  const data = await updateConstellationRecord(req.params.slug, req.body);
+  return sendSuccess(res, data, "Constellation updated successfully");
+});
+
+export const deleteConstellation = asyncHandler(async (req, res) => {
+  const data = await deleteConstellationRecord(req.params.slug);
+  return sendSuccess(res, data, "Constellation deleted successfully");
 });
 
 export const recognizeConstellationImage = asyncHandler(async (req, res) => {

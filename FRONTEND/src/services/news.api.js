@@ -1,4 +1,4 @@
-import api from "./api.js";
+import { getData, postData } from "./api.js";
 
 const NEWS_CACHE_KEY = "cosmovision_news_cache";
 const NEWS_CACHE_TTL_MS = 1000 * 60 * 5;
@@ -45,43 +45,22 @@ export const getNewsList = async (params = {}, options = {}) => {
   const cached = options.skipCache ? null : readCache(key);
   if (cached) return cached;
 
-  const { data } = await api.get("/news", { params });
-  const result = data.data;
+  const result = await getData("/news", { params });
   writeCache(key, result);
   return result;
 };
 
-export const getDashboardHighlights = async (limit = 5) => {
-  const { data } = await api.get("/news/dashboard/highlights", { params: { limit } });
-  return data.data;
-};
+export const generateNewsAiSummary = (id, options = {}) =>
+  postData(`/news/${id}/ai/summary`, options);
 
-export const generateNewsAiSummary = async (id, options = {}) => {
-  const { data } = await api.post(`/news/${id}/ai/summary`, options);
-  return data.data;
-};
+export const generateNewsImportance = (id, options = {}) =>
+  postData(`/news/${id}/ai/importance`, options);
 
-export const generateNewsImportance = async (id, options = {}) => {
-  const { data } = await api.post(`/news/${id}/ai/importance`, options);
-  return data.data;
-};
+export const generateNewsAiCategory = (id, options = {}) =>
+  postData(`/news/${id}/ai/category`, options);
 
-export const generateNewsAiCategory = async (id, options = {}) => {
-  const { data } = await api.post(`/news/${id}/ai/category`, options);
-  return data.data;
-};
+export const generateNewsAiTags = (id, options = {}) => postData(`/news/${id}/ai/tags`, options);
 
-export const generateNewsAiTags = async (id, options = {}) => {
-  const { data } = await api.post(`/news/${id}/ai/tags`, options);
-  return data.data;
-};
+export const explainNewsArticle = (id) => postData(`/news/${id}/ai/explain`);
 
-export const explainNewsArticle = async (id) => {
-  const { data } = await api.post(`/news/${id}/ai/explain`);
-  return data.data;
-};
-
-export const askNewsQuestion = async (id, question) => {
-  const { data } = await api.post(`/news/${id}/ai/question`, { question });
-  return data.data;
-};
+export const askNewsQuestion = (id, question) => postData(`/news/${id}/ai/question`, { question });

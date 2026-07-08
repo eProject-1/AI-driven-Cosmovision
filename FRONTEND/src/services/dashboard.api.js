@@ -1,6 +1,3 @@
-import api from "./api.js";
+import { getData } from "./api.js";
 
-export const getDashboardData = async (params = {}) => {
-  const { data } = await api.get("/dashboard-public", { params });
-  return data.data;
-};
+export const getDashboardData = (params = {}) => getData("/dashboard-public", { params });

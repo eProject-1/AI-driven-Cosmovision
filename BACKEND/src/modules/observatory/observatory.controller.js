@@ -1,14 +1,17 @@
-import { asyncHandler } from "../../utils/asyncHandler.js";
+import { asyncHandler } from "../../utils/async-handler.util.js";
 import { sendSuccess } from "../../utils/response.util.js";
-import { AppError } from "../../utils/AppError.js";
+import { AppError } from "../../utils/app-error.util.js";
 
 import {
+  createObservatory,
+  deleteObservatory,
   getAllObservatories,
   getNearbyObservatories,
   getObservatoryBySlug,
   getObservatoryStats,
-  removeSavedObservatory,
+  getUserObservatoryPlans,
   toggleSaveObservatory,
+  updateObservatory,
 } from "./observatory.service.js";
 
 /**
@@ -108,17 +111,26 @@ export const toggleSave = asyncHandler(async (req, res) => {
 });
 
 /**
- * DELETE /api/observatory/:id/save
+ * GET /api/observatory/plans
  */
-export const removeSave = asyncHandler(async (req, res) => {
-  const result = await removeSavedObservatory(
-    req.params.id,
-    req.user.id
-  );
+export const getPlans = asyncHandler(async (req, res) => {
+  const limit = req.query.limit ? Number(req.query.limit) : 10;
+  const result = await getUserObservatoryPlans(req.user.id, { limit });
 
-  return sendSuccess(
-    res,
-    result,
-    `${result.observatoryName} removed successfully`
-  );
+  return sendSuccess(res, result, "Observatory plans fetched successfully");
+});
+
+export const create = asyncHandler(async (req, res) => {
+  const result = await createObservatory(req.body);
+  return sendSuccess(res, result, "Observatory created successfully", 201);
+});
+
+export const update = asyncHandler(async (req, res) => {
+  const result = await updateObservatory(req.params.slug, req.body);
+  return sendSuccess(res, result, "Observatory updated successfully");
+});
+
+export const remove = asyncHandler(async (req, res) => {
+  const result = await deleteObservatory(req.params.slug);
+  return sendSuccess(res, result, "Observatory deleted successfully");
 });

@@ -1,10 +1,13 @@
-import { asyncHandler } from "../../../utils/asyncHandler.js";
+import { asyncHandler } from "../../../utils/async-handler.util.js";
 import { sendSuccess } from "../../../utils/response.util.js";
 import {
+  createPlanet as createPlanetRecord,
+  deletePlanet as deletePlanetRecord,
   getAllPlanets as fetchAllPlanets,
   getPlanetBySlug as fetchPlanetBySlug,
   getPlanetFacts as fetchPlanetFacts,
   getRelatedPlanets,
+  updatePlanet as updatePlanetRecord,
 } from "./planet.service.js";
 
 export const getAllPlanets = asyncHandler(async (req, res) => {
@@ -31,4 +34,19 @@ export const refreshPlanetFacts = asyncHandler(async (req, res) => {
 export const getRelatedPlanet = asyncHandler(async (req, res) => {
   const related = await getRelatedPlanets(req.params.slug);
   return sendSuccess(res, related);
+});
+
+export const createPlanet = asyncHandler(async (req, res) => {
+  const data = await createPlanetRecord(req.body);
+  return sendSuccess(res, data, "Planet created successfully", 201);
+});
+
+export const updatePlanet = asyncHandler(async (req, res) => {
+  const data = await updatePlanetRecord(req.params.slug, req.body);
+  return sendSuccess(res, data, "Planet updated successfully");
+});
+
+export const deletePlanet = asyncHandler(async (req, res) => {
+  const data = await deletePlanetRecord(req.params.slug);
+  return sendSuccess(res, data, "Planet deleted successfully");
 });

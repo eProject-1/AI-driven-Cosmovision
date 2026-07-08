@@ -1,9 +1,13 @@
 import argparse
 import math
 import random
+import re
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter
+
+
+CATALOG_PATH = Path(__file__).resolve().parents[1] / "src" / "data" / "constellations-88.js"
 
 
 PATTERNS = {
@@ -74,10 +78,57 @@ PATTERNS = {
 }
 
 
+def slugify(value):
+    return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+
+
+def load_catalog_slugs():
+    if not CATALOG_PATH.exists():
+        return []
+
+    text = CATALOG_PATH.read_text(encoding="utf-8")
+    pattern = re.compile(r'^\s*\["([^"]+)",', re.MULTILINE)
+    return [slugify(name) for name in pattern.findall(text)]
+
+
+def generated_pattern(slug):
+    seed = sum((index + 1) * ord(char) for index, char in enumerate(slug))
+    rng = random.Random(seed)
+    point_count = rng.randint(5, 9)
+    points = []
+
+    for index in range(point_count):
+        angle = (math.tau * index / point_count) + rng.uniform(-0.45, 0.45)
+        radius = rng.uniform(0.16, 0.42)
+        x = 0.5 + math.cos(angle) * radius + rng.uniform(-0.05, 0.05)
+        y = 0.5 + math.sin(angle) * radius + rng.uniform(-0.05, 0.05)
+        points.append((min(0.88, max(0.12, x)), min(0.86, max(0.14, y))))
+
+    points.sort(key=lambda point: (point[0], point[1]))
+    edges = [(index, index + 1) for index in range(point_count - 1)]
+
+    if point_count >= 6:
+        edges.extend([(0, 3), (2, point_count - 1)])
+    if point_count >= 8:
+        edges.append((1, 5))
+
+    return {"points": points, "edges": edges}
+
+
+def build_patterns():
+    patterns = dict(PATTERNS)
+
+    for slug in load_catalog_slugs():
+        patterns.setdefault(slug, generated_pattern(slug))
+
+    return patterns
+
+
 def parse_args():
     root = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(description="Generate synthetic constellation training images.")
     parser.add_argument("--output", default=str(root / "data" / "constellations"))
+    parser.add_argument("--classes", nargs="*", default=None)
     parser.add_argument("--count", type=int, default=80)
     parser.add_argument("--size", type=int, default=512)
     parser.add_argument("--seed", type=int, default=42)
@@ -140,15 +191,24 @@ def main():
     random.seed(args.seed)
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=True)
+    patterns = build_patterns()
+    selected_classes = args.classes or sorted(patterns.keys())
+    generated = 0
 
-    for slug, pattern in PATTERNS.items():
+    for slug in selected_classes:
+        pattern = patterns.get(slug)
+        if not pattern:
+            print(f"skip unknown class: {slug}")
+            continue
+
         class_dir = output / slug
         class_dir.mkdir(parents=True, exist_ok=True)
         for index in range(args.count):
             image = render(pattern, args.size)
             image.save(class_dir / f"synthetic-{index + 1:03d}.jpg", quality=90)
+            generated += 1
 
-    print(f"generated {len(PATTERNS) * args.count} images in {output}")
+    print(f"generated {generated} images across {len(selected_classes)} classes in {output}")
 
 
 if __name__ == "__main__":

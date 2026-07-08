@@ -1,9 +1,11 @@
 import { ObservatoryType } from "@prisma/client";
 import { getCurrentWeatherByCoordinates } from "../../services/external/weather.service.js";
+import { calculateDistanceKm } from "../../utils/geo.util.js";
+import { createLogger } from "../../utils/logger.util.js";
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 50;
-const EARTH_RADIUS_KM = 6371;
+const logger = createLogger("observatory");
 
 export function parsePagination(query) {
   const page = Math.max(1, Number.parseInt(query.page) || 1);
@@ -72,11 +74,7 @@ function matchesEquipment(obs, equipmentTerms) {
 }
 
 export function buildObservatoryWhere(query = {}) {
-  const where = {};
-
-  if (query.isActive !== "false") {
-    where.isActive = true;
-  }
+  const where = { isActive: true };
 
   if (query.city) {
     where.city = { contains: query.city, mode: "insensitive" };
@@ -90,20 +88,8 @@ export function buildObservatoryWhere(query = {}) {
     where.country = { contains: query.country, mode: "insensitive" };
   }
 
-  if (query.isFeatured === "true") {
-    where.isFeatured = true;
-  }
-
   if (query.type && Object.values(ObservatoryType).includes(query.type.toUpperCase())) {
     where.type = query.type.toUpperCase();
-  }
-
-  const minElevation = parseNumber(query.minElevation);
-  const maxElevation = parseNumber(query.maxElevation);
-  if (minElevation !== null || maxElevation !== null) {
-    where.elevation = {};
-    if (minElevation !== null) where.elevation.gte = minElevation;
-    if (maxElevation !== null) where.elevation.lte = maxElevation;
   }
 
   const minSkyQuality = parseNumber(query.minSkyQuality);
@@ -128,19 +114,7 @@ export function applyTextFilters(observatories, query = {}) {
   );
 }
 
-export function calculateDistanceKm(lat1, lon1, lat2, lon2) {
-  const toRad = (value) => (value * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) *
-      Math.cos(toRad(lat2)) *
-      Math.sin(dLon / 2) ** 2;
-
-  return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
+export { calculateDistanceKm };
 
 function buildDirectionsUrl(obs) {
   if (!obs.latitude || !obs.longitude) return null;
@@ -210,7 +184,7 @@ export async function getObservingCondition(obs) {
     const weather = await getCurrentWeatherByCoordinates(obs.latitude, obs.longitude);
     return scoreObservingCondition(weather, obs);
   } catch (error) {
-    console.error("[observatory.service] Weather lookup failed:", error.message);
+    logger.error("Weather lookup failed", error);
     return null;
   }
 }

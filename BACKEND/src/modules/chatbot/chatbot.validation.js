@@ -7,6 +7,6 @@ export const sendMessageSchema = z.object({
     })
     .trim()
     .min(1, "Message cannot be empty")
-    .max(1000, "Message cannot exceed 1000 characters"),
+    .max(4000, "Message cannot exceed 4000 characters"),
   sessionId: z.string().trim().min(1).optional(),
 });

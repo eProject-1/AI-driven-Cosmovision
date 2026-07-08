@@ -147,6 +147,7 @@ model Constellation {
 
   // ── Media & mô tả ────────────────────────────────────────
   images             ImageUpload[]
+  galleryImages      ConstellationImage[]
   imageUrl           String?
   mapUrl             String? // URL ảnh bản đồ sao
   description        String?
@@ -163,6 +164,22 @@ model Constellation {
   updatedAt DateTime @updatedAt
 
   @@map("constellations")
+}
+
+model ConstellationImage {
+  id              String        @id @default(cuid())
+  constellationId String
+  url             String
+  title           String?
+  source          String?
+  license         String?
+  sortOrder       Int           @default(0)
+  createdAt       DateTime      @default(now())
+  constellation   Constellation @relation(fields: [constellationId], references: [id], onDelete: Cascade)
+
+  @@unique([constellationId, url])
+  @@index([constellationId, sortOrder])
+  @@map("constellation_images")
 }
 
 model CelestialEvent {

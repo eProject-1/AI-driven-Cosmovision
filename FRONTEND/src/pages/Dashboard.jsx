@@ -4,7 +4,7 @@ import { PageShell } from "../components/lovable/PageShell";
 import { DataGrid, DividerList } from "../components/lovable/Framing";
 import { getDashboardData } from "../services/dashboard.api";
 import { getObservatoryImage } from "../utils/observatoryImages";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/authState";
 import { getSavedEvents, removeSavedEvent, saveEvent } from "../services/user.api";
 
 const formatDate = (value) => {
@@ -28,44 +28,34 @@ function NearbyObservatoryItem({ item }) {
   const imageUrl = getObservatoryImage(item);
 
   return (
-    <li className="group relative z-0 px-6 py-5 hover:z-50 focus-within:z-50 sm:px-8">
-      <Link to={`/observatory/${item.slug}`} className="block">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="font-display text-base transition-colors group-hover:text-aurora">{item.name}</p>
-            <p className="mt-1 text-sm text-foreground/60">
-              {item.city} - {item.distanceKm ?? "?"} km away
-            </p>
-          </div>
-          <span className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-foreground/40">
-            Rating {item.rating ?? "N/A"}
-          </span>
-        </div>
-        <p className="mt-2 text-sm text-foreground/70">Sky quality: {item.skyQualityScore ?? "N/A"}</p>
-      </Link>
-
-      <div className="pointer-events-none absolute bottom-full left-4 z-[999] mb-3 hidden w-[min(22rem,calc(100vw-3rem))] overflow-hidden rounded-2xl border border-cyan-200/20 bg-slate-950 shadow-2xl shadow-black/70 ring-1 ring-white/10 group-hover:block group-focus-within:block sm:left-auto sm:right-4">
-        <img src={imageUrl} alt={item.name} className="h-36 w-full object-cover" loading="lazy" />
-        <div className="bg-slate-950 p-4">
+    <li className="px-4 py-4 sm:px-6">
+      <Link to={`/observatory/${item.slug}`} className="grid gap-4 transition hover:text-aurora sm:grid-cols-[128px_1fr]">
+        <img
+          src={imageUrl}
+          alt={item.name}
+          className="h-28 w-full rounded-xl object-cover sm:h-24"
+          loading="lazy"
+        />
+        <div className="min-w-0">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="font-display text-lg font-light">{item.name}</p>
-              <p className="mt-1 text-xs text-foreground/55">{item.address || item.city}</p>
+            <div className="min-w-0">
+              <p className="font-display text-base transition-colors">{item.name}</p>
+              <p className="mt-1 text-sm text-foreground/60">
+                {[item.city, item.province, item.country].filter(Boolean).join(", ")}
+              </p>
             </div>
-            <span className="shrink-0 rounded-full border border-white/10 px-2 py-1 text-[10px] text-foreground/50">
+            <span className="shrink-0 rounded-full border border-white/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-foreground/40">
               {item.distanceKm ?? "?"} km
             </span>
           </div>
-          <p className="mt-3 line-clamp-3 text-sm font-light leading-relaxed text-foreground/65">
-            {item.description || "No description available."}
+          <p className="mt-2 line-clamp-2 text-sm text-foreground/65">
+            {item.description || "Observatory record from database."}
           </p>
-          <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[10px] uppercase tracking-[0.18em] text-foreground/45">
-            <span className="rounded-xl bg-white/[0.04] px-2 py-2">Sky {item.skyQualityScore ?? "N/A"}</span>
-            <span className="rounded-xl bg-white/[0.04] px-2 py-2">Light {item.lightPollutionScore ?? "N/A"}</span>
-            <span className="rounded-xl bg-white/[0.04] px-2 py-2">Rate {item.rating ?? "N/A"}</span>
-          </div>
+          <p className="mt-3 text-[10px] uppercase tracking-[0.22em] text-foreground/40">
+            {item.type || "Observatory"} {item.rating ? `/ Rating ${item.rating}` : ""}
+          </p>
         </div>
-      </div>
+      </Link>
     </li>
   );
 }
@@ -179,6 +169,14 @@ export default function LovableDashboard() {
   }
 
   async function toggleSavedEvent(event) {
+    if (event.external) {
+      if (event.sourceUrl) {
+        window.open(event.sourceUrl, "_blank", "noopener,noreferrer");
+      }
+      setReminderMessage(`${event.source || "External"} event opened from its source.`);
+      return;
+    }
+
     if (!user) {
       setReminderMessage("Please log in to save event reminders.");
       return;
@@ -333,7 +331,7 @@ export default function LovableDashboard() {
                   <p className="font-display text-base">{event.title}</p>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-foreground/40">
-                      {event.type}
+                      {event.source || event.type}
                     </span>
                     <button
                       type="button"
@@ -346,7 +344,9 @@ export default function LovableDashboard() {
                           : "border-white/10 bg-white/[0.03] text-foreground/65 hover:bg-white/10",
                       ].join(" ")}
                     >
-                      {eventSavingId === event.id
+                      {event.external
+                        ? event.sourceUrl ? "Open source" : "External"
+                        : eventSavingId === event.id
                         ? "Saving"
                         : savedEventIds.has(event.id)
                           ? "Reminder on"

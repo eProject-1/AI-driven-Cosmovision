@@ -3,6 +3,8 @@ import { authenticate } from "../../middlewares/auth.middleware.js";
 import { roleMiddleware } from "../../middlewares/role.middleware.js";
 
 import {
+  createNews,
+  deleteNews,
   listNews,
   getNewsDetail,
   fetchNews,
@@ -18,25 +20,30 @@ import {
   aiExplain,
   aiQuestion,
   dashboardHighlights,
+  updateNews,
 } from "./news.controller.js";
 
 const router = Router();
+const adminOnly = [authenticate, roleMiddleware("ADMIN")];
 
 router.get("/", listNews);
+router.post("/", ...adminOnly, createNews);
 router.get("/dashboard/highlights", dashboardHighlights);
 router.get("/:slug", getNewsDetail);
+router.patch("/:slug", ...adminOnly, updateNews);
+router.delete("/:slug", ...adminOnly, deleteNews);
 
-router.post("/fetch", authenticate, roleMiddleware("ADMIN"), fetchNews);
-router.post("/fetch/nasa", authenticate, roleMiddleware("ADMIN"), fetchNasaNews);
-router.post("/fetch/exoplanets", authenticate, roleMiddleware("ADMIN"), fetchExoplanetNews);
-router.post("/refresh", authenticate, roleMiddleware("ADMIN"), refreshNews);
-router.post("/cleanup", authenticate, roleMiddleware("ADMIN"), cleanupNews);
-router.post("/:id/summarize", authenticate, roleMiddleware("ADMIN"), summarizeNews);
-router.post("/:id/ai/summary", aiSummary);
-router.post("/:id/ai/importance", aiImportance);
-router.post("/:id/ai/category", aiCategory);
-router.post("/:id/ai/tags", aiTags);
-router.post("/:id/ai/explain", aiExplain);
-router.post("/:id/ai/question", aiQuestion);
+router.post("/fetch", ...adminOnly, fetchNews);
+router.post("/fetch/nasa", ...adminOnly, fetchNasaNews);
+router.post("/fetch/exoplanets", ...adminOnly, fetchExoplanetNews);
+router.post("/refresh", ...adminOnly, refreshNews);
+router.post("/cleanup", ...adminOnly, cleanupNews);
+router.post("/:id/summarize", ...adminOnly, summarizeNews);
+router.post("/:id/ai/summary", ...adminOnly, aiSummary);
+router.post("/:id/ai/importance", ...adminOnly, aiImportance);
+router.post("/:id/ai/category", ...adminOnly, aiCategory);
+router.post("/:id/ai/tags", ...adminOnly, aiTags);
+router.post("/:id/ai/explain", ...adminOnly, aiExplain);
+router.post("/:id/ai/question", ...adminOnly, aiQuestion);
 
 export default router;

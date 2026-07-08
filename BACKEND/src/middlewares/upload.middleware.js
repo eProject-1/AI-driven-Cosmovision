@@ -2,7 +2,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import multer from "multer";
-import { AppError } from "../utils/AppError.js";
+import { AppError } from "../utils/app-error.util.js";
 
 const MAX_IMAGE_SIZE_BYTES = Number(process.env.MAX_CONSTELLATION_IMAGE_SIZE_MB || 4) * 1024 * 1024;
 const UPLOAD_ROOT = path.join(process.cwd(), "src", "uploads");

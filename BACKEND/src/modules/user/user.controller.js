@@ -1,5 +1,6 @@
-import { asyncHandler } from "../../utils/asyncHandler.js";
-import { sendSuccess, sendError } from "../../utils/response.util.js";
+import { asyncHandler } from "../../utils/async-handler.util.js";
+import { sendSuccess } from "../../utils/response.util.js";
+import { parseOrSendError } from "../../utils/validation.util.js";
 
 import {
   updateProfileSchema,
@@ -22,6 +23,8 @@ import {
   saveEvent,
 } from "./user.service.js";
 
+const favoriteTypeMessage = "Favorite type must be planets or constellations";
+
 export const getMe = asyncHandler(async (req, res) => {
   const data = await getCurrentUser(req.user.id);
   return sendSuccess(res, data, "Current user fetched successfully");
@@ -33,24 +36,18 @@ export const getSummary = asyncHandler(async (req, res) => {
 });
 
 export const updateProfile = asyncHandler(async (req, res) => {
-  const parsed = updateProfileSchema.safeParse(req.body);
+  const body = parseOrSendError(updateProfileSchema, req.body, res);
+  if (!body) return;
 
-  if (!parsed.success) {
-    return sendError(res, "Validation failed", 400, parsed.error.flatten().fieldErrors);
-  }
-
-  const data = await updateUserProfile(req.user.id, parsed.data);
+  const data = await updateUserProfile(req.user.id, body);
   return sendSuccess(res, data, "Profile updated successfully");
 });
 
 export const updatePreferences = asyncHandler(async (req, res) => {
-  const parsed = updatePreferencesSchema.safeParse(req.body);
+  const body = parseOrSendError(updatePreferencesSchema, req.body, res);
+  if (!body) return;
 
-  if (!parsed.success) {
-    return sendError(res, "Validation failed", 400, parsed.error.flatten().fieldErrors);
-  }
-
-  const data = await updateUserPreferences(req.user.id, parsed.data);
+  const data = await updateUserPreferences(req.user.id, body);
   return sendSuccess(res, data, "Preferences updated successfully");
 });
 
@@ -85,21 +82,21 @@ export const getImageUploads = asyncHandler(async (req, res) => {
 });
 
 export const addUserFavorite = asyncHandler(async (req, res) => {
-  const parsedType = favoriteTypeSchema.safeParse(req.params.type);
-  if (!parsedType.success) {
-    return sendError(res, "Favorite type must be planets or constellations", 400);
-  }
+  const type = parseOrSendError(favoriteTypeSchema, req.params.type, res, favoriteTypeMessage, {
+    includeErrors: false,
+  });
+  if (!type) return;
 
-  const data = await addFavorite(req.user.id, parsedType.data, req.params.slugOrName);
+  const data = await addFavorite(req.user.id, type, req.params.slugOrName);
   return sendSuccess(res, data, "Favorite added successfully", 201);
 });
 
 export const removeUserFavorite = asyncHandler(async (req, res) => {
-  const parsedType = favoriteTypeSchema.safeParse(req.params.type);
-  if (!parsedType.success) {
-    return sendError(res, "Favorite type must be planets or constellations", 400);
-  }
+  const type = parseOrSendError(favoriteTypeSchema, req.params.type, res, favoriteTypeMessage, {
+    includeErrors: false,
+  });
+  if (!type) return;
 
-  const data = await removeFavorite(req.user.id, parsedType.data, req.params.slugOrName);
+  const data = await removeFavorite(req.user.id, type, req.params.slugOrName);
   return sendSuccess(res, data, "Favorite removed successfully");
 });

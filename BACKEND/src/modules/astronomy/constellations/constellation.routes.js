@@ -1,59 +1,45 @@
-// modules/astronomy/constellations/constellation.routes.js
 import { Router } from "express";
 import { authenticate } from "../../../middlewares/auth.middleware.js";
 import { roleMiddleware } from "../../../middlewares/role.middleware.js";
 import { uploadConstellationImage } from "../../../middlewares/upload.middleware.js";
 import {
-  getAllConstellations,
-  getConstellationBySlug,
-  getConstellationAIContent,
-  refreshConstellationAIContent,
-  getRelatedConstellation,
-  getByMonth,
-  recognizeConstellationImage,
-  getMyConstellationUploads,
+  createConstellation,
+  deleteConstellation,
   deleteMyConstellationUpload,
+  getAllConstellations,
+  getByMonth,
+  getConstellationAIContent,
+  getConstellationBySlug,
+  getConstellationGallery,
+  getMyConstellationUploads,
+  getRelatedConstellation,
+  recognizeConstellationImage,
+  refreshConstellationAIContent,
+  updateConstellation,
 } from "./constellation.controller.js";
 
 const router = Router();
+const adminOnly = [authenticate, roleMiddleware("ADMIN")];
 
-// ─── Public routes ────────────────────────────────────────────
-
-// GET /api/astronomy/constellations
-// Query: ?search=orion  ?season=winter  ?quadrant=NQ1
+// Public catalog routes
 router.get("/", getAllConstellations);
-
-// GET /api/astronomy/constellations/month/:month   (1–12)
 router.get("/month/:month", getByMonth);
 
+// Authenticated user scan history and recognition
 router.get("/uploads/me", authenticate, getMyConstellationUploads);
 router.delete("/uploads/:uploadId", authenticate, deleteMyConstellationUpload);
+router.post("/recognize", authenticate, uploadConstellationImage, recognizeConstellationImage);
 
-router.post(
-  "/recognize",
-  authenticate,
-  uploadConstellationImage,
-  recognizeConstellationImage
-);
-
-// GET /api/astronomy/constellations/:slug/ai-content
-// Query: ?refresh=true (chỉ có tác dụng với ADMIN)
+// Public constellation detail helpers
 router.get("/:slug/ai-content", getConstellationAIContent);
-
-// GET /api/astronomy/constellations/:slug/related
 router.get("/:slug/related", getRelatedConstellation);
-
-// GET /api/astronomy/constellations/:slug
+router.get("/:slug/gallery", getConstellationGallery);
 router.get("/:slug", getConstellationBySlug);
 
-// ─── Admin-only routes ────────────────────────────────────────
-
-// POST /api/astronomy/constellations/:slug/ai-content/refresh
-router.post(
-  "/:slug/ai-content/refresh",
-  authenticate,
-  roleMiddleware("ADMIN"),
-  refreshConstellationAIContent
-);
+// Admin-only catalog mutation routes
+router.post("/", ...adminOnly, createConstellation);
+router.patch("/:slug", ...adminOnly, updateConstellation);
+router.delete("/:slug", ...adminOnly, deleteConstellation);
+router.post("/:slug/ai-content/refresh", ...adminOnly, refreshConstellationAIContent);
 
 export default router;

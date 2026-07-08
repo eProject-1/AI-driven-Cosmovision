@@ -1,7 +1,7 @@
-import api from "./api.js";
+import { getData } from "./api.js";
 
-export const smartSearch = async ({ query, limit = 6, lat, lon } = {}) => {
-  const { data } = await api.get("/search", {
+export const smartSearch = ({ query, limit = 6, lat, lon } = {}) =>
+  getData("/search", {
     params: {
       q: query,
       limit,
@@ -9,6 +9,3 @@ export const smartSearch = async ({ query, limit = 6, lat, lon } = {}) => {
       ...(lon != null ? { lon } : {}),
     },
   });
-
-  return data.data;
-};

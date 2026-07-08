@@ -1,4 +1,4 @@
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { Planet } from "../../lib/planets";
@@ -53,19 +53,7 @@ const planetTexturePresets: Record<string, TexturePreset> = {
     ],
   },
   earth: {
-    color: [
-      ...localCandidates("earth", "color"),
-      "https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg",
-      "https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg",
-    ],
-    normal: [
-      ...localCandidates("earth", "normal"),
-      "https://threejs.org/examples/textures/planets/earth_normal_2048.jpg",
-    ],
-    clouds: [
-      ...localCandidates("earth", "clouds"),
-      "https://www.solarsystemscope.com/textures/download/2k_earth_clouds.jpg",
-    ],
+    color: [],
   },
   mars: {
     color: [
@@ -389,12 +377,13 @@ function usePlanetTextureSet(slug: string) {
 
     setTextureSet(null);
 
+    if (slug === "earth") return undefined;
     if (!preset) return undefined;
 
     Promise.all([
       loadFirstTexture(preset.color),
-      preset.normal ? loadFirstTexture(preset.normal, true) : Promise.resolve(undefined),
-      preset.clouds ? loadFirstTexture(preset.clouds) : Promise.resolve(undefined),
+      slug !== "earth" && preset.normal ? loadFirstTexture(preset.normal, true) : Promise.resolve(undefined),
+      slug !== "earth" && preset.clouds ? loadFirstTexture(preset.clouds) : Promise.resolve(undefined),
       preset.rings ? loadFirstTexture(preset.rings) : Promise.resolve(undefined),
     ]).then(([map, normalMap, cloudMap, ringMap]) => {
       if (!active) {
@@ -494,7 +483,9 @@ export function PlanetCinematic({ planet }: { planet: Planet }) {
 }
 
 function Scene({ planet }: { planet: Planet }) {
+  const { viewport } = useThree();
   const { map, normalMap, cloudMap, ringMap, isFallback } = usePlanetTextureSet(planet.slug);
+  const singleTextureMode = planet.slug === "earth";
   const sphereRef = useRef<THREE.Mesh>(null);
   const cloudRef = useRef<THREE.Mesh>(null);
   const ringRef = useRef<THREE.Mesh>(null);
@@ -502,6 +493,8 @@ function Scene({ planet }: { planet: Planet }) {
   const radius = PLANET_RADIUS[planet.slug] ?? 1.08;
   const isSaturn = planet.slug === "saturn";
   const tilt = planet.slug === "uranus" ? 1.28 : planet.slug === "saturn" ? 0.18 : 0.22;
+  const xOffset = viewport.width >= 6 ? 1.08 : 0.18;
+  const yOffset = viewport.width >= 6 ? -0.02 : -0.12;
 
   useFrame((state, dt) => {
     if (sphereRef.current) sphereRef.current.rotation.y += dt * 0.09;
@@ -528,59 +521,62 @@ function Scene({ planet }: { planet: Planet }) {
       <directionalLight position={[6, 1.8, 4]} intensity={3.1} color={"#fff4e2"} />
       <directionalLight position={[-4, -1, -3]} intensity={0.32} color={"#5a7dff"} />
 
-      <mesh ref={glowRef} scale={radius * 1.92}>
-        <sphereGeometry args={[1, 48, 48]} />
-        <meshBasicMaterial
-          color={planet.slug === "mars" ? "#ff6b45" : planet.slug === "venus" ? "#ffc56d" : "#6b8cff"}
-          transparent
-          opacity={0.17}
-          side={THREE.BackSide}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      </mesh>
-
-      <mesh ref={sphereRef} rotation={[0, 0, tilt]}>
-        <sphereGeometry args={[radius, 128, 128]} />
-        <meshStandardMaterial
-          map={map}
-          normalMap={normalMap}
-          normalScale={normalMap ? new THREE.Vector2(0.42, 0.42) : undefined}
-          bumpMap={!normalMap && isFallback ? map : undefined}
-          bumpScale={!normalMap && isFallback ? 0.012 : 0}
-          roughness={planet.slug === "earth" ? 0.72 : 0.88}
-          metalness={0}
-          emissive={new THREE.Color("#05070d")}
-          emissiveIntensity={0.05}
-        />
-      </mesh>
-
-      {cloudMap ? (
-        <mesh ref={cloudRef} rotation={[0, 0, tilt]} scale={1.012}>
-          <sphereGeometry args={[radius, 128, 128]} />
-          <meshStandardMaterial
-            map={cloudMap}
+      <group position={[xOffset, yOffset, 0]}>
+        <mesh ref={glowRef} scale={radius * 1.92}>
+          <sphereGeometry args={[1, 48, 48]} />
+          <meshBasicMaterial
+            color={planet.slug === "mars" ? "#ff6b45" : planet.slug === "venus" ? "#ffc56d" : "#6b8cff"}
             transparent
-            opacity={0.34}
+            opacity={0.17}
+            side={THREE.BackSide}
             depthWrite={false}
-            roughness={1}
             blending={THREE.AdditiveBlending}
           />
         </mesh>
-      ) : null}
 
-      {isSaturn && ringMap ? (
-        <mesh ref={ringRef} rotation={[-Math.PI / 2 + 0.42, 0, 0]}>
-          <ringGeometry args={[radius * 1.42, radius * 2.48, 192, 1]} />
-          <meshBasicMaterial
-            map={ringMap}
-            transparent
-            opacity={0.9}
-            side={THREE.DoubleSide}
-            depthWrite={false}
+        <mesh ref={sphereRef} rotation={[0, 0, tilt]}>
+          <sphereGeometry args={[radius, 128, 128]} />
+          <meshStandardMaterial
+            map={map}
+            normalMap={singleTextureMode ? undefined : normalMap}
+            normalScale={!singleTextureMode && normalMap ? new THREE.Vector2(0.42, 0.42) : undefined}
+            bumpMap={!singleTextureMode && !normalMap && isFallback ? map : undefined}
+            bumpScale={!singleTextureMode && !normalMap && isFallback ? 0.012 : 0}
+            roughness={planet.slug === "earth" ? 0.72 : 0.88}
+            metalness={0}
+            emissive={new THREE.Color("#05070d")}
+            emissiveIntensity={0.05}
           />
         </mesh>
-      ) : null}
+
+        {!singleTextureMode && cloudMap ? (
+          <mesh ref={cloudRef} renderOrder={2} rotation={[0, 0, tilt]} scale={1.006}>
+            <sphereGeometry args={[radius, 128, 128]} />
+            <meshStandardMaterial
+              color="#ffffff"
+              alphaMap={cloudMap}
+              transparent
+              opacity={planet.slug === "earth" ? 0.42 : 0.28}
+              depthTest
+              depthWrite={false}
+              roughness={1}
+            />
+          </mesh>
+        ) : null}
+
+        {isSaturn && ringMap ? (
+          <mesh ref={ringRef} rotation={[-Math.PI / 2 + 0.42, 0, 0]}>
+            <ringGeometry args={[radius * 1.42, radius * 2.48, 192, 1]} />
+            <meshBasicMaterial
+              map={ringMap}
+              transparent
+              opacity={0.9}
+              side={THREE.DoubleSide}
+              depthWrite={false}
+            />
+          </mesh>
+        ) : null}
+      </group>
     </>
   );
 }

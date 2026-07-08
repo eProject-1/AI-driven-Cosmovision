@@ -1,54 +1,33 @@
-import api from "./api.js";
+import { deleteData, getData, postData } from "./api.js";
 
-export const getPlanets = async () => {
-  const { data } = await api.get("/astronomy/planets");
-  return data.data;
-};
+export const getPlanets = () => getData("/astronomy/planets");
 
-export const getPlanetById = async (id) => {
-  const { data } = await api.get(`/astronomy/planets/${id}`);
-  return data.data;
-};
+export const getConstellations = () => getData("/astronomy/constellations");
 
-export const getPlanetFacts = async (slug) => {
-  const { data } = await api.get(`/astronomy/planets/${slug}/facts`);
-  return data.data;
-};
+export const getConstellationsByMonth = (month) => getData(`/astronomy/constellations/month/${month}`);
 
-export const getRelatedPlanets = async (slug) => {
-  const { data } = await api.get(`/astronomy/planets/${slug}/related`);
-  return data.data;
-};
+export const getConstellationBySlug = (slug) => getData(`/astronomy/constellations/${slug}`);
 
-export const getConstellations = async () => {
-  const { data } = await api.get("/astronomy/constellations");
-  return data.data;
-};
+export const getConstellationAIContent = (slug) => getData(`/astronomy/constellations/${slug}/ai-content`);
 
-export const getConstellationById = async (id) => {
-  const { data } = await api.get(`/astronomy/constellations/${id}`);
-  return data.data;
-};
+export const refreshConstellationAIContent = (slug) =>
+  postData(`/astronomy/constellations/${slug}/ai-content/refresh`);
+
+export const getConstellationGallery = (slug, { limit = 15 } = {}) =>
+  getData(`/astronomy/constellations/${slug}/gallery`, { params: { limit } });
+
+export const getRelatedConstellations = (slug) => getData(`/astronomy/constellations/${slug}/related`);
 
 export const recognizeConstellationImage = async ({ image, hint }) => {
   const formData = new FormData();
   formData.append("image", image);
   if (hint?.trim()) formData.append("hint", hint.trim());
 
-  const { data } = await api.post("/astronomy/constellations/recognize", formData, {
-    timeout: 60000,
-  });
-  return data.data;
+  return postData("/astronomy/constellations/recognize", formData, { timeout: 60000 });
 };
 
-export const getMyConstellationUploads = async ({ limit = 6 } = {}) => {
-  const { data } = await api.get("/astronomy/constellations/uploads/me", {
-    params: { limit },
-  });
-  return data.data;
-};
+export const getMyConstellationUploads = ({ limit = 6 } = {}) =>
+  getData("/astronomy/constellations/uploads/me", { params: { limit } });
 
-export const deleteConstellationUpload = async (uploadId) => {
-  const { data } = await api.delete(`/astronomy/constellations/uploads/${uploadId}`);
-  return data.data;
-};
+export const deleteConstellationUpload = (uploadId) =>
+  deleteData(`/astronomy/constellations/uploads/${uploadId}`);

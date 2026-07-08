@@ -2,28 +2,28 @@ import { Router } from "express";
 import { authenticate } from "../../../middlewares/auth.middleware.js";
 import { roleMiddleware } from "../../../middlewares/role.middleware.js";
 import {
+  createPlanet,
+  deletePlanet,
   getAllPlanets,
   getPlanetBySlug,
   getPlanetFacts,
-  refreshPlanetFacts,
   getRelatedPlanet,
+  refreshPlanetFacts,
+  updatePlanet,
 } from "./planet.controller.js";
 
 const router = Router();
+const adminOnly = [authenticate, roleMiddleware("ADMIN")];
 
-// Public routes
-router.get("/", getAllPlanets); // Danh sách hành tinh
-router.get("/:slug/facts", getPlanetFacts); // AI Interesting Facts
-router.get("/:slug/related", getRelatedPlanet); // Related planets
-router.get("/:slug", getPlanetBySlug); // Chi tiết hành tinh
+router.get("/", getAllPlanets);
+router.post("/", ...adminOnly, createPlanet);
 
-router.post(
-  "/:slug/facts/refresh",
-  authenticate,
-  roleMiddleware("ADMIN"),
-  refreshPlanetFacts
-);
+router.get("/:slug/facts", getPlanetFacts);
+router.post("/:slug/facts/refresh", ...adminOnly, refreshPlanetFacts);
 
+router.get("/:slug/related", getRelatedPlanet);
+router.get("/:slug", getPlanetBySlug);
+router.patch("/:slug", ...adminOnly, updatePlanet);
+router.delete("/:slug", ...adminOnly, deletePlanet);
 
 export default router;
-

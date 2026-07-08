@@ -3,12 +3,12 @@ import { Link } from "react-router-dom";
 import { CalendarClock, LocateFixed, RefreshCw, Sparkles } from "lucide-react";
 import { PageShell } from "../components/lovable/PageShell";
 import { DataGrid, DividerList, SectionPanel } from "../components/lovable/Framing";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/authState";
 import {
   createRecommendation,
-  getRecommendationHistory,
   refreshRecommendation,
 } from "../services/recommendation.api";
+import { getObservatoryPlans } from "../services/observatory.api";
 
 function formatTime(value) {
   if (!value) return "--";
@@ -44,10 +44,19 @@ export function StargazingPlannerPanel() {
 
   useEffect(() => {
     if (!user) return;
-    getRecommendationHistory({ limit: 5 })
+    getObservatoryPlans({ limit: 5 })
       .then(setHistory)
       .catch(() => setHistory([]));
   }, [user]);
+
+  async function reloadPlans() {
+    try {
+      const nextHistory = await getObservatoryPlans({ limit: 5 });
+      setHistory(nextHistory);
+    } catch {
+      setHistory((items) => items);
+    }
+  }
 
   function useLocation() {
     if (!navigator.geolocation) {
@@ -92,9 +101,8 @@ export function StargazingPlannerPanel() {
 
       const data = await createRecommendation(payload);
       setRecommendation(data);
-      const nextHistory = await getRecommendationHistory({ limit: 5 });
-      setHistory(nextHistory);
       setStatus("ready");
+      reloadPlans();
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Could not create recommendation.");
       setStatus("error");
@@ -108,9 +116,8 @@ export function StargazingPlannerPanel() {
     try {
       const data = await refreshRecommendation(recommendation.id);
       setRecommendation(data);
-      const nextHistory = await getRecommendationHistory({ limit: 5 });
-      setHistory(nextHistory);
       setStatus("ready");
+      reloadPlans();
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Could not refresh recommendation.");
       setStatus("error");

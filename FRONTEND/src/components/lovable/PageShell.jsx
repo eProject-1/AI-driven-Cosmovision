@@ -9,7 +9,7 @@ export function PageShell({ eyebrow, title, lead, children }) {
         {eyebrow ? (
           <p className="font-sans text-[10px] font-light tracking-[0.45em] uppercase text-foreground/40">{eyebrow}</p>
         ) : null}
-        <h1 className="mt-6 font-display text-5xl md:text-7xl font-light tracking-tight">{title}</h1>
+        <h1 className={`${eyebrow ? "mt-6" : ""} font-display text-5xl md:text-7xl font-light tracking-tight`}>{title}</h1>
         {lead ? <p className="mt-6 max-w-xl text-sm md:text-base font-light leading-relaxed text-foreground/60">{lead}</p> : null}
       </section>
 

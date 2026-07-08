@@ -1,35 +1,9 @@
 import prisma from "../../config/db.js";
-import { AppError } from "../../utils/AppError.js";
-
-function clampLimit(value, fallback = 10, max = 50) {
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
-  return Math.min(parsed, max);
-}
-
-function toUserResponse(user) {
-  if (!user) return null;
-
-  return {
-    id: user.id,
-    email: user.email,
-    username: user.username,
-    displayName: user.displayName,
-    name: user.displayName || user.username,
-    avatarUrl: user.avatarUrl,
-    role: user.role,
-    provider: user.provider,
-    isVerified: user.isVerified,
-    isActive: user.isActive,
-    lastLoginAt: user.lastLoginAt,
-    createdAt: user.createdAt,
-    profile: user.profile || null,
-    preferences: user.preferences || null,
-  };
-}
+import { AppError } from "../../utils/app-error.util.js";
+import { clampInteger, requireUserId } from "../../utils/service.util.js";
 
 export async function getCurrentUser(userId) {
-  if (!userId) throw new AppError("User authentication is required", 401);
+  requireUserId(userId);
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -40,20 +14,16 @@ export async function getCurrentUser(userId) {
   });
 
   if (!user) throw new AppError("User not found", 404);
-
   return toUserResponse(user);
 }
 
 export async function updateUserProfile(userId, payload) {
-  if (!userId) throw new AppError("User authentication is required", 401);
+  requireUserId(userId);
 
   const { displayName, avatarUrl, ...profileData } = payload;
-
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: {
-      profile: true,
-    },
+    include: { profile: true },
   });
 
   if (!user) throw new AppError("User not found", 404);
@@ -73,9 +43,7 @@ export async function updateUserProfile(userId, payload) {
             timezone: profileData.timezone || "UTC",
             website: profileData.website ?? null,
           },
-          update: {
-            ...profileData,
-          },
+          update: profileData,
         },
       },
     },
@@ -89,77 +57,23 @@ export async function updateUserProfile(userId, payload) {
 }
 
 export async function updateUserPreferences(userId, payload) {
-  if (!userId) throw new AppError("User authentication is required", 401);
+  requireUserId(userId);
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
-
+  const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new AppError("User not found", 404);
 
-  const preferences = await prisma.userPreference.upsert({
+  return prisma.userPreference.upsert({
     where: { userId },
     create: {
       userId,
       ...payload,
     },
-    update: {
-      ...payload,
-    },
+    update: payload,
   });
-
-  return preferences;
-}
-
-async function ensurePreference(userId) {
-  return prisma.userPreference.upsert({
-    where: { userId },
-    create: { userId },
-    update: {},
-  });
-}
-
-function getFavoriteField(type) {
-  if (type === "planets") return "favoritesPlanets";
-  if (type === "constellations") return "favoritesConstellations";
-  throw new AppError("Favorite type must be planets or constellations", 400);
-}
-
-async function resolveFavoriteName(type, slugOrName) {
-  const cleanValue = String(slugOrName || "").trim();
-  if (!cleanValue) throw new AppError("Favorite value is required", 400);
-
-  if (type === "planets") {
-    const planet = await prisma.planet.findFirst({
-      where: {
-        OR: [
-          { slug: { equals: cleanValue, mode: "insensitive" } },
-          { name: { equals: cleanValue, mode: "insensitive" } },
-        ],
-      },
-      select: { name: true },
-    });
-
-    if (!planet) throw new AppError("Planet not found", 404);
-    return planet.name;
-  }
-
-  const constellation = await prisma.constellation.findFirst({
-    where: {
-      OR: [
-        { slug: { equals: cleanValue, mode: "insensitive" } },
-        { name: { equals: cleanValue, mode: "insensitive" } },
-      ],
-    },
-    select: { name: true },
-  });
-
-  if (!constellation) throw new AppError("Constellation not found", 404);
-  return constellation.name;
 }
 
 export async function addFavorite(userId, type, slugOrName) {
-  if (!userId) throw new AppError("User authentication is required", 401);
+  requireUserId(userId);
 
   const field = getFavoriteField(type);
   const favoriteName = await resolveFavoriteName(type, slugOrName);
@@ -173,7 +87,7 @@ export async function addFavorite(userId, type, slugOrName) {
 }
 
 export async function removeFavorite(userId, type, slugOrName) {
-  if (!userId) throw new AppError("User authentication is required", 401);
+  requireUserId(userId);
 
   const field = getFavoriteField(type);
   const favoriteName = await resolveFavoriteName(type, slugOrName);
@@ -189,31 +103,27 @@ export async function removeFavorite(userId, type, slugOrName) {
 }
 
 export async function getUserRecommendations(userId, limit = 10) {
-  if (!userId) throw new AppError("User authentication is required", 401);
+  requireUserId(userId);
 
   return prisma.recommendation.findMany({
     where: { userId },
     orderBy: { requestedAt: "desc" },
-    take: clampLimit(limit),
+    take: clampInteger(limit),
   });
 }
 
 export async function getSavedEvents(userId) {
-  if (!userId) throw new AppError("User authentication is required", 401);
+  requireUserId(userId);
 
   return prisma.savedEvent.findMany({
     where: { userId },
-    include: {
-      event: true,
-    },
-    orderBy: {
-      savedAt: "desc",
-    },
+    include: { event: true },
+    orderBy: { savedAt: "desc" },
   });
 }
 
 export async function saveEvent(userId, eventId) {
-  if (!userId) throw new AppError("User authentication is required", 401);
+  requireUserId(userId);
   if (!eventId) throw new AppError("eventId is required", 400);
 
   const event = await prisma.celestialEvent.findUnique({
@@ -235,14 +145,12 @@ export async function saveEvent(userId, eventId) {
       eventId,
     },
     update: {},
-    include: {
-      event: true,
-    },
+    include: { event: true },
   });
 }
 
 export async function removeSavedEvent(userId, eventId) {
-  if (!userId) throw new AppError("User authentication is required", 401);
+  requireUserId(userId);
   if (!eventId) throw new AppError("eventId is required", 400);
 
   await prisma.savedEvent.deleteMany({
@@ -256,26 +164,22 @@ export async function removeSavedEvent(userId, eventId) {
 }
 
 export async function getSavedObservatories(userId) {
-  if (!userId) throw new AppError("User authentication is required", 401);
+  requireUserId(userId);
 
   return prisma.savedObservatory.findMany({
     where: { userId },
-    include: {
-      observatory: true,
-    },
-    orderBy: {
-      savedAt: "desc",
-    },
+    include: { observatory: true },
+    orderBy: { savedAt: "desc" },
   });
 }
 
 export async function getUserImageUploads(userId, limit = 10) {
-  if (!userId) throw new AppError("User authentication is required", 401);
+  requireUserId(userId);
 
   return prisma.imageUpload.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
-    take: clampLimit(limit),
+    take: clampInteger(limit),
     include: {
       constellation: {
         select: {
@@ -291,7 +195,7 @@ export async function getUserImageUploads(userId, limit = 10) {
 }
 
 export async function getUserSummary(userId) {
-  if (!userId) throw new AppError("User authentication is required", 401);
+  requireUserId(userId);
 
   const [
     user,
@@ -328,4 +232,59 @@ export async function getUserSummary(userId) {
     latestRecommendations,
     latestUploads,
   };
+}
+
+function toUserResponse(user) {
+  if (!user) return null;
+
+  return {
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    displayName: user.displayName,
+    name: user.displayName || user.username,
+    avatarUrl: user.avatarUrl,
+    role: user.role,
+    provider: user.provider,
+    isVerified: user.isVerified,
+    isActive: user.isActive,
+    lastLoginAt: user.lastLoginAt,
+    createdAt: user.createdAt,
+    profile: user.profile || null,
+    preferences: user.preferences || null,
+  };
+}
+
+async function ensurePreference(userId) {
+  return prisma.userPreference.upsert({
+    where: { userId },
+    create: { userId },
+    update: {},
+  });
+}
+
+function getFavoriteField(type) {
+  if (type === "planets") return "favoritesPlanets";
+  if (type === "constellations") return "favoritesConstellations";
+  throw new AppError("Favorite type must be planets or constellations", 400);
+}
+
+async function resolveFavoriteName(type, slugOrName) {
+  const cleanValue = String(slugOrName || "").trim();
+  if (!cleanValue) throw new AppError("Favorite value is required", 400);
+
+  const model = type === "planets" ? prisma.planet : prisma.constellation;
+  const entityName = type === "planets" ? "Planet" : "Constellation";
+  const entity = await model.findFirst({
+    where: {
+      OR: [
+        { slug: { equals: cleanValue, mode: "insensitive" } },
+        { name: { equals: cleanValue, mode: "insensitive" } },
+      ],
+    },
+    select: { name: true },
+  });
+
+  if (!entity) throw new AppError(`${entityName} not found`, 404);
+  return entity.name;
 }

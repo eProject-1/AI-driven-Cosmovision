@@ -1,6 +1,9 @@
 import prisma from "../../config/db.js";
 import { env } from "../../config/env.js";
-import { AppError } from "../../utils/AppError.js";
+import { AppError } from "../../utils/app-error.util.js";
+import { calculateDistanceKm } from "../../utils/geo.util.js";
+import { clampInteger } from "../../utils/service.util.js";
+import { createLogger } from "../../utils/logger.util.js";
 
 import {
   getCurrentWeatherByCoordinates,
@@ -10,32 +13,18 @@ import {
   getDashboardNewsHighlights,
 } from "../news/news.service.js";
 
+import {
+  getApod,
+  getNearEarthObjectsRange,
+} from "../../services/external/nasa.service.js";
+
+import {
+  getUpcomingLaunches,
+} from "../../services/external/spaceflight.service.js";
+
 const DEFAULT_SECTION_LIMIT = 5;
 const MAX_SECTION_LIMIT = 20;
-
-function clampLimit(value, fallback = DEFAULT_SECTION_LIMIT, max = MAX_SECTION_LIMIT) {
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
-  return Math.min(parsed, max);
-}
-
-function calculateDistanceKm(lat1, lon1, lat2, lon2) {
-  if (![lat1, lon1, lat2, lon2].every((value) => Number.isFinite(Number(value)))) {
-    return null;
-  }
-
-  const radius = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
-
-  return radius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
+const logger = createLogger("dashboard");
 
 function getSkyLabel(score) {
   if (score >= 85) return "Excellent";
@@ -76,26 +65,35 @@ function calculateSkyVisibilityScore({
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
-function buildSkySuggestion(score, weather) {
+function buildSkySuggestion(score, weather, context = {}) {
   const label = getSkyLabel(score);
+  const nearest = context.nearestObservatory
+    ? ` Nearest DB observing site: ${context.nearestObservatory.name} (${context.nearestObservatory.distanceKm} km).`
+    : "";
+  const nasa = context.nasaEvent
+    ? ` NASA signal: ${context.nasaEvent.title}.`
+    : "";
+  const launch = context.launchEvent
+    ? ` Upcoming spaceflight: ${context.launchEvent.title}.`
+    : "";
 
   if (score >= 85) {
-    return `Sky conditions look excellent for stargazing. Clear views are likely if local light pollution is low.`;
+    return `Sky conditions look excellent for stargazing. Clear views are likely if local light pollution is low.${nearest}${nasa}${launch}`;
   }
 
   if (score >= 70) {
-    return `Sky conditions look good. You may be able to observe bright planets, the Moon, and major constellations.`;
+    return `Sky conditions look good. You may be able to observe bright planets, the Moon, and major constellations.${nearest}${nasa}${launch}`;
   }
 
   if (score >= 50) {
-    return `Sky conditions are fair. Observation is possible, but clouds or humidity may reduce visibility.`;
+    return `Sky conditions are fair. Observation is possible, but clouds or humidity may reduce visibility.${nearest}${nasa}${launch}`;
   }
 
   if (score >= 30) {
-    return `Sky conditions are poor. Consider waiting for clearer weather before planning a stargazing session.`;
+    return `Sky conditions are poor. Consider waiting for clearer weather before planning a stargazing session.${nearest}${nasa}${launch}`;
   }
 
-  return `Sky conditions are not suitable for stargazing right now. ${weather?.description || ""}`;
+  return `Sky conditions are not suitable for stargazing right now. ${weather?.description || ""}${nearest}${nasa}${launch}`;
 }
 
 async function resolveUserLocation(userId, query = {}) {
@@ -141,7 +139,7 @@ async function resolveUserLocation(userId, query = {}) {
 }
 
 async function getNearestObservatories(latitude, longitude, limit = 5) {
-  const safeLimit = clampLimit(limit);
+  const safeLimit = clampInteger(limit, { fallback: DEFAULT_SECTION_LIMIT, max: MAX_SECTION_LIMIT });
   const observatories = await prisma.observatory.findMany({
     where: {
       isActive: true,
@@ -155,10 +153,14 @@ async function getNearestObservatories(latitude, longitude, limit = 5) {
       imageUrl: true,
       address: true,
       city: true,
+      province: true,
       country: true,
+      type: true,
       latitude: true,
       longitude: true,
       website: true,
+      equipment: true,
+      openingHours: true,
       rating: true,
       reviewCount: true,
       lightPollutionScore: true,
@@ -179,9 +181,81 @@ async function getNearestObservatories(latitude, longitude, limit = 5) {
     .slice(0, safeLimit);
 }
 
+function addDays(date, days) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function normalizeLocalEvent(event) {
+  return {
+    ...event,
+    source: "CosmoVision DB",
+    sourceUrl: null,
+    external: false,
+  };
+}
+
+function normalizeNeoEvent(neo) {
+  const diameterMax = neo.estimatedDiameterMaxKm != null
+    ? `${neo.estimatedDiameterMaxKm.toFixed(2)} km max diameter`
+    : "Diameter unavailable";
+  const missDistance = neo.missDistanceKm != null
+    ? `${Math.round(neo.missDistanceKm).toLocaleString("en-US")} km miss distance`
+    : "Miss distance unavailable";
+
+  return {
+    id: `nasa-neo-${neo.id}-${neo.closestApproachDate}`,
+    title: `${neo.name} close approach`,
+    slug: `nasa-neo-${neo.id}`,
+    type: "NEAR_EARTH_OBJECT",
+    description: `${diameterMax}; ${missDistance}.`,
+    imageUrl: "https://www.nasa.gov/wp-content/uploads/2023/03/asteroid-bennu.jpeg",
+    startDate: neo.closestApproachDate ? new Date(neo.closestApproachDate) : new Date(),
+    endDate: null,
+    peakDate: neo.closestApproachDate ? new Date(neo.closestApproachDate) : null,
+    visibleFrom: ["NASA NeoWs"],
+    aiSummary: neo.isPotentiallyHazardous
+      ? "NASA flags this object as potentially hazardous."
+      : "NASA-tracked near-Earth object.",
+    source: "NASA NeoWs",
+    sourceUrl: neo.nasaJplUrl,
+    external: true,
+  };
+}
+
+async function getExternalUpcomingEvents(limit = 5) {
+  const safeLimit = clampInteger(limit, { fallback: DEFAULT_SECTION_LIMIT, max: MAX_SECTION_LIMIT });
+  const start = new Date();
+  const end = addDays(start, 7);
+
+  const [neoResult, launchResult] = await Promise.allSettled([
+    getNearEarthObjectsRange(start, end),
+    getUpcomingLaunches({ limit: safeLimit }),
+  ]);
+
+  const neoEvents = neoResult.status === "fulfilled"
+    ? neoResult.value.slice(0, safeLimit).map(normalizeNeoEvent)
+    : [];
+
+  if (neoResult.status === "rejected") {
+    logger.error("NASA NeoWs upcoming failed", neoResult.reason);
+  }
+
+  const launchEvents = launchResult.status === "fulfilled"
+    ? launchResult.value
+    : [];
+
+  if (launchResult.status === "rejected") {
+    logger.error("Launch Library upcoming failed", launchResult.reason);
+  }
+
+  return [...neoEvents, ...launchEvents];
+}
+
 async function getUpcomingEvents(limit = 5) {
-  const safeLimit = clampLimit(limit);
-  return prisma.celestialEvent.findMany({
+  const safeLimit = clampInteger(limit, { fallback: DEFAULT_SECTION_LIMIT, max: MAX_SECTION_LIMIT });
+  const localEvents = await prisma.celestialEvent.findMany({
     where: {
       startDate: {
         gte: new Date(),
@@ -205,6 +279,13 @@ async function getUpcomingEvents(limit = 5) {
       aiSummary: true,
     },
   });
+
+  const externalEvents = await getExternalUpcomingEvents(safeLimit);
+
+  return [...localEvents.map(normalizeLocalEvent), ...externalEvents]
+    .filter((event) => event.startDate)
+    .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+    .slice(0, safeLimit);
 }
 
 async function getLatestRecommendation(userId) {
@@ -240,7 +321,7 @@ async function createRecommendationSnapshot({
       },
     });
   } catch (error) {
-    console.error("Create recommendation snapshot error:", error.message);
+    logger.error("Create recommendation snapshot failed", error);
     return null;
   }
 }
@@ -248,13 +329,17 @@ async function createRecommendationSnapshot({
 export async function getDashboardData({ userId, query = {} }) {
   const location = await resolveUserLocation(userId, query);
 
-  const [weatherResult, upcomingEvents, latestNews, nearbyObservatories, latestRecommendation] =
+  const [weatherResult, upcomingEvents, latestNews, nearbyObservatories, latestRecommendation, apodResult] =
     await Promise.all([
       getCurrentWeatherByCoordinates(location.latitude, location.longitude),
       getUpcomingEvents(5),
       getDashboardNewsHighlights(5),
       getNearestObservatories(location.latitude, location.longitude, 5),
       getLatestRecommendation(userId),
+      getApod().catch((error) => {
+        logger.error("NASA APOD failed", error);
+        return null;
+      }),
     ]);
 
   const weather = weatherResult?.success ? weatherResult.data : weatherResult;
@@ -270,7 +355,20 @@ export async function getDashboardData({ userId, query = {} }) {
     lightPollutionScore: nearestLightPollution,
   });
 
-  const skySuggestion = buildSkySuggestion(skyVisibilityScore, weather);
+  const nasaEvent = upcomingEvents.find((event) => event.source === "NASA NeoWs")
+    || (apodResult
+      ? {
+          title: `APOD - ${apodResult.title}`,
+          source: "NASA APOD",
+        }
+      : null);
+  const launchEvent = upcomingEvents.find((event) => event.type === "SPACE_LAUNCH");
+
+  const skySuggestion = buildSkySuggestion(skyVisibilityScore, weather, {
+    nearestObservatory: nearbyObservatories?.[0],
+    nasaEvent,
+    launchEvent,
+  });
 
   const snapshot = await createRecommendationSnapshot({
     userId,
@@ -295,5 +393,10 @@ export async function getDashboardData({ userId, query = {} }) {
     upcomingEvents,
     latestNews,
     nearbyObservatories,
+    externalSignals: {
+      apod: apodResult,
+      nasaEvent,
+      launchEvent,
+    },
   };
 }

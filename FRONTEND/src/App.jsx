@@ -1,14 +1,16 @@
 import AppRoutes from "./routes/AppRoutes";
 import ChatWidget from "./components/chatbot/ChatWidget";
-import { Navbar } from "./components/lovable/Navbar";
-import { Footer } from "./components/lovable/Footer";
+import { SiteFooter } from "./components/layout/SiteFooter";
+import { SiteHeader } from "./components/layout/SiteHeader";
 
 function App() {
   return (
     <>
-      <Navbar />
+      <SiteHeader />
+      <main>
       <AppRoutes />
-      <Footer />
+      </main>
+      <SiteFooter />
       <ChatWidget />
     </>
   );

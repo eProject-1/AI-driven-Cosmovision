@@ -1,8 +1,9 @@
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from "react";
 import * as THREE from "three";
 import { TextureLoader } from "three";
-import { planets, type Planet } from "../../lib/planets";
+import { Minus, Plus, RotateCcw } from "lucide-react";
+import { planets as defaultPlanets, type Planet } from "../../lib/planets";
 import sunTexture from "../../assets/sun.jpg";
 
 type Props = {
@@ -14,6 +15,10 @@ type Props = {
   onFocusComplete: (slug: string) => void;
   /** Fired when the camera/cursor hovers a planet (slug or null). */
   onPlanetHover?: (slug: string | null) => void;
+  /** The visible planet catalog to render. Falls back to the full local Solar System. */
+  planetList?: Planet[];
+  /** Camera zoom multiplier controlled by mouse wheel / trackpad. */
+  zoomLevel?: number;
   /** When true, fills the parent container instead of the viewport. */
   contained?: boolean;
 };
@@ -25,25 +30,90 @@ type Props = {
  * and the caller is notified to navigate.
  */
 export function SolarSystemStage({ contained, ...props }: Props) {
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [cameraOrbitOffset, setCameraOrbitOffset] = useState(0);
+  const dragRef = useRef<{ active: boolean; x: number; pointerId: number | null }>({
+    active: false,
+    x: 0,
+    pointerId: null,
+  });
+
+  const handleWheel = (event: WheelEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setZoomLevel((current) => THREE.MathUtils.clamp(current + event.deltaY * 0.0012, 0.62, 1.45));
+  };
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (props.focusSlug) return;
+    dragRef.current = { active: true, x: event.clientX, pointerId: event.pointerId };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current.active) return;
+    const deltaX = event.clientX - dragRef.current.x;
+    dragRef.current.x = event.clientX;
+    setCameraOrbitOffset((current) => current - deltaX * 0.006);
+  };
+  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    if (dragRef.current.pointerId === event.pointerId) {
+      dragRef.current = { active: false, x: 0, pointerId: null };
+    }
+  };
+
   return (
-    <div className={contained ? "absolute inset-0" : "fixed inset-0 z-0"}>
+    <div
+      className={`${contained ? "absolute inset-0" : "fixed inset-0 z-0"} cursor-grab active:cursor-grabbing`}
+      onWheel={handleWheel}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+    >
       <Canvas
         dpr={[1, 2]}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-        camera={{ fov: 38, near: 0.1, far: 400, position: [0, 9, 28] }}
+        camera={{ fov: 50, near: 0.1, far: 400, position: [0, 14, 34] }}
       >
         <Suspense fallback={null}>
-          <Scene {...props} />
+          <Scene {...props} zoomLevel={zoomLevel} cameraOrbitOffset={cameraOrbitOffset} />
         </Suspense>
       </Canvas>
+      <div className="pointer-events-auto absolute bottom-6 right-6 z-20 flex overflow-hidden rounded-full border border-white/12 bg-[#07111f]/70 text-white shadow-[0_18px_60px_rgba(0,0,0,0.35)] backdrop-blur-md">
+        <button
+          type="button"
+          aria-label="Zoom in"
+          title="Zoom in"
+          onClick={() => setZoomLevel((current) => THREE.MathUtils.clamp(current - 0.12, 0.62, 1.45))}
+          className="grid size-11 place-items-center border-r border-white/10 text-white/82 transition hover:bg-[#6ecbff]/16 hover:text-white"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          aria-label="Reset zoom"
+          title="Reset zoom"
+          onClick={() => setZoomLevel(1)}
+          className="grid size-11 place-items-center border-r border-white/10 text-white/72 transition hover:bg-[#6ecbff]/16 hover:text-white"
+        >
+          <RotateCcw className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          aria-label="Zoom out"
+          title="Zoom out"
+          onClick={() => setZoomLevel((current) => THREE.MathUtils.clamp(current + 0.12, 0.62, 1.45))}
+          className="grid size-11 place-items-center text-white/82 transition hover:bg-[#6ecbff]/16 hover:text-white"
+        >
+          <Minus className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
 
 
-// Visual layout — compressed, NOT to scale. Tuned for beauty.
-const ORBIT_BASE = 5.5;
-const ORBIT_STEP = 3.4;
+// Visual layout: compressed, not to scale. Tuned for beauty.
+const ORBIT_BASE = 4.8;
+const ORBIT_STEP = 2.65;
 const PLANET_SIZES: Record<string, number> = {
   mercury: 0.35,
   venus: 0.55,
@@ -92,19 +162,7 @@ const PLANET_TEXTURE_PRESETS: Record<string, TexturePreset> = {
     ],
   },
   earth: {
-    color: [
-      ...localCandidates("earth", "color"),
-      "https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg",
-      "https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg",
-    ],
-    normal: [
-      ...localCandidates("earth", "normal"),
-      "https://threejs.org/examples/textures/planets/earth_normal_2048.jpg",
-    ],
-    clouds: [
-      ...localCandidates("earth", "clouds"),
-      "https://www.solarsystemscope.com/textures/download/2k_earth_clouds.jpg",
-    ],
+    color: [],
   },
   mars: {
     color: [
@@ -171,6 +229,13 @@ const ORBIT_ORDER = [
   "uranus",
   "neptune",
 ];
+
+function orderPlanetList(planetList?: Planet[]) {
+  const bySlug = new Map((planetList?.length ? planetList : defaultPlanets).map((planet) => [planet.slug, planet]));
+  return ORBIT_ORDER
+    .map((slug) => bySlug.get(slug) || defaultPlanets.find((planet) => planet.slug === slug))
+    .filter(Boolean) as Planet[];
+}
 
 function orbitFor(slug: string): { radius: number; speed: number; phase: number } {
   const i = ORBIT_ORDER.indexOf(slug);
@@ -300,7 +365,10 @@ function createFallbackRingTexture() {
 
 function usePlanetTextureSet(slug: string) {
   const fallbackMap = useMemo(() => createFallbackPlanetTexture(slug), [slug]);
-  const fallbackRingMap = useMemo(() => (slug === "saturn" ? createFallbackRingTexture() : undefined), [slug]);
+  const fallbackRingMap = useMemo(() => {
+    if (slug === "saturn") return createFallbackRingTexture();
+    return undefined;
+  }, [slug]);
   const [textureSet, setTextureSet] = useState<PlanetTextureSet | null>(null);
 
   useEffect(() => {
@@ -308,12 +376,13 @@ function usePlanetTextureSet(slug: string) {
     const preset = PLANET_TEXTURE_PRESETS[slug];
     setTextureSet(null);
 
+    if (slug === "earth") return undefined;
     if (!preset) return undefined;
 
     Promise.all([
       loadFirstTexture(preset.color),
-      preset.normal ? loadFirstTexture(preset.normal, true) : Promise.resolve(undefined),
-      preset.clouds ? loadFirstTexture(preset.clouds) : Promise.resolve(undefined),
+      slug !== "earth" && preset.normal ? loadFirstTexture(preset.normal, true) : Promise.resolve(undefined),
+      slug !== "earth" && preset.clouds ? loadFirstTexture(preset.clouds) : Promise.resolve(undefined),
       preset.rings ? loadFirstTexture(preset.rings) : Promise.resolve(undefined),
     ]).then(([map, normalMap, cloudMap, ringMap]) => {
       if (!active) {
@@ -361,7 +430,15 @@ function usePlanetTextureSet(slug: string) {
   };
 }
 
-function Scene({ focusSlug, onPlanetClick, onFocusComplete, onPlanetHover }: Props) {
+function Scene({
+  focusSlug,
+  onPlanetClick,
+  onFocusComplete,
+  onPlanetHover,
+  planetList,
+  zoomLevel = 1,
+  cameraOrbitOffset = 0,
+}: Props & { cameraOrbitOffset?: number }) {
   return (
     <>
       <ambientLight intensity={0.18} color={"#8aa0ff"} />
@@ -373,13 +450,14 @@ function Scene({ focusSlug, onPlanetClick, onFocusComplete, onPlanetHover }: Pro
       <Orbits />
 
       <PlanetSystem
+        planetList={planetList}
         focusSlug={focusSlug}
         onPlanetClick={onPlanetClick}
         onFocusComplete={onFocusComplete}
         onPlanetHover={onPlanetHover}
       />
 
-      <CameraRig focusSlug={focusSlug} />
+      <CameraRig focusSlug={focusSlug} zoomLevel={zoomLevel} cameraOrbitOffset={cameraOrbitOffset} />
     </>
   );
 }
@@ -418,13 +496,13 @@ function Sun() {
 
   return (
     <group>
-      {/* Photosphere — textured, emissive-like via basic material so it always glows */}
+      {/* Photosphere: textured, emissive-like via basic material so it always glows. */}
       <mesh ref={ref}>
         <sphereGeometry args={[1.5, 96, 96]} />
         <meshBasicMaterial map={tex} toneMapped={false} />
       </mesh>
 
-      {/* Chromosphere — thin warm halo hugging the surface */}
+      {/* Chromosphere: thin warm halo hugging the surface. */}
       <mesh>
         <sphereGeometry args={[1.62, 48, 48]} />
         <meshBasicMaterial
@@ -450,7 +528,7 @@ function Sun() {
         />
       </mesh>
 
-      {/* Outer corona — soft falloff */}
+      {/* Outer corona: soft falloff. */}
       <mesh ref={coronaOuter}>
         <sphereGeometry args={[4.2, 48, 48]} />
         <meshBasicMaterial
@@ -463,7 +541,7 @@ function Sun() {
         />
       </mesh>
 
-      {/* Far bloom — wide warm wash that fakes lens bloom */}
+      {/* Far bloom: wide warm wash that fakes lens bloom. */}
       <mesh>
         <sphereGeometry args={[7.5, 32, 32]} />
         <meshBasicMaterial
@@ -516,13 +594,16 @@ function Orbits() {
     onPlanetClick,
     onFocusComplete,
     onPlanetHover,
+    planetList,
   }: {
     focusSlug: string | null;
     onPlanetClick: (slug: string) => void;
     onFocusComplete: (slug: string) => void;
     onPlanetHover?: (slug: string | null) => void;
+    planetList?: Planet[];
   }) {
   // Track per-planet world position so the camera can fly toward it.
+    const renderedPlanets = useMemo(() => orderPlanetList(planetList), [planetList]);
     const positions = useRef<Record<string, THREE.Vector3>>({});
     const [opacities, setOpacities] = useState<Record<string, number>>({});
     const notifiedRef = useRef(false);
@@ -537,7 +618,7 @@ function Orbits() {
       setOpacities((prev) => {
         const next: Record<string, number> = { ...prev };
         let done = true;
-        for (const p of planets) {
+        for (const p of renderedPlanets) {
           const target = p.slug === focusSlug ? 1 : 0;
           const cur = next[p.slug] ?? 1;
           const v = cur + (target - cur) * 0.18;
@@ -558,11 +639,11 @@ function Orbits() {
       clearInterval(fade);
       clearTimeout(arrive);
     };
-  }, [focusSlug, onFocusComplete]);
+  }, [focusSlug, onFocusComplete, renderedPlanets]);
 
   return (
     <group>
-      {planets.map((planet) => {
+      {renderedPlanets.map((planet) => {
         return (
           <OrbitingPlanet
             key={planet.slug}
@@ -603,14 +684,29 @@ function Orbits() {
     const cloudMatRef = useRef<THREE.MeshStandardMaterial | null>(null);
     const atmoRef = useRef<THREE.MeshBasicMaterial | null>(null);
     const ringRef = useRef<THREE.MeshBasicMaterial | null>(null);
+    const clickedRef = useRef(false);
   const { map, normalMap, cloudMap, ringMap, isFallback } = usePlanetTextureSet(planet.slug);
+  const singleTextureMode = planet.slug === "earth";
   const orbit = useMemo(() => orbitFor(planet.slug), [planet.slug]);
   const size = PLANET_SIZES[planet.slug] ?? 0.6;
-  const isSaturn = planet.slug === "saturn";
+  const hasRings = planet.slug === "saturn";
   const tiltRef = useRef(planet.slug === "uranus" ? 1.3 : 0.18);
 
   // Pre-compute starting angle from phase
   const angleRef = useRef(orbit.phase);
+
+  useEffect(() => {
+    clickedRef.current = false;
+  }, [planet.slug]);
+
+  const triggerPlanetClick = () => {
+    if (clickedRef.current) return;
+    clickedRef.current = true;
+    onClick();
+    window.setTimeout(() => {
+      clickedRef.current = false;
+    }, 650);
+  };
 
     useFrame((_, dt) => {
       if (!paused) angleRef.current += dt * orbit.speed;
@@ -627,15 +723,15 @@ function Orbits() {
         matRef.current.opacity = opacity;
         matRef.current.transparent = true;
       }
-      if (cloudMatRef.current) cloudMatRef.current.opacity = opacity * 0.28;
-      if (atmoRef.current) atmoRef.current.opacity = opacity * 0.22;
-      if (ringRef.current) ringRef.current.opacity = opacity * 0.85;
+      if (cloudMatRef.current) cloudMatRef.current.opacity = opacity * (planet.slug === "earth" ? 0.38 : 0.24);
+      if (atmoRef.current) atmoRef.current.opacity = opacity * 0.14;
+      if (ringRef.current) ringRef.current.opacity = opacity * (planet.slug === "saturn" ? 0.85 : 0.38);
     });
 
   return (
     <group ref={groupRef}>
       {/* atmosphere glow */}
-      <mesh scale={[size * 1.9, size * 1.9, size * 1.9] as [number, number, number]}>
+      <mesh scale={[size * 1.42, size * 1.42, size * 1.42] as [number, number, number]}>
         <sphereGeometry args={[1, 24, 24]} />
         <meshBasicMaterial
           ref={atmoRef}
@@ -660,41 +756,46 @@ function Orbits() {
           onHover(false);
           document.body.style.cursor = "";
         }}
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          triggerPlanetClick();
+        }}
         onClick={(e) => {
           e.stopPropagation();
-          onClick();
+          triggerPlanetClick();
         }}
       >
         <sphereGeometry args={[size, 96, 96]} />
         <meshStandardMaterial
           ref={matRef}
           map={map}
-          normalMap={normalMap}
-          normalScale={normalMap ? new THREE.Vector2(0.36, 0.36) : undefined}
-          bumpMap={!normalMap && isFallback ? map : undefined}
-          bumpScale={!normalMap && isFallback ? 0.01 : 0}
+          normalMap={singleTextureMode ? undefined : normalMap}
+          normalScale={!singleTextureMode && normalMap ? new THREE.Vector2(0.36, 0.36) : undefined}
+          bumpMap={!singleTextureMode && !normalMap && isFallback ? map : undefined}
+          bumpScale={!singleTextureMode && !normalMap && isFallback ? 0.01 : 0}
           roughness={planet.slug === "earth" ? 0.72 : 0.9}
           metalness={0}
           transparent
         />
       </mesh>
 
-      {cloudMap ? (
-        <mesh ref={cloudRef} rotation={new THREE.Euler(0, 0, tiltRef.current)} scale={1.018}>
+      {!singleTextureMode && cloudMap ? (
+        <mesh ref={cloudRef} renderOrder={2} rotation={new THREE.Euler(0, 0, tiltRef.current)} scale={1.006}>
           <sphereGeometry args={[size, 96, 96]} />
           <meshStandardMaterial
             ref={cloudMatRef}
-            map={cloudMap}
+            color="#ffffff"
+            alphaMap={cloudMap}
             transparent
-            opacity={0.28}
+            opacity={planet.slug === "earth" ? 0.38 : 0.24}
             roughness={1}
+            depthTest
             depthWrite={false}
-            blending={THREE.AdditiveBlending}
           />
         </mesh>
       ) : null}
 
-      {isSaturn && ringMap && (
+      {hasRings && ringMap && (
         <mesh rotation={new THREE.Euler(-Math.PI / 2 + 0.38, 0, 0)}>
           <ringGeometry args={[size * 1.45, size * 2.4, 144, 1]} />
           <meshBasicMaterial
@@ -711,10 +812,18 @@ function Orbits() {
   );
 }
 
-function CameraRig({ focusSlug }: { focusSlug: string | null }) {
+function CameraRig({
+  focusSlug,
+  zoomLevel,
+  cameraOrbitOffset,
+}: {
+  focusSlug: string | null;
+  zoomLevel: number;
+  cameraOrbitOffset: number;
+}) {
   const { camera } = useThree();
   const baseTarget = useRef(new THREE.Vector3(0, 0, 0));
-  const targetPos = useRef(new THREE.Vector3(0, 9, 28));
+  const targetPos = useRef(new THREE.Vector3(0, 14, 34));
   const focusedPlanet = useRef<{ slug: string; radius: number } | null>(null);
   const t0 = useRef(0);
 
@@ -731,20 +840,22 @@ function CameraRig({ focusSlug }: { focusSlug: string | null }) {
   useFrame((state, dt) => {
     const time = state.clock.elapsedTime;
     if (!focusedPlanet.current) {
-      // Gentle drift through space — slow orbital cinematic
-      const driftX = Math.sin(time * 0.06) * 3;
-      const driftY = 8.5 + Math.sin(time * 0.04) * 1.6;
-      const driftZ = 28 + Math.cos(time * 0.05) * 2.5;
+      // Gentle drift through space: slow orbital cinematic.
+      const orbitAngle = time * 0.035 + cameraOrbitOffset;
+      const orbitRadius = (34 + Math.cos(time * 0.035) * 1.4) * zoomLevel;
+      const driftX = Math.sin(orbitAngle) * orbitRadius;
+      const driftY = (13.5 + Math.sin(time * 0.03) * 0.9) * zoomLevel;
+      const driftZ = Math.cos(orbitAngle) * orbitRadius;
       targetPos.current.set(driftX, driftY, driftZ);
-      baseTarget.current.set(Math.sin(time * 0.03) * 1.5, 0, 0);
+      baseTarget.current.set(Math.sin(time * 0.02) * 0.8, 0, 0);
     } else {
       // Fly toward the focused planet's orbit ring (use a point ahead of it)
       const orbitR = focusedPlanet.current.radius;
       const elapsed = (performance.now() - t0.current) / 1400;
       const e = Math.min(1, elapsed);
       // approach from above, settle near the orbit
-      const distance = THREE.MathUtils.lerp(orbitR + 6, orbitR + 1.6, e);
-      const height = THREE.MathUtils.lerp(8.5, 1.2, e);
+      const distance = THREE.MathUtils.lerp(orbitR + 6, orbitR + 1.6, e) * zoomLevel;
+      const height = THREE.MathUtils.lerp(8.5, 1.2, e) * zoomLevel;
       targetPos.current.set(distance * 0.55, height, distance * 0.8);
       baseTarget.current.set(orbitR * 0.35, 0, orbitR * 0.55);
     }

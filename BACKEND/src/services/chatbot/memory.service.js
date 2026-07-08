@@ -1,8 +1,11 @@
 import prisma from "../../config/db.js";
+import { createLogger } from "../../utils/logger.util.js";
 
-const DEFAULT_LIMIT = 25; // Giữ trong khoảng 20-30 để phù hợp context window LLM (llama3-8b)
+const logger = createLogger("chatbot-memory");
+const DEFAULT_HISTORY_LIMIT = 25;
+const DEFAULT_SESSION_TITLE = "New Conversation";
 
-async function getConversationHistory(sessionId, limit = DEFAULT_LIMIT) {
+async function getConversationHistory(sessionId, limit = DEFAULT_HISTORY_LIMIT) {
   try {
     if (!sessionId) return [];
 
@@ -10,12 +13,12 @@ async function getConversationHistory(sessionId, limit = DEFAULT_LIMIT) {
       where: { sessionId },
       orderBy: { createdAt: "desc" },
       take: limit,
-      select: { role: true, content: true },
+      select: { id: true, role: true, content: true },
     });
 
     return messages.reverse();
   } catch (error) {
-    console.error("Get conversation history error:", error.message);
+    logger.error("Get conversation history failed", error);
     return [];
   }
 }
@@ -23,14 +26,25 @@ async function getConversationHistory(sessionId, limit = DEFAULT_LIMIT) {
 async function getUserSessions(userId, limit = 10) {
   try {
     if (!userId) return [];
+
     return await prisma.chatSession.findMany({
       where: { userId },
       orderBy: { updatedAt: "desc" },
       take: limit,
-      include: { _count: { select: { messages: true } } },
+      select: {
+        id: true,
+        title: true,
+        updatedAt: true,
+        _count: { select: { messages: true } },
+        messages: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { content: true },
+        },
+      },
     });
   } catch (error) {
-    console.error("Get user sessions error:", error.message);
+    logger.error("Get user sessions failed", error);
     return [];
   }
 }
@@ -38,71 +52,26 @@ async function getUserSessions(userId, limit = 10) {
 async function getSessionById(sessionId) {
   try {
     if (!sessionId) return null;
+
     return await prisma.chatSession.findUnique({
       where: { id: sessionId },
       include: { _count: { select: { messages: true } } },
     });
   } catch (error) {
-    console.error("Get session by id error:", error.message);
+    logger.error("Get session by id failed", error);
     return null;
   }
 }
 
-async function createSession(userId, title = null) {
+async function createSession(userId) {
   try {
     if (!userId) return null;
+
     return await prisma.chatSession.create({
-      data: { userId, title: title || "New Conversation" },
+      data: { userId, title: DEFAULT_SESSION_TITLE },
     });
   } catch (error) {
-    console.error("Create session error:", error.message);
-    return null;
-  }
-}
-
-async function updateSessionTitle(sessionId, title) {
-  try {
-    if (!sessionId || !title?.trim()) return null;
-    return await prisma.chatSession.update({
-      where: { id: sessionId },
-      data: { title: title.trim() },
-    });
-  } catch (error) {
-    console.error("Update session title error:", error.message);
-    return null;
-  }
-}
-
-async function saveMessage({ sessionId, role, content, intent = "UNKNOWN", tokensUsed = null, modelUsed = null }) {
-  try {
-    if (!sessionId || !role || !content) return null;
-
-    const lowerRole = role.toLowerCase().trim();
-    if (!["user", "assistant"].includes(lowerRole)) {
-      throw new Error(`Invalid role: ${role}. Only "user" or "assistant" allowed.`);
-    }
-
-    return await prisma.$transaction(async (tx) => {
-      const message = await tx.chatMessage.create({
-        data: {
-          sessionId,
-          role: lowerRole, 
-          content,
-          intent,
-          tokensUsed,
-          modelUsed: lowerRole === "assistant" ? (modelUsed || "llama-3.1-8b-instant") : null,
-        },
-      });
-
-      await tx.chatSession.update({
-        where: { id: sessionId },
-        data: { updatedAt: new Date() },
-      });
-
-      return message;
-    });
-  } catch (error) {
-    console.error("Save message error:", error.message);
+    logger.error("Create session failed", error);
     return null;
   }
 }
@@ -120,23 +89,38 @@ async function saveConversation({
     if (!sessionId) return false;
 
     await prisma.$transaction(async (tx) => {
+      const session = await tx.chatSession.findUnique({
+        where: { id: sessionId },
+        select: { title: true },
+      });
+      const shouldUpdateTitle = isGenericSessionTitle(session?.title);
+
       await tx.chatMessage.create({
         data: { sessionId, role: "user", content: userMessage, intent, tokensUsed: userTokens },
       });
 
       await tx.chatMessage.create({
-        data: { sessionId, role: "assistant", content: assistantMessage, modelUsed, tokensUsed: assistantTokens },
+        data: {
+          sessionId,
+          role: "assistant",
+          content: assistantMessage,
+          modelUsed,
+          tokensUsed: assistantTokens,
+        },
       });
 
       await tx.chatSession.update({
         where: { id: sessionId },
-        data: { updatedAt: new Date() },
+        data: {
+          updatedAt: new Date(),
+          ...(shouldUpdateTitle && { title: buildSessionTitle(userMessage) }),
+        },
       });
     });
 
     return true;
   } catch (error) {
-    console.error("Save conversation error:", error.message);
+    logger.error("Save conversation failed", error);
     return false;
   }
 }
@@ -144,26 +128,35 @@ async function saveConversation({
 async function deleteSession(sessionId) {
   try {
     if (!sessionId) return false;
+
     await prisma.chatSession.delete({ where: { id: sessionId } });
     return true;
   } catch (error) {
-    console.error("Delete session error:", error.message);
+    logger.error("Delete session failed", error);
     return false;
   }
 }
 
-function formatHistoryForPrompt(history = []) {
-  if (!Array.isArray(history) || history.length === 0) {
-    return "No previous conversation.";
-  }
+async function deleteUserSessions(userId) {
+  try {
+    if (!userId) return null;
 
-  return history
-    .filter(msg => msg && msg.content && msg.role)
-    .map((msg) => {
-      const displayRole = msg.role.toLowerCase() === "assistant" ? "Assistant" : "User";
-      return `${displayRole}: ${msg.content}`;
-    })
-    .join("\n");
+    const result = await prisma.chatSession.deleteMany({ where: { userId } });
+    return result.count || 0;
+  } catch (error) {
+    logger.error("Delete user sessions failed", error);
+    return null;
+  }
+}
+
+function isGenericSessionTitle(title) {
+  return !title || title === DEFAULT_SESSION_TITLE;
+}
+
+function buildSessionTitle(message = "") {
+  const title = String(message).replace(/\s+/g, " ").trim();
+  if (!title) return DEFAULT_SESSION_TITLE;
+  return title.length > 64 ? `${title.slice(0, 61).trim()}...` : title;
 }
 
 export {
@@ -171,9 +164,7 @@ export {
   getUserSessions,
   getSessionById,
   createSession,
-  updateSessionTitle,
-  saveMessage,
   saveConversation,
   deleteSession,
-  formatHistoryForPrompt,
+  deleteUserSessions,
 };
