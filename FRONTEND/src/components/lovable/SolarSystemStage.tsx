@@ -3,7 +3,8 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { TextureLoader } from "three";
 import { planets, type Planet } from "../../lib/planets";
-import sunTexture from "../../assets/sun.jpg";
+import sunTexture from "../../assets/backgrounds/sun.jpg";
+
 
 type Props = {
   /** Slug currently being focused on (during fly-to). null = overview. */

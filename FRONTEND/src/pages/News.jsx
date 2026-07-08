@@ -1,5 +1,6 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageShell } from "../components/lovable/PageShell";
 import { DividerList } from "../components/lovable/Framing";
 import {
@@ -132,14 +133,86 @@ function NewsAiPanel({ story, onArticleUpdate }) {
 }
 
 export default function LovableNews() {
+  const { search: searchString } = window.location;
+  void searchString;
+
   const [stories, setStories] = useState([]);
+  // pagination/loading/page/search/category state is declared above
+
+
+  const highlightedSlugRef = useRef(null);
+  const [highlightedSlug, setHighlightedSlug] = useState(null);
+
+  const articleSlugFromUrl = useMemo(() => {
+    try {
+      const url = new URL(window.location.href);
+      const fromQuery = url.searchParams.get("article");
+      if (fromQuery) return decodeURIComponent(fromQuery);
+      return null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const tryScrollToSlug = (slug) => {
+    if (!slug) return false;
+    const el = document.querySelector(`[data-article-slug="${CSS.escape(slug)}"]`);
+    if (!el) return false;
+
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    highlightedSlugRef.current = slug;
+    setHighlightedSlug(slug);
+    window.setTimeout(() => {
+      if (highlightedSlugRef.current === slug) setHighlightedSlug(null);
+    }, 2000);
+
+    return true;
+  };
+
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("ALL");
 
+  // scroll logic handled below after stories render
   useEffect(() => {
+    if (!articleSlugFromUrl) return;
+    if (category !== "ALL") setCategory("ALL");
+    if (page !== 1) setPage(1);
+  }, [articleSlugFromUrl, category, page]);
+
+  useEffect(() => {
+    if (!articleSlugFromUrl) return;
+    if (loading) return;
+    if (!stories || stories.length === 0) return;
+
+    const targetSlug = articleSlugFromUrl;
+    // Nếu target có nằm trong page hiện tại, scroll + highlight
+    const found = tryScrollToSlug(targetSlug);
+    if (found) return;
+
+    // Nếu không thấy, thử tăng page để tìm đến bài (pagination có thể che khuất bài)
+    if (pagination && page < (pagination.totalPages || 1)) {
+      setPage((prev) => prev + 1);
+    }
+  }, [articleSlugFromUrl, loading, stories, pagination, page]);
+
+
+  useEffect(() => {
+    if (articleSlugFromUrl) {
+      if (category !== "ALL") setCategory("ALL");
+      if (page !== 1) setPage(1);
+    }
+
+    const forcedSlug = articleSlugFromUrl;
+
+    if (forcedSlug) {
+      if (category !== "ALL") setCategory("ALL");
+      if (page !== 1) setPage(1);
+    }
+
     setLoading(true);
 
     const params = {
@@ -247,7 +320,11 @@ export default function LovableNews() {
           const articleUrl = s.sourceUrl || s.url || "#";
 
           return (
-            <article key={s.id} className="px-6 py-8 sm:px-8 md:px-10 md:py-10">
+              <article
+                key={s.id}
+                data-article-slug={s.slug}
+                className={`px-6 py-8 sm:px-8 md:px-10 md:py-10 transition-colors ${highlightedSlug === s.slug ? "ring-2 ring-cyan-300/80 bg-cyan-950/30" : ""}`}
+              >
               <div className="flex items-center gap-4 text-[10px] font-light tracking-[0.3em] uppercase text-foreground/40">
                 <span>{new Date(s.publishedAt).toLocaleDateString()}</span>
                 <span className="h-px w-6 bg-foreground/20" />

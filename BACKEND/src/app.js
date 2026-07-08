@@ -11,8 +11,10 @@ import observatoryRoutes from "./modules/observatory/observatory.routes.js";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
 import newsRoutes from "./modules/news/news.routes.js";
 import userRoutes from "./modules/user/user.routes.js";
+import cosmicKnowledgeNotesRoutes from "./modules/cosmicKnowledgeNotes/cosmicKnowledgeNotes.routes.js";
 
 const app = express();
+
 
 import fs from "fs";
 import path from "path";
@@ -60,7 +62,14 @@ app.use("/api/observatory", observatoryRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/cosmic-knowledge-notes", cosmicKnowledgeNotesRoutes);
+
+// Debug endpoint list (optional)
+
+// app.get('/debug/cosmic-routes', (req,res)=>res.json({ok:true}));
+
 // Public dashboard (no auth) to support anonymous clients that pass lat/lng
+
 app.use("/api/dashboard-public", (await import("./modules/dashboard/public.routes.js")).default);
 
 

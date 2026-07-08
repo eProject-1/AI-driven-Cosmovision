@@ -1,11 +1,12 @@
-import earth from "../assets/earth.png";
-import mercury from "../assets/mercury.png";
-import venus from "../assets/venus.png";
-import mars from "../assets/mars.png";
-import jupiter from "../assets/jupiter.png";
-import saturn from "../assets/saturn.png";
-import uranus from "../assets/uranus.png";
-import neptune from "../assets/neptune.png";
+import earth from "../assets/planets/earth.png";
+import mercury from "../assets/planets/mercury.png";
+import venus from "../assets/planets/venus.png";
+import mars from "../assets/planets/mars.png";
+import jupiter from "../assets/planets/jupiter.png";
+import saturn from "../assets/planets/saturn.png";
+import uranus from "../assets/planets/uranus.png";
+import neptune from "../assets/planets/neptune.png";
+
 
 export type Planet = {
   slug: string;

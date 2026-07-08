@@ -1,66 +1,220 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { HyperspaceTransition } from "../components/lovable/HyperspaceTransition";
-import { Button } from "../components/lovable/ui/button";
-import { ArrowRight, CalendarDays, FileText, Orbit, Radio, Satellite, Telescope } from "lucide-react";
+import { Button } from "../components/ui/button";
 
-const signalCards = [
-  {
-    label: "Event",
-    icon: CalendarDays,
-    title: "Lyrids Meteor Shower Peak",
-    body: "Peak viewing tonight through April 23. Best observed after midnight with clear skies.",
-    time: "Tonight - 23:00 UTC",
-  },
-  {
-    label: "Mission",
-    icon: Satellite,
-    title: "James Webb Mirror Maintenance",
-    body: "Scheduled checkup on primary mirror segments. Part of ongoing observatory optimization.",
-    time: "Apr 22 - 14:30 UTC",
-  },
-  {
-    label: "Article",
-    icon: FileText,
-    title: "New Exoplanet Discovery in Proxima Centauri",
-    body: "Terrestrial-mass planet detected in habitable zone. Spectroscopy confirms water signatures.",
-    time: "Apr 21 - 09:15 UTC",
-  },
-  {
-    label: "Event",
-    icon: Orbit,
-    title: "ISS Pass Over North America",
-    body: "International Space Station visible across major cities. Duration: 5 minutes. Clear view expected.",
-    time: "Tomorrow - 21:45 UTC",
-  },
-  {
-    label: "Discovery",
-    icon: Radio,
-    title: "Supermassive Black Hole Early Universe",
-    body: "Most ancient SMBH found, formed less than 100 million years after the Big Bang. Challenges formation models.",
-    time: "Apr 20 - 16:20 UTC",
-  },
-  {
-    label: "Observatory",
-    icon: Telescope,
-    title: "Chandra X-Ray Observatory Status Update",
-    body: "Resumed full operations after scheduled maintenance. New observations of Cassiopeia A underway.",
-    time: "Apr 19 - 11:00 UTC",
-  },
-];
+import { ArrowRight, FileText, Orbit, Radio, Satellite, Telescope } from "lucide-react";
+import { getNewsList } from "../services/news.api";
+import { CosmicFieldNoteCard } from "../components/knowledge/CosmicFieldNoteCard";
+import { KnowledgeSheetModal } from "../components/knowledge/KnowledgeSheetModal";
+
+
+
+
+
+
+
+const cosmicNoteImageUrls = {
+  bigBang: "/images/cosmic-notes/big-bang/cover.jpg",
+  stellarLife: "/images/cosmic-notes/stellar-life/cover.jpg",
+  galaxiesNebulae: "/images/cosmic-notes/galaxies-nebulae/cover.jpg",
+  constellations: "/images/cosmic-notes/constellations/cover.jpg",
+};
+
+const signalIconMap = {
+
+  SPACE_EXPLORATION: Satellite,
+  SOLAR_SYSTEM: Orbit,
+  DEEP_SPACE: Telescope,
+  TECHNOLOGY: Radio,
+  GENERAL: FileText,
+};
+
+function getSignalIcon(category) {
+  return signalIconMap[category] || FileText;
+}
+
+function getSignalLabel(category) {
+  if (!category) return "News";
+  return String(category)
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatPublishedAt(value) {
+  if (!value) return "Recently published";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export default function LovableHome() {
   const [stage, setStage] = useState("hero");
+  const [signalItems, setSignalItems] = useState([]);
+  const [signalLoading, setSignalLoading] = useState(true);
+  const [signalError, setSignalError] = useState("");
   const navigate = useNavigate();
+
+  const [selectedKnowledge, setSelectedKnowledge] = useState(null);
+  const [isKnowledgeModalOpen, setIsKnowledgeModalOpen] = useState(false);
+  const discoverBtnRef = useRef(null);
+
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadSignals = async () => {
+      try {
+        setSignalLoading(true);
+        setSignalError("");
+        const result = await getNewsList({ page: 1, limit: 6 });
+
+        if (!cancelled) {
+          setSignalItems(Array.isArray(result?.items) ? result.items : []);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setSignalError("Unable to load the latest news right now.");
+        }
+      } finally {
+        if (!cancelled) {
+          setSignalLoading(false);
+        }
+      }
+    };
+
+    loadSignals();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
 
   const handleLaunch = () => {
     if (stage !== "hero") return;
     setStage("warp");
   };
 
+  const fallbackCosmicFieldNotes = [
+    {
+      title: "Big Bang & Early Universe",
+      slug: "big-bang-early-universe",
+      category: "Early Universe",
+      description:
+        "From the hot, dense beginning to the first atoms—this chapter traces how the early cosmos expanded and cooled into a transparent universe.",
+      imageSrc: cosmicNoteImageUrls.bigBang,
+
+      ctaLabel: "Discover More",
+    },
+    {
+      title: "Life Cycle of Stars",
+      slug: "life-cycle-of-stars",
+      category: "Stellar Evolution",
+      description:
+        "Stars are born in nebulae, fuse elements in stable phases, and end their lives in spectacular transformations—seeding new generations.",
+      imageSrc: cosmicNoteImageUrls.stellarLife,
+
+      ctaLabel: "Discover More",
+    },
+    {
+      title: "Galaxies & Nebulae",
+      slug: "galaxies-nebulae",
+      category: "Deep Space",
+      description:
+        "Galaxies gather billions of stars, while nebulae shape the raw material—together they paint the long arc of cosmic structure.",
+      imageSrc: cosmicNoteImageUrls.galaxiesNebulae,
+
+      ctaLabel: "Discover More",
+    },
+    {
+      title: "Constellations as Sky Maps",
+      slug: "constellations-sky-maps",
+      category: "Sky Cartography",
+      description:
+        "Constellations help us navigate the night—patterns of stars that connect imagination to observation across seasons and cultures.",
+      imageSrc: cosmicNoteImageUrls.constellations,
+
+      ctaLabel: "Discover More",
+    },
+  ];
+
+  const [cosmicKnowledgeNotes, setCosmicKnowledgeNotes] = useState([]);
+  const [cosmicKnowledgeNotesError, setCosmicKnowledgeNotesError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCosmicNotes = async () => {
+      try {
+        // Dynamic import to avoid bundler issues
+        const { getCosmicKnowledgeNotes } = await import("../services/cosmicKnowledgeNotes.api");
+        const result = await getCosmicKnowledgeNotes();
+        const items = Array.isArray(result?.items) ? result.items : [];
+
+        if (!cancelled) {
+          setCosmicKnowledgeNotes(items);
+          setCosmicKnowledgeNotesError("");
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setCosmicKnowledgeNotesError("Unable to load Cosmic Field Notes right now.");
+          setCosmicKnowledgeNotes([]);
+        }
+      }
+    };
+
+    loadCosmicNotes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const notesToRender = cosmicKnowledgeNotesError
+    ? fallbackCosmicFieldNotes
+    : cosmicKnowledgeNotes.length
+      ? cosmicKnowledgeNotes
+      : fallbackCosmicFieldNotes;
+
+  const cosmicFieldNotesCards = (
+    <div className="grid gap-8 md:gap-10">
+      {notesToRender.map((note, idx) => (
+        <CosmicFieldNoteCard
+          key={note.slug || idx}
+          title={note.title}
+          category={note.category}
+          description={note.body || note.description}
+          imageSrc={note.imageUrl ? note.imageUrl : note.imageSrc}
+          ctaLabel={note.ctaLabel}
+          onExplore={(e) => {
+            // Maintain scroll position; modal is overlay only.
+            // Also restore focus back to this button when modal closes.
+            setSelectedKnowledge(note);
+            setIsKnowledgeModalOpen(true);
+            // If click provides event target, store it for focus restore.
+            if (e?.currentTarget) discoverBtnRef.current = e.currentTarget;
+            else discoverBtnRef.current = document.activeElement;
+          }}
+        />
+      ))}
+    </div>
+  );
+
+
+
   return (
     <>
-      <section aria-label="Hero" className="relative min-h-screen w-full overflow-hidden" style={{ background: "radial-gradient(ellipse at 50% 110%, #10162B 0%, #0B1020 45%, #050816 100%)" }}>
+
+    <section aria-label="Hero" className="relative min-h-screen w-full overflow-hidden" style={{ background: "radial-gradient(ellipse at 50% 110%, #10162B 0%, #0B1020 45%, #050816 100%)" }}>
+
         <div aria-hidden className="absolute inset-0 opacity-[0.18]" style={{ backgroundImage: "linear-gradient(to right, rgba(140,170,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(140,170,255,0.08) 1px, transparent 1px)", backgroundSize: "64px 64px", maskImage: "radial-gradient(ellipse at 50% 40%, black 30%, transparent 80%)", WebkitMaskImage: "radial-gradient(ellipse at 50% 40%, black 30%, transparent 80%)" }} />
         <HeroStars />
         <div aria-hidden className="absolute -top-40 left-1/2 -translate-x-1/2 w-[120vw] h-[60vh] pointer-events-none" style={{ background: "radial-gradient(ellipse at center, rgba(100,140,255,0.18) 0%, transparent 60%)", filter: "blur(40px)" }} />
@@ -94,61 +248,33 @@ export default function LovableHome() {
 
       <HyperspaceTransition active={stage === "warp"} durationMs={2600} onDone={() => navigate("/planets")} />
 
-      <section className="relative py-28 bg-[#070b1c]" aria-labelledby="stories-title">
+      <section className="relative py-28 bg-[#070b1c]" aria-labelledby="cosmic-field-notes-title">
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-16 max-w-3xl">
             <p className="font-display text-[11px] tracking-[0.4em] uppercase text-foreground/45 mb-4">Chapter II</p>
-            <h2 id="stories-title" className="font-display text-4xl md:text-6xl font-light tracking-[-0.025em] leading-tight text-foreground mb-5">
-              Stories from the edge of the cosmos
+            <h2 id="cosmic-field-notes-title" className="font-display text-4xl md:text-6xl font-light tracking-[-0.025em] leading-tight text-foreground mb-5">
+              Cosmic Field Notes
             </h2>
             <p className="text-foreground/58 max-w-2xl text-base font-light leading-relaxed">
-              Hand-picked discoveries, missions, and observatories - the moments that are quietly rewriting our map of the universe.
+              Short explorations designed for curiosity—learn how the universe began, evolved, and organizes its light.
             </p>
           </div>
 
-          <div className="grid gap-24">
-            <StoryFeature
-              meta="Cosmology - JWST NIRSpec"
-              label="Latest discovery"
-              title="JWST resolves a galaxy 290M years after the Big Bang."
-              body="New deep-field observations push the cosmic frontier earlier than any prior survey, suggesting galaxy formation accelerated within the first 300 million years of cosmic history."
-              imageLabel="JWST Deep Field"
-              imageClassName="md:h-96"
-            />
-
-            <StoryFeature
-              reversed
-              meta="NASA - JPL - Arrival 2030"
-              label="Active mission"
-              title="Europa Clipper begins its long cruise to Jupiter."
-              body="NASA's flagship ice-moon mission is en route to a world whose subsurface ocean may hold twice the water of all Earth's oceans combined. Arrival: April 2030."
-              imageLabel="Europa Clipper Mission"
-              textClassName="md:col-start-2"
-              layoutClassName="md:grid-cols-[1.15fr_0.9fr] md:gap-16"
-            />
-
-            <StoryFeature
-              meta="Cerro Pachon - Chile"
-              label="Featured observatory"
-              title="Vera C. Rubin: a 3.2-gigapixel survey of the southern sky."
-              body="Beginning its decade-long Legacy Survey of Space and Time, Rubin will image the entire visible sky every few nights, cataloging billions of moving objects in unprecedented detail."
-              imageLabel="Vera C. Rubin Observatory"
-              layoutClassName="md:grid-cols-[0.85fr_1.15fr]"
-            />
-
-            <StoryFeature
-              reversed
-              meta="Free - Self-paced - 8 lessons"
-              label="Education"
-              title="Learn the night sky in eight short chapters."
-              body="A guided path through stars, constellations, planetary motion, and the deep sky - designed for curious beginners and seasoned amateurs alike."
-              imageLabel="Night Sky Learning Path"
-              textClassName="md:col-start-2"
-              layoutClassName="md:grid-cols-[1.05fr_0.95fr] md:gap-16"
-            />
-          </div>
+          {cosmicFieldNotesCards}
         </div>
       </section>
+
+      <KnowledgeSheetModal
+        isOpen={isKnowledgeModalOpen}
+        onClose={() => {
+          setIsKnowledgeModalOpen(false);
+        }}
+        knowledge={selectedKnowledge}
+        launchButtonRef={discoverBtnRef}
+      />
+
+
+
 
       <section className="relative py-24 bg-[#050816]" aria-labelledby="signal-title">
         <div className="mx-auto max-w-6xl px-6">
@@ -166,22 +292,57 @@ export default function LovableHome() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {signalCards.map((card) => {
-              const Icon = card.icon;
-              return (
-                <article key={card.title} className="group min-h-52 border border-white/10 bg-white/[0.025] p-5 transition-colors duration-300 hover:bg-white/[0.04]">
+            {signalLoading ? (
+              Array.from({ length: 6 }).map((_, index) => (
+                <article key={index} className="group min-h-52 border border-white/10 bg-white/[0.025] p-5">
                   <div className="flex items-center gap-3 mb-5">
-                    <div className="w-7 h-7 flex items-center justify-center text-foreground/55">
-                      <Icon className="w-4 h-4" strokeWidth={1.4} />
+                    <div className="w-7 h-7 flex items-center justify-center text-foreground/25">
+                      <div className="h-4 w-4 rounded-full bg-white/10 animate-pulse" />
                     </div>
-                    <p className="text-xs tracking-widest uppercase text-foreground/50">{card.label}</p>
+                    <div className="h-3 w-20 rounded-full bg-white/10 animate-pulse" />
                   </div>
-                  <h3 className="font-display text-lg font-light leading-snug text-foreground mb-3">{card.title}</h3>
-                  <p className="text-sm text-foreground/56 font-light leading-relaxed">{card.body}</p>
-                  <p className="text-[11px] tracking-[0.18em] uppercase text-foreground/38 mt-5">{card.time}</p>
+                  <div className="h-5 w-3/4 rounded-full bg-white/10 animate-pulse mb-3" />
+                  <div className="space-y-2">
+                    <div className="h-3 w-full rounded-full bg-white/10 animate-pulse" />
+                    <div className="h-3 w-5/6 rounded-full bg-white/10 animate-pulse" />
+                  </div>
+                  <div className="h-3 w-24 rounded-full bg-white/10 animate-pulse mt-5" />
                 </article>
-              );
-            })}
+              ))
+            ) : signalError ? (
+              <div className="md:col-span-2 lg:col-span-3 rounded border border-white/10 bg-white/[0.025] p-5 text-sm text-foreground/60">
+                {signalError}
+              </div>
+            ) : (
+              signalItems.map((item, index) => {
+                const Icon = getSignalIcon(item.category);
+                return (
+                  <article
+                    key={item.slug || index}
+onClick={() => item.slug && navigate(`/news?article=${encodeURIComponent(item.slug)}`)}
+                    role={item.slug ? "button" : undefined}
+                    tabIndex={item.slug ? 0 : undefined}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+if (item.slug) navigate(`/news?article=${encodeURIComponent(item.slug)}`);
+                      }
+                    }}
+                    className="group min-h-52 cursor-pointer border border-white/10 bg-white/[0.025] p-5 transition-colors duration-300 hover:bg-white/[0.04]"
+                  >
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-7 h-7 flex items-center justify-center text-foreground/55">
+                        <Icon className="w-4 h-4" strokeWidth={1.4} />
+                      </div>
+                      <p className="text-xs tracking-widest uppercase text-foreground/50">{getSignalLabel(item.category)}</p>
+                    </div>
+                    <h3 className="font-display text-lg font-light leading-snug text-foreground mb-3">{item.title || "Untitled update"}</h3>
+                    <p className="text-sm text-foreground/56 font-light leading-relaxed">{item.summary || "More details will appear here soon."}</p>
+                    <p className="text-[11px] tracking-[0.18em] uppercase text-foreground/38 mt-5">{formatPublishedAt(item.publishedAt)}</p>
+                  </article>
+                );
+              })
+            )}
           </div>
 
           <div className="md:hidden mt-8 text-center">
@@ -205,24 +366,60 @@ function StoryFeature({
   layoutClassName = "md:grid-cols-[0.95fr_1.25fr]",
   textClassName = "",
   imageClassName = "",
+  imageSrc = "",
+  slug = "",
+  loading = false,
+  onNavigate = null,
 }) {
   const text = (
     <div className={`relative border-l border-white/12 pl-6 md:pl-8 ${textClassName}`}>
-      <p className="font-display text-[11px] tracking-[0.32em] uppercase text-foreground/42 mb-4">{meta}</p>
-      <p className="text-[11px] tracking-[0.26em] uppercase text-foreground/36 mb-3">{label}</p>
-      <h3 className="font-display text-3xl md:text-4xl font-light tracking-[-0.018em] leading-tight text-foreground mb-5">{title}</h3>
-      <p className="text-foreground/60 text-sm md:text-base font-light leading-relaxed">{body}</p>
+      <p className="font-display text-[11px] tracking-[0.32em] uppercase text-foreground/42 mb-4">
+        {loading ? <span className="inline-block h-3 w-24 animate-pulse rounded-full bg-white/10" /> : meta}
+      </p>
+      <p className="text-[11px] tracking-[0.26em] uppercase text-foreground/36 mb-3">
+        {loading ? <span className="inline-block h-3 w-20 animate-pulse rounded-full bg-white/10" /> : label}
+      </p>
+      <h3 className="font-display text-3xl md:text-4xl font-light tracking-[-0.018em] leading-tight text-foreground mb-5">
+        {loading ? <span className="block h-5 w-3/4 animate-pulse rounded-full bg-white/10" /> : title}
+      </h3>
+      <p className="text-foreground/60 text-sm md:text-base font-light leading-relaxed">
+        {loading ? (
+          <span className="block space-y-2">
+            <span className="block h-3 w-full animate-pulse rounded-full bg-white/10" />
+            <span className="block h-3 w-5/6 animate-pulse rounded-full bg-white/10" />
+          </span>
+        ) : (
+          body
+        )}
+      </p>
     </div>
   );
 
   const image = (
-    <div className={`h-72 md:h-88 border border-white/10 bg-white/[0.025] flex items-end justify-start p-7 text-foreground/35 font-display text-sm tracking-[0.18em] uppercase ${imageClassName}`}>
-      {imageLabel}
+    <div className={`h-72 md:h-88 border border-white/10 bg-white/[0.025] overflow-hidden flex items-end justify-start p-7 text-foreground/35 font-display text-sm tracking-[0.18em] uppercase ${imageClassName}`}>
+      {loading ? (
+        <div className="h-full w-full rounded-sm border border-white/10 bg-white/[0.04] animate-pulse" />
+      ) : imageSrc ? (
+        <img src={imageSrc} alt={imageLabel || title} className="h-full w-full object-cover" />
+      ) : (
+        imageLabel
+      )}
     </div>
   );
 
   return (
-    <article className={`grid gap-8 md:gap-14 items-center md:grid-flow-dense ${layoutClassName}`}>
+    <article
+      className={`grid gap-8 md:gap-14 items-center md:grid-flow-dense ${layoutClassName} ${slug ? "cursor-pointer" : ""}`}
+      onClick={slug ? () => onNavigate?.(slug) : undefined}
+      role={slug ? "button" : undefined}
+      tabIndex={slug ? 0 : undefined}
+      onKeyDown={slug ? (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onNavigate?.(slug);
+        }
+      } : undefined}
+    >
       {reversed ? (
         <>
           {image}

@@ -31,11 +31,13 @@ model User {
   refreshTokens      RefreshToken[]
   savedEvents        SavedEvent[]
   savedObservatories SavedObservatory[]
+  savedCosmicKnowledgeNotes SavedCosmicKnowledgeNote[]
   preferences        UserPreference?
   profile            UserProfile?
 
   @@map("users")
 }
+
 
 model UserProfile {
   id        String   @id @default(cuid())
@@ -449,7 +451,49 @@ enum AnalyticsEvent {
   SEARCH
 }
 
+model CosmicKnowledgeNote {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  category      String
+  subtitle      String
+  body          String
+  imageUrl      String?
+  displayOrder Int
+  ctaLabel      String
+  isVisible     Boolean  @default(true)
+
+  detailIntro     String
+  galleryImages   Json
+  keyFacts        Json
+  timeline        Json
+  interestingFact String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  savedBy SavedCosmicKnowledgeNote[]
+
+  @@map("cosmic_knowledge_notes")
+}
+
+model SavedCosmicKnowledgeNote {
+  id                      String @id @default(cuid())
+  userId                  String
+  cosmicKnowledgeNoteId String
+  savedAt                 DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cosmicKnowledgeNote CosmicKnowledgeNote @relation(fields: [cosmicKnowledgeNoteId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cosmicKnowledgeNoteId])
+  @@index([userId])
+  @@index([cosmicKnowledgeNoteId])
+  @@map("saved_cosmic_knowledge_notes")
+}
+
 model WeatherCache {
+
   id         String @id @default(cuid())
   latRounded Float
   lonRounded Float
@@ -475,3 +519,4 @@ model WeatherCache {
   @@index([expiresAt])
   @@map("weather_cache")
 }
+

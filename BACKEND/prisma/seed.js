@@ -289,10 +289,11 @@ async function main() {
     })
   }
 
-  console.log(`   ✅ Seeded ${planets.length} planets`)
+        console.log(`   ✅ Seeded ${planets.length} planets`)
 
   // -----------------------------------------------------------
   // 3. CONSTELLATIONS
+
   // -----------------------------------------------------------
   console.log('⭐ Seeding constellations...')
 
@@ -1032,9 +1033,180 @@ console.log(`✅ Seeded ${observatories.length} observatories`)
 
 
   // -----------------------------------------------------------
-  // 6. SAMPLE CHAT SESSION
+  // 6. COSMIC KNOWLEDGE NOTES (HOME — CHAPTER II)
+  // -----------------------------------------------------------
+  console.log('🌌 Seeding cosmic knowledge notes...')
+
+  const cosmicKnowledgeNotes = [
+    {
+      title: 'Big Bang & Early Universe',
+      slug: 'big-bang-early-universe',
+      category: 'Early Universe',
+      subtitle: 'From hot beginnings to a clear, expanding sky',
+      body:
+        'The universe began extremely hot and dense. As space expanded, matter cooled and formed stable atoms. When the early cosmic fog thinned, light traveled freely—allowing us to observe the sky today.',
+
+      imageUrl: '/images/cosmic-notes/big-bang/cover.jpg',
+      displayOrder: 1,
+      ctaLabel: 'Discover More',
+      isVisible: true,
+      detailIntro: 'You will learn why the universe expands and why the light we see has been traveling for billions of years.',
+      galleryImages: [
+
+        '/images/cosmic-notes/big-bang/cover.jpg',
+        '/images/cosmic-notes/big-bang/expansion.jpg',
+        '/images/cosmic-notes/big-bang/cmb.jpg',
+      ],
+      keyFacts: [
+        'The universe is expanding: galaxies move farther apart over time.',
+        'The universe cooled after the earliest extreme heat.',
+        'Old light lets us “look back” into the universe’s past.',
+      ],
+      timeline: [
+        { label: 'The very beginning', year: 'very early', text: 'The universe was hot and dense, with energy dominating.' },
+        { label: 'Expansion and cooling', year: 'a few hundred thousand years', text: 'Matter cooled enough to form stable atoms.' },
+        { label: 'Becoming transparent', year: 'early', text: 'Light escaped freely, so we can observe the sky.' },
+      ],
+      interestingFact: 'The leftover signal from the early universe is called the “cosmic microwave background.” It helps scientists test Big Bang models.',
+
+    },
+    {
+      title: 'Life Cycle of Stars',
+      slug: 'life-cycle-of-stars',
+      category: 'Stellar Evolution',
+      subtitle: 'Birth, balance, and spectacular endings',
+      body:
+        'Stars form when gas and dust are pulled together by gravity. When the core becomes hot enough, nuclear fusion begins and the star settles into a stable phase. Eventually, the star runs out of fuel and ends in different ways—ranging from shedding its outer layers to ending in a supernova.',
+
+      imageUrl: '/images/cosmic-notes/stellar-life/cover.jpg',
+      displayOrder: 2,
+      ctaLabel: 'Discover More',
+      isVisible: true,
+      detailIntro: 'Begin with a star’s birth, learn how it “shines,” and discover how its ending depends on its mass.',
+      galleryImages: [
+        '/images/cosmic-notes/stellar-life/cover.jpg',
+        '/images/cosmic-notes/stellar-life/nebula.jpg',
+        '/images/cosmic-notes/stellar-life/supernova.jpg',
+      ],
+      keyFacts: [
+        'Stars glow because of nuclear fusion in their cores.',
+        'Mass determines a star’s “path” and the way it ultimately ends.',
+        'The elements created during a star’s life and death help form the next generation of stars.',
+      ],
+      timeline: [
+        { label: 'Birth', year: 'inside a nebula', text: 'Gas and dust collapse, forming a hot core that grows denser.' },
+        { label: 'Stable phase', year: 'millions to billions of years', text: 'Nuclear fusion balances gravity, keeping the star steady.' },
+        { label: 'Ending', year: 'late life', text: 'Massive stars can explode as supernovae.' },
+      ],
+      interestingFact: 'When a star explodes, its matter and newly forged elements can mix with nearby gas—helping seed the next stars to form.',
+    },
+    {
+      title: 'Galaxies & Nebulae',
+      slug: 'galaxies-nebulae',
+      category: 'Deep Space',
+      subtitle: 'Where structure grows and stars take shape',
+      body:
+        'A galaxy is home to billions—or even hundreds of billions—of stars, as well as gas and dust. Nebulae are regions where gas collects, heats up, and eventually forms new stars. When stars are born, their winds and radiation reshape the surrounding environment—keeping the cycle of star formation going.',
+      imageUrl: '/images/cosmic-notes/galaxies-nebulae/cover.jpg',
+      displayOrder: 3,
+      ctaLabel: 'Discover More',
+      isVisible: true,
+      detailIntro: 'See how galaxies build large-scale structure—and how nebulae “nurture” new stars.',
+      galleryImages: [
+        '/images/cosmic-notes/galaxies-nebulae/cover.jpg',
+        '/images/cosmic-notes/galaxies-nebulae/andromeda.jpg',
+        '/images/cosmic-notes/galaxies-nebulae/pillars.jpg',
+      ],
+      keyFacts: [
+        'Nebulae are stellar nurseries: collapsing gas lights up when young stars form.',
+        'Galaxies are never still— they interact and can merge.',
+        'Light from distant regions reaches us like a “slice” of the past.',
+      ],
+      timeline: [
+        { label: 'Star formation begins', year: 'from gas clouds', text: 'Gas and dust start to collapse under gravity.' },
+        { label: 'Young stars appear', year: 'ongoing', text: 'Newborn stars ignite within the nebula.' },
+        { label: 'The environment reshapes', year: 'afterward', text: 'Radiation and stellar winds alter the nebula’s shape.' },
+      ],
+      interestingFact: 'Some nebulae may look quiet from far away, but inside they host fast, energetic processes of star birth.',
+    },
+    {
+      title: 'Constellations as Sky Maps',
+      slug: 'constellations-sky-maps',
+      category: 'Sky Cartography',
+      subtitle: 'Navigate the night through patterns and meaning',
+      body:
+        'Constellations are imaginary “connect-the-dots” patterns drawn between bright stars to help us find our way and “read” the sky. Even though the stars in a constellation are often far apart in space, our viewpoint makes them appear to form recognizable shapes. As Earth rotates, the sky seems to shift—so constellations move through different positions across seasons.',
+      imageUrl: '/images/cosmic-notes/constellations/cover.jpg',
+      displayOrder: 4,
+      ctaLabel: 'Discover More',
+      isVisible: true,
+      detailIntro: 'Use constellations like sky maps to train your observing skills and spot targets more easily.',
+      galleryImages: [
+        '/images/cosmic-notes/constellations/cover.jpg',
+        '/images/cosmic-notes/constellations/orion.jpg',
+        '/images/cosmic-notes/constellations/ancient-map.jpg',
+      ],
+      keyFacts: [
+        'Constellations help you locate directions and observing seasons.',
+        'The stars in a constellation are not necessarily close to each other in space.',
+        'Constellation positions change throughout the year and from night to night.',
+      ],
+      timeline: [
+        { label: 'Pick your landmarks', year: 'right away', text: 'Find a bright constellation to use as a “marker” in the sky.' },
+        { label: 'Connect the pattern', year: 'practice', text: 'Follow the “connecting lines” to recognize common shapes.' },
+        { label: 'Use the season map', year: 'by season', text: 'Revisit the sky across seasons to see how the constellations shift.' },
+      ],
+      interestingFact: 'Many ancient cultures used constellations to track seasonal cycles and tell stories—so each constellation can carry different meanings depending on tradition.',
+    },
+  ];
+
+
+
+  for (const note of cosmicKnowledgeNotes) {
+    await prisma.cosmicKnowledgeNote.upsert({
+      where: { slug: note.slug },
+      update: {
+        title: note.title,
+        category: note.category,
+        subtitle: note.subtitle,
+        body: note.body,
+        imageUrl: note.imageUrl,
+        detailIntro: note.detailIntro,
+        galleryImages: note.galleryImages,
+        keyFacts: note.keyFacts,
+        timeline: note.timeline,
+        interestingFact: note.interestingFact,
+        displayOrder: note.displayOrder,
+        ctaLabel: note.ctaLabel,
+        isVisible: note.isVisible,
+      },
+      create: {
+        title: note.title,
+        slug: note.slug,
+        category: note.category,
+        subtitle: note.subtitle,
+        body: note.body,
+        imageUrl: note.imageUrl,
+        detailIntro: note.detailIntro,
+        galleryImages: note.galleryImages,
+        keyFacts: note.keyFacts,
+        timeline: note.timeline,
+        interestingFact: note.interestingFact,
+        displayOrder: note.displayOrder,
+        ctaLabel: note.ctaLabel,
+        isVisible: note.isVisible,
+      },
+
+    });
+  }
+
+  console.log(`   ✅ Seeded ${cosmicKnowledgeNotes.length} cosmic knowledge notes`)
+
+  // -----------------------------------------------------------
+  // 7. SAMPLE CHAT SESSION
   // -----------------------------------------------------------
   console.log(' Seeding sample chat session...')
+
 
   const session = await prisma.chatSession.create({
     data: {
