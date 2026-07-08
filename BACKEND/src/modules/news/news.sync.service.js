@@ -1,6 +1,6 @@
 import prisma from "../../config/db.js";
 import { env } from "../../config/env.js";
-import { AppError } from "../../utils/app-error.util.js";
+import { AppError } from "../../utils/app.error.util.js";
 import { createLogger } from "../../utils/logger.util.js";
 import { clampInteger } from "../../utils/service.util.js";
 import {
@@ -8,7 +8,7 @@ import {
   fetchExoplanetNews,
   fetchNasaNews,
 } from "../../services/external/news.service.js";
-import { upsertExternalArticle } from "./news-article.service.js";
+import { upsertExternalArticle } from "./news.article.service.js";
 
 let maintenanceTimer = null;
 const logger = createLogger("news");

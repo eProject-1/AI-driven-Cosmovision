@@ -1,6 +1,6 @@
 import prisma from "../../config/db.js";
 import groq from "../../config/groq.js";
-import { AppError } from "../../utils/app-error.util.js";
+import { AppError } from "../../utils/app.error.util.js";
 import { stripJsonFences } from "../../utils/service.util.js";
 
 function buildArticleContext(article) {

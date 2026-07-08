@@ -1,13 +1,13 @@
 import fs from "fs/promises";
 import path from "path";
 import prisma from "../../config/db.js";
-import { AppError } from "../../utils/app-error.util.js";
+import { AppError } from "../../utils/app.error.util.js";
 import { createLogger } from "../../utils/logger.util.js";
 import { clampInteger, clampUnitInterval, requireUserId } from "../../utils/service.util.js";
 import { trackAnalyticsEvent } from "../analytics/analytics.service.js";
-import { analyzeStarField } from "./constellation-image-analysis.service.js";
-import { runClipRecognition } from "./constellation-clip-recognition.service.js";
-import { runVisionRecognition } from "./constellation-vision-recognition.service.js";
+import { analyzeStarField } from "./constellation.image.analysis.service.js";
+import { runClipRecognition } from "./constellation.clip.recognition.service.js";
+import { runVisionRecognition } from "./constellation.vision.recognition.service.js";
 
 const MIN_RECOGNITION_CONFIDENCE = Number(process.env.MIN_CONSTELLATION_RECOGNITION_CONFIDENCE || 0.62);
 const MIN_AI_RECOGNITION_CONFIDENCE = Number(process.env.MIN_AI_CONSTELLATION_RECOGNITION_CONFIDENCE || 0.76);

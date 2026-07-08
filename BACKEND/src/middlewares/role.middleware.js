@@ -1,4 +1,4 @@
-import { AppError } from "../utils/app-error.util.js";
+import { AppError } from "../utils/app.error.util.js";
 
 /**
  *

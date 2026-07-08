@@ -1,4 +1,4 @@
-import { similarity } from "../../utils/fuzzy-match.util.js";
+import { similarity } from "../../utils/fuzzy.match.util.js";
 export { calculateDistanceKm } from "../../utils/geo.util.js";
 
 export function normalizeSearchText(value = "") {

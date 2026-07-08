@@ -1,4 +1,4 @@
-import { AppError } from "../../utils/app-error.util.js";
+import { AppError } from "../../utils/app.error.util.js";
 import { calculateDistanceKm } from "../../utils/geo.util.js";
 import { createLogger } from "../../utils/logger.util.js";
 

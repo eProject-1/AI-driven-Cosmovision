@@ -1,4 +1,4 @@
-import { includesAny, normalizeSearchText } from "./search-ranking.js";
+import { includesAny, normalizeSearchText } from "./search.ranking.js";
 
 export const DEFAULT_LIMIT = 6;
 export const MAX_LIMIT = 20;

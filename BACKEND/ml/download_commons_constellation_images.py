@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 COMMONS_API = "https://commons.wikimedia.org/w/api.php"
-CATALOG_PATH = Path(__file__).resolve().parents[1] / "src" / "data" / "constellations-88.js"
+CATALOG_PATH = Path(__file__).resolve().parents[1] / "src" / "data" / "constellations.88.js"
 IMAGE_MIME_EXTENSIONS = {
     "image/jpeg": ".jpg",
     "image/png": ".png",

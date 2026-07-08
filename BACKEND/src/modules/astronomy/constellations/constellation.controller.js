@@ -1,5 +1,5 @@
 // modules/astronomy/constellations/constellation.controller.js
-import { asyncHandler } from "../../../utils/async-handler.util.js";
+import { asyncHandler } from "../../../utils/async.handler.util.js";
 import { sendSuccess } from "../../../utils/response.util.js";
 import { buildUploadedFileUrl } from "../../../middlewares/upload.middleware.js";
 import {

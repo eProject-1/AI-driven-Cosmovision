@@ -1,5 +1,5 @@
 import prisma from "../../config/db.js";
-import { AppError } from "../../utils/app-error.util.js";
+import { AppError } from "../../utils/app.error.util.js";
 import { formatObservatory } from "./observatory.helpers.js";
 
 export async function createObservatory(payload) {

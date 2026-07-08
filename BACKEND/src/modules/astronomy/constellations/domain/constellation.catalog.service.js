@@ -1,6 +1,6 @@
 import prisma from "../../../../config/db.js";
-import { AppError } from "../../../../utils/app-error.util.js";
-import { withVerifiedConstellationFallback } from "./constellation-fallback.service.js";
+import { AppError } from "../../../../utils/app.error.util.js";
+import { withVerifiedConstellationFallback } from "./constellation.fallback.service.js";
 
 export async function getAllConstellations({ search, season, quadrant } = {}) {
   const constellations = await prisma.constellation.findMany({

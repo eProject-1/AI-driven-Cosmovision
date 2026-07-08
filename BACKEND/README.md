@@ -97,7 +97,7 @@ Folders:
 
 Backend files:
 
-- Use kebab-case.
+- Use dot-separated names for multi-part backend files.
 - Use role suffixes for module files: `<feature>.controller.js`, `<feature>.service.js`, `<feature>.routes.js`, `<feature>.validation.js`, `<feature>.helpers.js`.
 - Use `<name>.middleware.js` for middleware files.
 - Use `<name>.util.js` for shared utilities.
@@ -119,4 +119,4 @@ service.util.js
 validation.util.js
 ```
 
-Avoid adding new camelCase or PascalCase backend filenames unless the file exports a class and the existing folder already uses that convention.
+Avoid adding new kebab-case, camelCase, or PascalCase backend filenames unless the existing folder already uses that convention.

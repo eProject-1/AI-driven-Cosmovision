@@ -5,7 +5,7 @@ import {
   normalizeSearchText,
   scoreTextMatch,
   sortAndLimit,
-} from "./search-ranking.js";
+} from "./search.ranking.js";
 
 const NEWS_DISCOVERY_TOKENS = new Set([
   "news", "latest", "new", "recent", "tin", "tuc", "moi",

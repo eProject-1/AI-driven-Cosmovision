@@ -1,4 +1,4 @@
-import { constellations88 } from "../../../../data/constellations-88.js";
+import { constellations88 } from "../../../../data/constellations.88.js";
 
 const fallbackBySlug = new Map(
   constellations88.map((constellation) => [constellation.slug, constellation])

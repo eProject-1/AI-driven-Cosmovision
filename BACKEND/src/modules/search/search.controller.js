@@ -1,4 +1,4 @@
-import { asyncHandler } from "../../utils/async-handler.util.js";
+import { asyncHandler } from "../../utils/async.handler.util.js";
 import { sendSuccess } from "../../utils/response.util.js";
 import { createLogger } from "../../utils/logger.util.js";
 import { trackAnalyticsEvent } from "../../services/analytics/analytics.service.js";

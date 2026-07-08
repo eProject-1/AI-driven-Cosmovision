@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import prisma from "../../../../config/db.js";
-import { AppError } from "../../../../utils/app-error.util.js";
+import { AppError } from "../../../../utils/app.error.util.js";
 
 const galleryRoot = path.join(process.cwd(), "ml", "data", "constellations");
 const galleryImageExtensions = new Set([".jpg", ".jpeg", ".png", ".webp"]);

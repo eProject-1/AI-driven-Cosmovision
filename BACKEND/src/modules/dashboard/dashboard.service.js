@@ -1,6 +1,6 @@
 import prisma from "../../config/db.js";
 import { env } from "../../config/env.js";
-import { AppError } from "../../utils/app-error.util.js";
+import { AppError } from "../../utils/app.error.util.js";
 import { calculateDistanceKm } from "../../utils/geo.util.js";
 import { clampInteger } from "../../utils/service.util.js";
 import { createLogger } from "../../utils/logger.util.js";

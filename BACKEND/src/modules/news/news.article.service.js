@@ -1,5 +1,5 @@
 import prisma from "../../config/db.js";
-import { AppError } from "../../utils/app-error.util.js";
+import { AppError } from "../../utils/app.error.util.js";
 import { clampInteger } from "../../utils/service.util.js";
 
 export function slugify(text = "") {

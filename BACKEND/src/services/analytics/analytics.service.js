@@ -1,5 +1,5 @@
 import prisma from "../../config/db.js";
-import { AppError } from "../../utils/app-error.util.js";
+import { AppError } from "../../utils/app.error.util.js";
 
 const DEFAULT_DAYS = 7;
 const DEFAULT_LIMIT = 10;

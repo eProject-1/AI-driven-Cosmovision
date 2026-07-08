@@ -1,5 +1,5 @@
 import prisma from "../../config/db.js";
-import { AppError } from "../../utils/app-error.util.js";
+import { AppError } from "../../utils/app.error.util.js";
 import { clampInteger, requireUserId } from "../../utils/service.util.js";
 
 export async function getCurrentUser(userId) {

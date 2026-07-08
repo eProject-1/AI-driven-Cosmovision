@@ -8,7 +8,7 @@ import {
   getNearbyObservatories,
   getVisibleConstellations,
   getVisiblePlanets,
-} from "../../modules/recommendation/recommendation-sources.service.js";
+} from "../../modules/recommendation/recommendation.sources.service.js";
 import { INTENT_TYPES } from "./intent.service.js";
 import { createLogger } from "../../utils/logger.util.js";
 

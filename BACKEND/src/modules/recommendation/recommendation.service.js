@@ -1,5 +1,5 @@
 import prisma from "../../config/db.js";
-import { AppError } from "../../utils/app-error.util.js";
+import { AppError } from "../../utils/app.error.util.js";
 import { createLogger } from "../../utils/logger.util.js";
 import { clampInteger } from "../../utils/service.util.js";
 
@@ -12,11 +12,11 @@ import {
   getNearbyObservatories,
   getVisibleConstellations,
   getVisiblePlanets,
-} from "./recommendation-sources.service.js";
+} from "./recommendation.sources.service.js";
 import {
   buildRuleBasedSuggestion,
   generateAiSuggestion,
-} from "./recommendation-suggestion.service.js";
+} from "./recommendation.suggestion.service.js";
 
 const logger = createLogger("recommendation");
 const RECOMMENDATION_CACHE_TTL_MIN = parseInt(process.env.RECOMMENDATION_CACHE_TTL_MINUTES || "30", 10);

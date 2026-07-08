@@ -1,5 +1,5 @@
 import prisma from "../../config/db.js";
-import { AppError } from "../../utils/app-error.util.js";
+import { AppError } from "../../utils/app.error.util.js";
 import { getUserRecommendations } from "../recommendation/recommendation.service.js";
 import {
   applyTextFilters,
@@ -15,7 +15,7 @@ export {
   createObservatory,
   deleteObservatory,
   updateObservatory,
-} from "./observatory-admin.service.js";
+} from "./observatory.admin.service.js";
 
 const DEFAULT_NEARBY_RADIUS_KM = 100;
 const MAX_NEARBY_RADIUS_KM = 500;

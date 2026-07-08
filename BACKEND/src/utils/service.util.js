@@ -1,4 +1,4 @@
-import { AppError } from "./app-error.util.js";
+import { AppError } from "./app.error.util.js";
 
 export function clampInteger(value, { fallback = 10, min = 1, max = 50 } = {}) {
   const parsed = Number.parseInt(value, 10);

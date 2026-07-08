@@ -1,4 +1,4 @@
-import { findMatchedKeywords, hasKeyword } from "../../utils/fuzzy-match.util.js";
+import { findMatchedKeywords, hasKeyword } from "../../utils/fuzzy.match.util.js";
 import { normalizeText } from "../../utils/normalize.util.js";
 
 const INTENT_TYPES = {

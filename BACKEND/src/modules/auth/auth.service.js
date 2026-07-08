@@ -2,14 +2,14 @@
 import bcrypt from "bcryptjs";
 import prisma from "../../config/db.js";
 import { signToken } from "../../utils/jwt.util.js";
-import { AppError } from "../../utils/app-error.util.js";
+import { AppError } from "../../utils/app.error.util.js";
 import { createLogger } from "../../utils/logger.util.js";
 import {
   assertEmailCanReceiveVerification,
   createVerificationToken,
   getStoredTokenParts,
   hashVerificationToken,
-} from "../../utils/email-verification.util.js";
+} from "../../utils/email.verification.util.js";
 import { sendVerificationEmailOrDevFallback } from "../../services/external/email.service.js";
 
 const logger = createLogger("auth");

@@ -5,7 +5,7 @@ export {
   getNewsBySlug,
   getNewsList,
   updateNewsArticle,
-} from "./news-article.service.js";
+} from "./news.article.service.js";
 
 export {
   cleanupOldNews,
@@ -14,7 +14,7 @@ export {
   fetchLatestNews,
   runNewsMaintenance,
   startNewsMaintenanceJob,
-} from "./news-sync.service.js";
+} from "./news.sync.service.js";
 
 export {
   answerNewsQuestion,
@@ -24,4 +24,4 @@ export {
   generateNewsAiTags,
   generateNewsImportance,
   summarizeNewsArticle,
-} from "./news-ai.service.js";
+} from "./news.ai.service.js";

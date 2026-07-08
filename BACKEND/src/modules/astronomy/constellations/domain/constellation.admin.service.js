@@ -1,6 +1,6 @@
 import prisma from "../../../../config/db.js";
-import { AppError } from "../../../../utils/app-error.util.js";
-import { withVerifiedConstellationFallback } from "./constellation-fallback.service.js";
+import { AppError } from "../../../../utils/app.error.util.js";
+import { withVerifiedConstellationFallback } from "./constellation.fallback.service.js";
 
 export async function createConstellation(payload) {
   const data = buildConstellationWriteData(payload, { requireBasics: true });

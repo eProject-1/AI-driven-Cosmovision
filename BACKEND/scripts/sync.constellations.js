@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
-import { constellations88 } from "../src/data/constellations-88.js";
+import { constellations88 } from "../src/data/constellations.88.js";
 
 const prisma = new PrismaClient();
 const GALLERY_ROOT = path.join(process.cwd(), "ml", "data", "constellations");

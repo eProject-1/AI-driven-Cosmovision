@@ -1,6 +1,6 @@
 import Groq from "groq-sdk";
 import { env } from "../../config/env.js";
-import { AppError } from "../../utils/app-error.util.js";
+import { AppError } from "../../utils/app.error.util.js";
 import { createLogger } from "../../utils/logger.util.js";
 
 const logger = createLogger("chatbot-llm");

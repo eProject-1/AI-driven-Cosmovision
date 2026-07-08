@@ -1,7 +1,7 @@
-import { AppError } from "../../utils/app-error.util.js";
+import { AppError } from "../../utils/app.error.util.js";
 import { clampInteger } from "../../utils/service.util.js";
-import { SEARCH_ADAPTERS } from "./search-adapters.js";
-import { DEFAULT_LIMIT, MAX_LIMIT, parseSearchQuery } from "./search-parser.js";
+import { SEARCH_ADAPTERS } from "./search.adapters.js";
+import { DEFAULT_LIMIT, MAX_LIMIT, parseSearchQuery } from "./search.parser.js";
 
 export async function smartSearch({ query, limit = DEFAULT_LIMIT, ...params }) {
   const rawQuery = String(query || params.q || "").trim();

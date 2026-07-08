@@ -7,7 +7,7 @@
  *   getMarsRoverPhotos(options) → Ảnh từ tàu thám hiểm Mars
  */
 
-import { AppError } from "../../utils/app-error.util.js";
+import { AppError } from "../../utils/app.error.util.js";
 
 // ─── Config ────────────────────────────────────────────────────────────────────
 
