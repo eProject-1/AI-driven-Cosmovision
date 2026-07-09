@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { AdminResourceActions } from "../components/admin/AdminResourceActions";
 import { planets as localPlanets, getPlanet, mergePlanetsFromApi } from "../lib/planets";
-import { getNasaPlanetFact } from "../lib/planetFacts";
 import { SolarSystemStage } from "../components/lovable/SolarSystemStage";
 import { Starfield } from "../components/lovable/Starfield";
 import { useAuth } from "../context/authState";
@@ -189,8 +188,6 @@ const planetCreateTemplate = {
 };
 
 function PlanetListItem({ planet, onOpen, adminActions }) {
-  const nasaFacts = getNasaPlanetFact(planet.slug);
-
   return (
     <article className="grid gap-4">
       <button
@@ -200,7 +197,7 @@ function PlanetListItem({ planet, onOpen, adminActions }) {
       >
         <span className="block overflow-hidden bg-black">
           <img
-            src={nasaFacts?.nasaImageUrl || planet.image}
+            src={planet.image}
             alt={planet.name}
             loading="lazy"
             className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-[1.04]"

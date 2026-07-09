@@ -30,7 +30,7 @@ export async function getPlanetBySlug(slug) {
   return planet;
 }
 
-export async function getPlanetFacts(slug, { refresh = false } = {}) {
+export async function getPlanetFacts(slug) {
   const planet = await prisma.planet.findUnique({
     where: { slug },
     select: {
@@ -52,13 +52,32 @@ export async function getPlanetFacts(slug, { refresh = false } = {}) {
   if (!planet) throw new AppError("Planet not found", 404);
 
   const hasFacts = Array.isArray(planet.aiFunFacts) && planet.aiFunFacts.length > 0;
-  if (hasFacts && !refresh) {
-    return {
-      planetName: planet.name,
-      facts: planet.aiFunFacts,
-      source: "cache",
-    };
-  }
+  return {
+    planetName: planet.name,
+    facts: hasFacts ? planet.aiFunFacts : [],
+    source: "database",
+  };
+}
+
+export async function refreshPlanetFacts(slug) {
+  const planet = await prisma.planet.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      type: true,
+      massKg: true,
+      diameterKm: true,
+      distanceFromSunAu: true,
+      avgTempCelsius: true,
+      hasRings: true,
+      numberOfMoons: true,
+      atmosphere: true,
+    },
+  });
+
+  if (!planet) throw new AppError("Planet not found", 404);
 
   const generatedFacts = await generateFunFactsFromGroq(planet);
   await prisma.planet.update({

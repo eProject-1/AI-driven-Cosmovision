@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { AdminResourceActions } from "../components/admin/AdminResourceActions";
 import { FilterGroup } from "../components/common/FilterControls";
 import { Pagination } from "../components/common/Pagination";
 import { SearchField } from "../components/common/SearchField";
@@ -33,6 +34,31 @@ const hemispheres = ["All", "Northern", "Southern", "Equatorial"];
 const seasons = ["All", "Spring", "Summer", "Autumn", "Winter", "All year"];
 const alphabet = ["All", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 const PAGE_SIZE = 20;
+
+const constellationCreateTemplate = {
+  name: "New Constellation",
+  slug: "new-constellation",
+  latinName: "New Constellation",
+  abbreviation: "New",
+  family: "Modern",
+  quadrant: "NQ1",
+  rightAscension: "0h 00m",
+  declination: "+0 deg",
+  areaSqDeg: 0,
+  visibleLatitudes: "+90 deg to -90 deg",
+  mainStars: 0,
+  brightestStar: "",
+  bestMonth: "January",
+  bestSeason: "Winter",
+  imageUrl: "",
+  mapUrl: "",
+  description: "Write a short constellation description.",
+  mythologicalOrigin: "",
+  aiMythology: "",
+  aiFacts: [],
+  aiObserverTip: "",
+  isVisible: true,
+};
 
 function getErrorMessage(error) {
   return error?.response?.data?.message || error?.message || "Recognition failed.";
@@ -105,6 +131,7 @@ export default function LovableConstellations() {
   const [monthlyConstellations, setMonthlyConstellations] = useState([]);
   const [monthlyStatus, setMonthlyStatus] = useState("idle");
   const currentMonth = new Date().getMonth() + 1;
+  const isAdmin = user?.role === "ADMIN";
 
   const loadConstellations = () => {
     let active = true;
@@ -309,6 +336,23 @@ export default function LovableConstellations() {
             </a>
           </div>
 
+          {isAdmin ? (
+            <div className="mb-5 rounded-2xl border border-emerald-200/15 bg-emerald-300/[0.045] px-5 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-100">Admin catalog</p>
+                  <p className="mt-1 text-sm text-slate-400">Create, edit, and hide constellation records.</p>
+                </div>
+                <AdminResourceActions
+                  resourceName="constellation"
+                  endpoint="/astronomy/constellations"
+                  createTemplate={constellationCreateTemplate}
+                  onCreated={loadConstellations}
+                />
+              </div>
+            </div>
+          ) : null}
+
           <SearchField
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -412,6 +456,18 @@ export default function LovableConstellations() {
                 </Link>
                 <p className="text-xs text-slate-500">{constellation.abbreviation}</p>
               </div>
+              {isAdmin ? (
+                <div className="border-t border-white/8 px-5 py-4">
+                  <AdminResourceActions
+                    resourceName="constellation"
+                    endpoint="/astronomy/constellations"
+                    slug={constellation.slug}
+                    item={constellation}
+                    onUpdated={loadConstellations}
+                    onDeleted={loadConstellations}
+                  />
+                </div>
+              ) : null}
             </article>
           ))}
         </section>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   ChevronLeft,
@@ -18,6 +18,7 @@ import {
   Telescope,
 } from "lucide-react";
 import { ConstellationSketch } from "../components/lovable/ConstellationSketch";
+import { AdminResourceActions } from "../components/admin/AdminResourceActions";
 import { Starfield } from "../components/lovable/Starfield";
 import { useAuth } from "../context/authState";
 import { getCategory, getHemisphere, safeConstellationValue } from "../lib/constellations";
@@ -94,6 +95,7 @@ function ErrorState({ message }) {
 
 export default function ConstellationDetail() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [constellation, setConstellation] = useState(null);
   const [status, setStatus] = useState("loading");
@@ -282,6 +284,15 @@ export default function ConstellationDetail() {
     }
   }
 
+  function handleConstellationUpdated(updated) {
+    setConstellation(updated);
+    if (updated?.slug && updated.slug !== slug) navigate(`/constellations/${updated.slug}`, { replace: true });
+  }
+
+  function handleConstellationDeleted() {
+    navigate("/constellations", { replace: true });
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-white">
       <Starfield />
@@ -304,6 +315,18 @@ export default function ConstellationDetail() {
           <p className="mt-8 max-w-xl text-lg font-light leading-9 text-slate-200/76">
             {constellation.description}
           </p>
+          {isAdmin ? (
+            <div className="mt-8">
+              <AdminResourceActions
+                resourceName="constellation"
+                endpoint="/astronomy/constellations"
+                slug={constellation.slug}
+                item={constellation}
+                onUpdated={handleConstellationUpdated}
+                onDeleted={handleConstellationDeleted}
+              />
+            </div>
+          ) : null}
         </div>
 
         <div

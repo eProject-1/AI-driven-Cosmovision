@@ -19,7 +19,7 @@ function formatError(error) {
   if (error instanceof Error) return error.message;
   if (typeof error === "object" && "message" in error) return error.message;
   return error;
-}
+} 
 
 function formatMeta(meta) {
   return meta ?? "";

@@ -129,6 +129,30 @@ function getLevelLabel(level) {
   return labels[level] || "Star Seeker";
 }
 
+function countLocalItemsThisWeek(items = []) {
+  const weekStart = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  return items.filter((item) => {
+    const time = new Date(item.savedAt || item.createdAt || 0).getTime();
+    return Number.isFinite(time) && time >= weekStart;
+  }).length;
+}
+
+function formatDelta(value) {
+  return `+${Number(value) || 0} this week`;
+}
+
+function getRealUserPoints({ summary, savedTotal, contributionCount }) {
+  const counts = summary?.counts || {};
+  return (
+    (counts.recommendations || 0) * 15 +
+    savedTotal * 10 +
+    (counts.imageUploads || 0) * 20 +
+    contributionCount * 5 +
+    (counts.favoritePlanets || 0) * 4 +
+    (counts.favoriteConstellations || 0) * 4
+  );
+}
+
 export default function LovableProfile() {
   const [activeTab, setActiveTab] = useState("overview");
   const [user, setUser] = useState(null);
@@ -199,10 +223,11 @@ export default function LovableProfile() {
 
   const displayName = user?.displayName || user?.username || "Explorer";
   const savedTotal =
-    (summary?.counts?.savedEvents || 0) +
-    (summary?.counts?.savedObservatories || 0) +
+    (summary?.counts?.savedItems ?? ((summary?.counts?.savedEvents || 0) + (summary?.counts?.savedObservatories || 0))) +
     savedCosmicKnowledge.length;
-  const contributionCount = (summary?.counts?.imageUploads || 0) + (summary?.counts?.recommendations || 0);
+  const contributionCount = summary?.counts?.contributions ?? ((summary?.counts?.imageUploads || 0) + (summary?.counts?.recommendations || 0));
+  const savedTotalThisWeek = (summary?.weeklyCounts?.savedItems || 0) + countLocalItemsThisWeek(savedCosmicKnowledge);
+  const userPoints = getRealUserPoints({ summary, savedTotal, contributionCount });
 
   function updateProfileForm(updater) {
     setProfileForm((prev) => {
@@ -347,6 +372,7 @@ export default function LovableProfile() {
               profileForm={profileForm}
               preferencesForm={preferencesForm}
               savedTotal={savedTotal}
+              userPoints={userPoints}
               user={user}
               onEdit={() => setActiveTab("settings")}
             />
@@ -361,6 +387,7 @@ export default function LovableProfile() {
               <OverviewPage
                 summary={summary}
                 savedTotal={savedTotal}
+                savedTotalThisWeek={savedTotalThisWeek}
                 contributionCount={contributionCount}
                 recommendations={recommendations}
                 imageUploads={imageUploads}
@@ -416,7 +443,7 @@ export default function LovableProfile() {
   );
 }
 
-function ProfileHero({ activeTab, displayName, initials, profileForm, preferencesForm, savedTotal, user, onEdit }) {
+function ProfileHero({ activeTab, displayName, initials, profileForm, preferencesForm, userPoints, user, onEdit }) {
   const title = profileTabs.find((tab) => tab.id === activeTab)?.label || "Overview";
 
   return (
@@ -466,7 +493,7 @@ function ProfileHero({ activeTab, displayName, initials, profileForm, preference
               <div className="mt-5 grid gap-3 text-sm text-foreground/70 sm:grid-cols-3">
                 <MiniBadge icon={User} label="Member since" value={formatDate(user?.createdAt)} />
                 <MiniBadge icon={Sparkles} label="Level" value={getLevelLabel(preferencesForm.experienceLevel)} />
-                <MiniBadge icon={Star} label="Points" value={String(2450 + savedTotal * 25)} />
+                <MiniBadge icon={Star} label="Points" value={String(userPoints)} />
               </div>
             </div>
           </div>
@@ -495,25 +522,38 @@ function ProfileHero({ activeTab, displayName, initials, profileForm, preference
   );
 }
 
-function OverviewPage({ summary, savedTotal, contributionCount, recommendations, imageUploads }) {
+function OverviewPage({ summary, savedTotal, savedTotalThisWeek, contributionCount, recommendations, imageUploads }) {
+  const counts = summary?.counts || {};
+  const weeklyCounts = summary?.weeklyCounts || {};
+  const topCategories = Array.isArray(summary?.topCategories) ? summary.topCategories : [];
+
   return (
     <>
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={Compass} label="Recommendations" value={summary?.counts?.recommendations || 0} delta="+20 this week" />
-        <StatCard icon={Bookmark} label="Saved Items" value={savedTotal} delta="+8 this week" />
-        <StatCard icon={ImageIcon} label="Image Scans" value={summary?.counts?.imageUploads || 0} delta="+4 this week" />
-        <StatCard icon={Medal} label="Contributions" value={contributionCount} delta="+3 this week" />
+        <StatCard icon={Compass} label="Recommendations" value={counts.recommendations || 0} delta={formatDelta(weeklyCounts.recommendations)} />
+        <StatCard icon={Bookmark} label="Saved Items" value={savedTotal} delta={formatDelta(savedTotalThisWeek)} />
+        <StatCard icon={ImageIcon} label="Image Scans" value={counts.imageUploads || 0} delta={formatDelta(weeklyCounts.imageUploads)} />
+        <StatCard icon={Medal} label="Contributions" value={contributionCount} delta={formatDelta(weeklyCounts.contributions)} />
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
         <Panel title="Exploration Activity" subtitle="Your activity in the last 30 days">
-          <ActivityChart />
+          <ActivityChart activity={summary?.activity || []} />
         </Panel>
         <Panel title="Top Categories" subtitle="Your most explored categories">
-          <CategoryBar label="Planets" value={42} icon="Saturn" />
-          <CategoryBar label="Constellations" value={28} icon="Stars" />
-          <CategoryBar label="Cosmic Knowledge" value={20} icon="Notes" />
-          <CategoryBar label="Observatory" value={10} icon="Scope" />
+          {topCategories.length ? (
+            topCategories.map((category) => (
+              <CategoryBar
+                key={category.label}
+                label={category.label}
+                value={category.percent}
+                count={category.count}
+                icon={category.icon}
+              />
+            ))
+          ) : (
+            <EmptyText>No category activity yet.</EmptyText>
+          )}
         </Panel>
       </section>
 
@@ -791,41 +831,48 @@ function Panel({ title, subtitle, children }) {
   );
 }
 
-function ActivityChart() {
-  const points = [28, 36, 50, 40, 47, 37, 66, 51, 35, 67, 55, 70];
-  const max = Math.max(...points);
+function ActivityChart({ activity = [] }) {
+  const points = Array.isArray(activity) && activity.length
+    ? activity.map((item) => Number(item.total) || 0)
+    : Array.from({ length: 30 }, () => 0);
+  const max = Math.max(...points, 1);
   const path = points
     .map((value, index) => {
       const x = (index / (points.length - 1)) * 100;
-      const y = 100 - (value / max) * 86;
+      const y = 92 - (value / max) * 78;
       return `${index === 0 ? "M" : "L"} ${x} ${y}`;
     })
     .join(" ");
+  const hasActivity = points.some((value) => value > 0);
 
   return (
     <div className="h-52 rounded-[8px] border border-white/10 bg-white/[0.02] p-4">
-      <svg viewBox="0 0 100 100" className="h-full w-full overflow-visible" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="activityLine" x1="0" x2="1">
-            <stop stopColor="#a78bfa" />
-            <stop offset="1" stopColor="#7dd3fc" />
-          </linearGradient>
-          <linearGradient id="activityFill" x1="0" x2="0" y1="0" y2="1">
-            <stop stopColor="#8b5cf6" stopOpacity="0.32" />
-            <stop offset="1" stopColor="#8b5cf6" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        {[20, 40, 60, 80].map((y) => (
-          <line key={y} x1="0" x2="100" y1={y} y2={y} stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
-        ))}
-        <path d={`${path} L 100 100 L 0 100 Z`} fill="url(#activityFill)" />
-        <path d={path} fill="none" stroke="url(#activityLine)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-      </svg>
+      {hasActivity ? (
+        <svg viewBox="0 0 100 100" className="h-full w-full overflow-visible" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="activityLine" x1="0" x2="1">
+              <stop stopColor="#a78bfa" />
+              <stop offset="1" stopColor="#7dd3fc" />
+            </linearGradient>
+            <linearGradient id="activityFill" x1="0" x2="0" y1="0" y2="1">
+              <stop stopColor="#8b5cf6" stopOpacity="0.32" />
+              <stop offset="1" stopColor="#8b5cf6" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          {[20, 40, 60, 80].map((y) => (
+            <line key={y} x1="0" x2="100" y1={y} y2={y} stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
+          ))}
+          <path d={`${path} L 100 100 L 0 100 Z`} fill="url(#activityFill)" />
+          <path d={path} fill="none" stroke="url(#activityLine)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        </svg>
+      ) : (
+        <div className="grid h-full place-items-center text-sm text-foreground/50">No activity in the last 30 days.</div>
+      )}
     </div>
   );
 }
 
-function CategoryBar({ icon, label, value }) {
+function CategoryBar({ icon, label, value, count }) {
   return (
     <div className="mb-4 last:mb-0">
       <div className="mb-2 flex items-center justify-between text-sm">
@@ -838,6 +885,7 @@ function CategoryBar({ icon, label, value }) {
       <div className="h-2 rounded-full bg-white/[0.06]">
         <div className="h-full rounded-full bg-gradient-to-r from-violet-400 to-sky-300" style={{ width: `${value}%` }} />
       </div>
+      <p className="mt-1 text-xs text-foreground/38">{count || 0} interactions</p>
     </div>
   );
 }

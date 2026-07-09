@@ -1,14 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronDown, ExternalLink, ImageOff, Menu, Search, Share2 } from "lucide-react";
+import { ChevronDown, ExternalLink, ImageOff, Loader2, Menu, RotateCcw, Search, Share2 } from "lucide-react";
 import { Starfield } from "../components/lovable/Starfield";
+import { useAuth } from "../context/authState";
 import { getPlanet } from "../lib/planets";
-import { getNasaPlanetFact } from "../lib/planetFacts";
+import { getPlanetBySlug, getPlanetFacts, refreshPlanetFacts } from "../services/planet.api";
 
 const makeId = (value) => value.toLowerCase().replaceAll(" ", "-").replace(/[^a-z0-9-]/g, "");
 const ringPlanets = new Set(["jupiter", "saturn", "uranus", "neptune"]);
 const rockyPlanets = new Set(["mercury", "venus", "earth", "mars"]);
 const gasGiants = new Set(["jupiter", "saturn"]);
+
+function formatNumber(value, options = {}) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  return new Intl.NumberFormat("en-US", options).format(numeric);
+}
 
 function moonSummary(planet) {
   if (!planet.moons) return `${planet.name} has no known natural moons.`;
@@ -141,7 +148,7 @@ function MissingFacts() {
         <p className="text-[10px] uppercase tracking-[0.35em] text-[#6ecbff]/70">Planet facts</p>
         <h1 className="mt-4 font-display text-4xl font-light">Facts not found</h1>
         <p className="mt-4 text-sm leading-relaxed text-slate-300">
-          This planet does not have a NASA fact profile in the CosmoVision dataset yet.
+          This planet does not have an AI fact profile in the CosmoVision database yet.
         </p>
         <Link
           to="/planets"
@@ -152,6 +159,59 @@ function MissingFacts() {
       </div>
     </main>
   );
+}
+
+function LoadingFacts() {
+  return (
+    <main className="relative grid min-h-screen place-items-center bg-[#05070d] px-6 text-center text-white">
+      <Starfield />
+      <div className="relative z-10">
+        <p className="text-[10px] uppercase tracking-[0.35em] text-[#6ecbff]/70">Planet facts</p>
+        <h1 className="mt-4 font-display text-4xl font-light">Loading AI facts...</h1>
+      </div>
+    </main>
+  );
+}
+
+function FactsError({ message }) {
+  return (
+    <main className="relative min-h-screen bg-[#05070d] px-6 pt-32 text-white">
+      <Starfield />
+      <div className="relative z-10 mx-auto max-w-2xl rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center backdrop-blur-xl">
+        <p className="text-[10px] uppercase tracking-[0.35em] text-[#6ecbff]/70">Planet facts</p>
+        <h1 className="mt-4 font-display text-4xl font-light">Unable to load AI facts</h1>
+        <p className="mt-4 text-sm leading-relaxed text-slate-300">{message}</p>
+      </div>
+    </main>
+  );
+}
+
+function buildFactsProfile({ planet, localPlanet, factPayload }) {
+  const aiFacts = Array.isArray(factPayload?.facts) ? factPayload.facts.filter(Boolean) : [];
+  const quickFacts = [
+    { label: "Type", value: planet.type || "Planet" },
+    { label: "Diameter", value: planet.diameterKm ? `${formatNumber(planet.diameterKm)} km` : localPlanet.diameter },
+    {
+      label: "Distance",
+      value: planet.distanceFromSunAu
+        ? `${formatNumber(planet.distanceFromSunAu, { maximumFractionDigits: 3 })} AU`
+        : localPlanet.distance,
+    },
+    { label: "Moons", value: String(planet.numberOfMoons ?? localPlanet.moons ?? "Unknown") },
+  ];
+
+  return {
+    intro: planet.description || localPlanet.description,
+    imageUrl: localPlanet.image || planet.imageUrl,
+    imageCredit: "CosmoVision planet database",
+    quickFacts,
+    sections: [
+      {
+        title: "AI Facts",
+        body: aiFacts.length ? aiFacts : ["No AI facts are stored in the database for this planet yet."],
+      },
+    ],
+  };
 }
 
 function FactIndex({ sections }) {
@@ -198,14 +258,87 @@ function DetailsText({ body, planetName, quickFacts }) {
 
 export default function PlanetFacts() {
   const { slug } = useParams();
+  const { user } = useAuth();
   const localPlanet = useMemo(() => getPlanet(slug), [slug]);
-  const facts = useMemo(() => getNasaPlanetFact(slug), [slug]);
+  const [planet, setPlanet] = useState(null);
+  const [facts, setFacts] = useState(null);
+  const [status, setStatus] = useState("loading");
+  const [error, setError] = useState("");
+  const [refreshStatus, setRefreshStatus] = useState("idle");
+  const [refreshError, setRefreshError] = useState("");
+  const isAdmin = user?.role === "ADMIN";
 
-  if (!localPlanet || !facts) return <MissingFacts />;
+  useEffect(() => {
+    let active = true;
 
-  const heroImage = facts.nasaImageUrl || localPlanet.image;
-  const sourceName = facts.sourceUrl.replace("https://", "").replace(/\/$/, "");
+    async function loadFacts() {
+      if (!slug || !localPlanet) {
+        setStatus("not-found");
+        return;
+      }
+
+      setStatus("loading");
+      setError("");
+
+      try {
+        const [planetData, factPayload] = await Promise.all([
+          getPlanetBySlug(slug),
+          getPlanetFacts(slug),
+        ]);
+        if (!active) return;
+        setPlanet(planetData);
+        setFacts(buildFactsProfile({ planet: planetData, localPlanet, factPayload }));
+        setStatus("ready");
+      } catch (err) {
+        if (!active) return;
+        setError(err.response?.data?.message || err.message || "Could not load AI facts.");
+        setStatus(err.response?.status === 404 ? "not-found" : "error");
+      }
+    }
+
+    loadFacts();
+
+    return () => {
+      active = false;
+    };
+  }, [slug, localPlanet]);
+
+  if (status === "loading") return <LoadingFacts />;
+  if (!localPlanet || status === "not-found") return <MissingFacts />;
+  if (status === "error") return <FactsError message={error} />;
+  if (!facts) return <MissingFacts />;
+
+  const planetName = planet?.name || localPlanet.name;
+  const heroImage = facts.imageUrl || localPlanet.image;
+  const sourceName = "CosmoVision database";
   const sections = mergeSections(facts.sections, generatedNasaSections(localPlanet));
+
+  async function handleRefreshFacts() {
+    if (!isAdmin || refreshStatus === "refreshing") return;
+    setRefreshStatus("refreshing");
+    setRefreshError("");
+
+    try {
+      const factPayload = await refreshPlanetFacts(slug);
+      const planetData = planet || await getPlanetBySlug(slug);
+      setPlanet((current) => ({
+        ...(current || planetData),
+        aiFunFacts: Array.isArray(factPayload.facts) ? factPayload.facts : [],
+      }));
+      setFacts(buildFactsProfile({
+        planet: {
+          ...planetData,
+          aiFunFacts: Array.isArray(factPayload.facts) ? factPayload.facts : [],
+        },
+        localPlanet,
+        factPayload,
+      }));
+      setRefreshStatus("ready");
+    } catch (err) {
+      setRefreshError(err.response?.data?.message || err.message || "Could not refresh AI facts.");
+      setRefreshStatus("error");
+    }
+  }
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#05070d] text-white">
@@ -220,16 +353,30 @@ export default function PlanetFacts() {
               <span>/</span>
               <Link to="/planets" className="transition hover:text-white">Planets</Link>
               <span>/</span>
-              <Link to={`/planets/${localPlanet.slug}`} className="transition hover:text-white">{localPlanet.name}</Link>
+              <Link to={`/planets/${localPlanet.slug}`} className="transition hover:text-white">{planetName}</Link>
               <span>/</span>
-              <span className="text-white">{localPlanet.name}: Facts</span>
+              <span className="text-white">{planetName}: Facts</span>
             </div>
             <h1 className="font-display text-6xl font-semibold tracking-[-0.03em] text-white md:text-8xl">
-              {localPlanet.name} Facts
+              {planetName} Facts
             </h1>
             <p className="mt-7 max-w-3xl text-xl font-light leading-9 text-slate-200/84 md:text-2xl">
               {facts.intro}
             </p>
+            {isAdmin ? (
+              <div className="mt-8">
+                <button
+                  type="button"
+                  onClick={handleRefreshFacts}
+                  disabled={refreshStatus === "refreshing"}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[#6ecbff]/35 bg-[#6ecbff]/10 px-5 text-sm font-semibold text-[#c8f1ff] transition hover:border-[#9ee8ff]/70 hover:bg-[#6ecbff]/16 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {refreshStatus === "refreshing" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                  Refresh AI facts
+                </button>
+                {refreshError ? <p className="mt-3 text-sm text-red-200">{refreshError}</p> : null}
+              </div>
+            ) : null}
           </div>
 
           <FactIndex sections={sections} />
@@ -248,15 +395,15 @@ export default function PlanetFacts() {
             </div>
 
             <div className="aspect-[16/9]">
-              <FactImage src={heroImage} fallback={localPlanet.image} alt={`${localPlanet.name} from NASA`} />
+              <FactImage src={heroImage} fallback={localPlanet.image} alt={planetName} />
             </div>
 
             <div className="absolute inset-x-0 top-0 flex items-center justify-between px-6 py-7 text-white">
               <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.2em] text-white/70">
-                <span className="grid size-9 place-items-center rounded-full border border-white/40 text-[10px]">NASA</span>
-                <span>Eyes on the Solar System</span>
+                <span className="grid size-9 place-items-center rounded-full border border-white/40 text-[10px]">AI</span>
+                <span>CosmoVision Database</span>
                 <span>&gt;</span>
-                <span>{localPlanet.name}</span>
+                <span>{planetName}</span>
               </div>
               <div className="hidden items-center gap-5 text-white/85 md:flex">
                 <Search className="h-5 w-5" />
@@ -269,7 +416,7 @@ export default function PlanetFacts() {
 
             <div className="absolute bottom-0 left-0 w-full max-w-md border-t border-r border-white/15 bg-[#121417]/92 p-6 backdrop-blur md:bottom-8 md:left-8">
               <p className="text-[11px] uppercase tracking-[0.24em] text-[#6ecbff]/80">Info</p>
-              <h2 className="mt-4 text-3xl font-semibold text-white">{localPlanet.name}</h2>
+              <h2 className="mt-4 text-3xl font-semibold text-white">{planetName}</h2>
               <p className="mt-1 flex items-center gap-2 text-sm text-slate-300">
                 <span className="size-2 rounded-full bg-[#4d7dff]" />
                 Planet
@@ -305,15 +452,12 @@ export default function PlanetFacts() {
                 </div>
               ))}
             </div>
-            <a
-              href={facts.sourceUrl}
-              target="_blank"
-              rel="noreferrer"
+            <span
               className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#9bd5ff] transition hover:text-white"
             >
-              NASA source
+              Database source
               <ExternalLink className="h-4 w-4" />
-            </a>
+            </span>
           </aside>
 
           <article className="grid gap-12">
@@ -325,16 +469,16 @@ export default function PlanetFacts() {
                 <h2 className="mt-3 font-display text-4xl font-semibold tracking-[-0.02em] text-white md:text-6xl">
                   {section.title}
                 </h2>
-                <DetailsText body={section.body} planetName={localPlanet.name} quickFacts={facts.quickFacts} />
+                <DetailsText body={section.body} planetName={planetName} quickFacts={facts.quickFacts} />
               </section>
             ))}
 
             <div className="border-t border-white/12 pt-8">
               <p className="text-base leading-8 text-slate-300/76">
-                Facts are summarized and paraphrased from NASA Science planet profiles. Source:{" "}
-                <a href={facts.sourceUrl} target="_blank" rel="noreferrer" className="font-semibold text-[#9bd5ff] underline underline-offset-4">
+                AI facts are loaded from the CosmoVision database. Source:{" "}
+                <span className="font-semibold text-[#9bd5ff]">
                   {sourceName}
-                </a>
+                </span>
               </p>
             </div>
           </article>

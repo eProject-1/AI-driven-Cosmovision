@@ -7,6 +7,7 @@ import {
   getPlanetBySlug as fetchPlanetBySlug,
   getPlanetFacts as fetchPlanetFacts,
   getRelatedPlanets,
+  refreshPlanetFacts as refreshPlanetFactsRecord,
   updatePlanet as updatePlanetRecord,
 } from "./planet.service.js";
 
@@ -21,13 +22,12 @@ export const getPlanetBySlug = asyncHandler(async (req, res) => {
 });
 
 export const getPlanetFacts = asyncHandler(async (req, res) => {
-  const refresh = req.query.refresh === "true" && req.user?.role === "ADMIN";
-  const data = await fetchPlanetFacts(req.params.slug, { refresh });
+  const data = await fetchPlanetFacts(req.params.slug);
   return sendSuccess(res, data);
 });
 
 export const refreshPlanetFacts = asyncHandler(async (req, res) => {
-  const data = await fetchPlanetFacts(req.params.slug, { refresh: true });
+  const data = await refreshPlanetFactsRecord(req.params.slug);
   return sendSuccess(res, data, "Facts refreshed successfully");
 });
 
