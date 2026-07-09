@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware.js";
+import { aiRateLimit } from "../../middlewares/rate-limit.middleware.js";
 import { validate } from "../../middlewares/validate.middleware.js";
 import { sendMessageSchema } from "./chatbot.validation.js";
 
@@ -13,7 +14,7 @@ import {
 
 const router = Router();
 
-router.post("/message", authenticate, validate(sendMessageSchema), sendMessage);
+router.post("/message", authenticate, aiRateLimit, validate(sendMessageSchema), sendMessage);
 router.get("/sessions", authenticate, listChatSessions);
 router.delete("/sessions", authenticate, clearAllChatSessions);
 router.get("/history", authenticate, getConversationHistory);

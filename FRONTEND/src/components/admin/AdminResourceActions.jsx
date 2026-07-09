@@ -102,7 +102,7 @@ export function AdminResourceActions({
   };
 
   return (
-    <div className={`relative z-20 ${className}`}>
+    <div className={`relative z-20 max-w-full ${className}`}>
       <div className="flex flex-wrap gap-2">
         {createTemplate ? (
           <button
@@ -139,7 +139,7 @@ export function AdminResourceActions({
       </div>
 
       {isEditing ? (
-        <form onSubmit={runSubmit} className="mt-3 grid gap-3 rounded-2xl border border-white/10 bg-slate-950/95 p-4 shadow-2xl shadow-black/40">
+        <form onSubmit={runSubmit} className="mt-3 grid max-w-full gap-3 rounded-2xl border border-white/10 bg-slate-950/95 p-3 shadow-2xl shadow-black/40 sm:p-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs font-bold uppercase tracking-normal text-cyan-100">
               {mode === "create" ? `Add ${resourceName}` : `Edit ${resourceName}`}
@@ -151,7 +151,7 @@ export function AdminResourceActions({
           <textarea
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            className="min-h-64 w-full resize-y rounded-xl border border-white/10 bg-black/40 p-3 font-mono text-xs leading-5 text-slate-100 outline-none focus:border-cyan-200/50"
+            className="min-h-56 w-full max-w-full resize-y overflow-x-auto rounded-xl border border-white/10 bg-black/40 p-3 font-mono text-xs leading-5 text-slate-100 outline-none focus:border-cyan-200/50 sm:min-h-64"
             spellCheck={false}
           />
           {error ? <p className="rounded-xl border border-red-300/25 bg-red-950/35 px-3 py-2 text-sm text-red-100">{error}</p> : null}

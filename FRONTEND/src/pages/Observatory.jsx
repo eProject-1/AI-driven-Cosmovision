@@ -60,10 +60,10 @@ function StatTile({ label, value }) {
 function ObservatoryCard({ site, compact = false, onPreview, adminActions }) {
   const cardLayout = compact
     ? "grid gap-4 sm:grid-cols-[120px_1fr_auto]"
-    : "flex h-[420px] flex-col overflow-hidden";
+    : "flex min-h-[360px] flex-col overflow-hidden sm:h-[420px]";
   const imageClass = compact
     ? "h-32 w-full object-cover sm:h-24"
-    : "h-[235px] w-full object-cover";
+    : "h-52 w-full object-cover sm:h-[235px]";
 
   return (
     <article className="border border-white/10 bg-background/70">
@@ -369,9 +369,9 @@ export default function LovableObservatory() {
           </ol>
 
           <div className="grid content-start gap-4">
-            <section className="flex h-[420px] flex-col">
-              <div className="mb-3 flex h-10 shrink-0 items-center justify-between gap-4">
-                <h2 className="text-xs uppercase tracking-[0.35em] text-foreground/40">Nearby & Map</h2>
+            <section className="flex min-h-[420px] flex-col sm:h-[420px]">
+              <div className="mb-3 flex min-h-10 shrink-0 flex-wrap items-center justify-between gap-3">
+                <h2 className="text-xs uppercase tracking-[0.22em] text-foreground/40 sm:tracking-[0.35em]">Nearby & Map</h2>
                 <button
                   type="button"
                   onClick={loadNearby}
@@ -387,11 +387,11 @@ export default function LovableObservatory() {
                   <iframe
                     title={mapSite?.name || "Observatory map"}
                     src={mapUrl}
-                    className="h-[250px] w-full border-0"
+                    className="h-56 w-full border-0 sm:h-[250px]"
                     loading="lazy"
                   />
                 ) : (
-                  <div className="flex h-[250px] items-center justify-center text-sm text-foreground/50">
+                  <div className="flex h-56 items-center justify-center text-sm text-foreground/50 sm:h-[250px]">
                     Map unavailable
                   </div>
                 )}

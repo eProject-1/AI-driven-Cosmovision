@@ -1,7 +1,10 @@
 import crypto from "crypto";
 import fs from "fs";
+import fsPromises from "fs/promises";
 import path from "path";
 import multer from "multer";
+import sharp from "sharp";
+import { env } from "../config/env.js";
 import { AppError } from "../utils/app.error.util.js";
 
 const MAX_IMAGE_SIZE_BYTES = Number(process.env.MAX_CONSTELLATION_IMAGE_SIZE_MB || 4) * 1024 * 1024;
@@ -16,12 +19,28 @@ const ALLOWED_IMAGE_TYPES = new Set([
   "image/heif",
 ]);
 
+const extensionByMimeType = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/heic": ".heic",
+  "image/heif": ".heif",
+};
+
+const sharpFormatByMimeType = {
+  "image/jpeg": "jpeg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/heic": "heif",
+  "image/heif": "heif",
+};
+
 fs.mkdirSync(CONSTELLATION_UPLOAD_DIR, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, CONSTELLATION_UPLOAD_DIR),
   filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname || "").toLowerCase() || ".jpg";
+    const ext = extensionByMimeType[file.mimetype] || ".jpg";
     cb(null, `${Date.now()}-${crypto.randomUUID()}${ext}`);
   },
 });
@@ -42,9 +61,42 @@ const constellationImageUploader = multer({
   },
 });
 
+async function removeUploadedFile(file) {
+  if (!file?.path) return;
+  await fsPromises.unlink(file.path).catch(() => null);
+}
+
+async function validateUploadedImageContent(file) {
+  if (!file) return;
+
+  try {
+    const metadata = await sharp(file.path, { failOn: "error" }).metadata();
+    const expectedFormat = sharpFormatByMimeType[file.mimetype];
+
+    if (!metadata.width || !metadata.height || metadata.width > 10_000 || metadata.height > 10_000) {
+      throw new AppError("Image dimensions are invalid or too large.", 415);
+    }
+
+    if (expectedFormat && metadata.format !== expectedFormat) {
+      throw new AppError("Image content does not match the declared file type.", 415);
+    }
+  } catch (error) {
+    await removeUploadedFile(file);
+    if (error instanceof AppError) throw error;
+    throw new AppError("Uploaded file is not a valid supported image.", 415);
+  }
+}
+
 export const uploadConstellationImage = (req, res, next) => {
-  constellationImageUploader.single("image")(req, res, (error) => {
-    if (!error) return next();
+  constellationImageUploader.single("image")(req, res, async (error) => {
+    if (!error) {
+      try {
+        await validateUploadedImageContent(req.file);
+        return next();
+      } catch (validationError) {
+        return next(validationError);
+      }
+    }
 
     if (error instanceof multer.MulterError) {
       if (error.code === "LIMIT_FILE_SIZE") {
@@ -57,6 +109,6 @@ export const uploadConstellationImage = (req, res, next) => {
   });
 };
 
-export function buildUploadedFileUrl(req, file) {
-  return `${req.protocol}://${req.get("host")}/uploads/constellations/${file.filename}`;
+export function buildUploadedFileUrl(_req, file) {
+  return `${env.API_PUBLIC_URL.replace(/\/$/, "")}/uploads/constellations/${file.filename}`;
 }

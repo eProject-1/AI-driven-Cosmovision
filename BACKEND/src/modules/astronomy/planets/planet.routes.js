@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../../../middlewares/auth.middleware.js";
 import { roleMiddleware } from "../../../middlewares/role.middleware.js";
+import { aiRateLimit } from "../../../middlewares/rate-limit.middleware.js";
 import {
   createPlanet,
   deletePlanet,
@@ -19,7 +20,7 @@ router.get("/", getAllPlanets);
 router.post("/", ...adminOnly, createPlanet);
 
 router.get("/:slug/facts", getPlanetFacts);
-router.post("/:slug/facts/refresh", ...adminOnly, refreshPlanetFacts);
+router.post("/:slug/facts/refresh", ...adminOnly, aiRateLimit, refreshPlanetFacts);
 
 router.get("/:slug/related", getRelatedPlanet);
 router.get("/:slug", getPlanetBySlug);

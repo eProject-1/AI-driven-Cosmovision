@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { env } from "./config/env.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
+import { securityHeaders } from "./middlewares/security.middleware.js";
 import path from "path";
 
 // Routes
@@ -18,6 +19,7 @@ import analyticsRoutes from "./services/analytics/analytics.routes.js";
 const app = express();
 
 // Middleware
+app.use(securityHeaders);
 app.use(cors({
   origin(origin, callback) {
     if (!origin || env.CLIENT_URLS.includes(origin)) return callback(null, true);
@@ -25,8 +27,8 @@ app.use(cors({
   },
   credentials: true,
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use("/uploads", express.static(path.join(process.cwd(), "src", "uploads")));
 app.use("/constellation-gallery", express.static(path.join(process.cwd(), "ml", "data", "constellations")));
 

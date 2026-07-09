@@ -29,12 +29,12 @@ export function Pagination({
   };
 
   const navButtonClass =
-    "inline-flex h-14 min-w-[8.5rem] items-center justify-center gap-3 border border-white/10 bg-black/20 px-6 font-display text-sm uppercase tracking-[0.28em] text-white transition duration-300 hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:text-white/25 disabled:hover:border-white/10 disabled:hover:bg-black/20";
+    "inline-flex h-11 w-full items-center justify-center gap-2 border border-white/10 bg-black/20 px-4 font-display text-xs uppercase tracking-[0.18em] text-white transition duration-300 hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:text-white/25 disabled:hover:border-white/10 disabled:hover:bg-black/20 sm:h-14 sm:min-w-[8.5rem] sm:px-6 sm:text-sm sm:tracking-[0.28em] md:w-auto";
 
   return (
     <div className={`w-full ${className}`}>
       <nav
-        className="grid w-full grid-cols-1 items-center justify-items-center gap-4 md:grid-cols-[1fr_auto_1fr]"
+        className="grid w-full grid-cols-2 items-center justify-items-stretch gap-3 md:grid-cols-[1fr_auto_1fr] md:justify-items-center md:gap-4"
         aria-label="Pagination"
       >
         <button
@@ -48,7 +48,7 @@ export function Pagination({
           Prev
         </button>
 
-        <div className="flex items-center justify-center gap-2">
+        <div className="col-span-2 flex max-w-full items-center justify-center gap-2 overflow-x-auto pb-1 md:col-span-1 md:row-start-auto md:pb-0">
           {pages.map((pageNumber) => {
             const active = pageNumber === safePage;
             return (
@@ -63,6 +63,7 @@ export function Pagination({
                   active
                     ? "border-white bg-white text-black"
                     : "border-white/10 bg-black/20 text-white hover:border-white/30 hover:bg-white/10",
+                  "h-11 min-w-11 px-3 text-base sm:h-[52px] sm:min-w-[52px] sm:px-4 sm:text-lg",
                 ].join(" ")}
               >
                 {pageNumber}

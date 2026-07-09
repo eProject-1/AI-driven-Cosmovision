@@ -2,18 +2,18 @@ import { Starfield } from "./Starfield";
 
 export function PageShell({ eyebrow, title, lead, children }) {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
+    <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <Starfield />
 
-      <section className="relative z-10 mx-auto max-w-6xl px-8 md:px-14 pt-40 pb-16">
+      <section className="relative z-10 mx-auto max-w-6xl px-4 pt-32 pb-12 sm:px-6 md:px-14 md:pt-40 md:pb-16">
         {eyebrow ? (
-          <p className="font-sans text-[10px] font-light tracking-[0.45em] uppercase text-foreground/40">{eyebrow}</p>
+          <p className="font-sans text-[10px] font-light tracking-[0.28em] uppercase text-foreground/40 sm:tracking-[0.45em]">{eyebrow}</p>
         ) : null}
-        <h1 className={`${eyebrow ? "mt-6" : ""} font-display text-5xl md:text-7xl font-light tracking-tight`}>{title}</h1>
+        <h1 className={`${eyebrow ? "mt-5 md:mt-6" : ""} max-w-full break-words font-display text-4xl font-light leading-tight tracking-tight sm:text-5xl md:text-7xl`}>{title}</h1>
         {lead ? <p className="mt-6 max-w-xl text-sm md:text-base font-light leading-relaxed text-foreground/60">{lead}</p> : null}
       </section>
 
-      <section className="relative z-10 mx-auto max-w-6xl px-8 md:px-14 pb-32">{children}</section>
+      <section className="relative z-10 mx-auto max-w-6xl px-4 pb-24 sm:px-6 md:px-14 md:pb-32">{children}</section>
     </main>
   );
 }

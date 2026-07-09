@@ -243,14 +243,14 @@ function PlanetGroupSection({ group, planets, onOpen, isAdmin, onReload }) {
   const groupPlanets = group.slugs.map((slug) => planets.find((planet) => planet.slug === slug) || getPlanet(slug)).filter(Boolean);
 
   return (
-    <section className="border-t border-white/10 px-6 py-24 md:px-10">
+    <section className="border-t border-white/10 px-4 py-16 sm:px-6 md:px-10 md:py-24">
       <div className="mx-auto max-w-6xl">
         <header className="max-w-3xl">
-          <p className="text-[11px] font-bold uppercase tracking-[0.34em] text-[#6ecbff]/70">{group.eyebrow}</p>
-          <h2 className="mt-4 font-display text-4xl font-semibold tracking-[-0.03em] text-white md:text-6xl">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#6ecbff]/70 sm:tracking-[0.34em]">{group.eyebrow}</p>
+          <h2 className="mt-4 break-words font-display text-3xl font-semibold leading-tight tracking-[-0.02em] text-white sm:text-4xl md:text-6xl">
             {group.title}
           </h2>
-          <p className="mt-6 text-lg leading-9 text-slate-300/78">{group.description}</p>
+          <p className="mt-5 text-base leading-8 text-slate-300/78 sm:mt-6 sm:text-lg sm:leading-9">{group.description}</p>
         </header>
 
         <div className="mt-14 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
@@ -281,14 +281,14 @@ function PlanetGroupSection({ group, planets, onOpen, isAdmin, onReload }) {
 
 function DwarfPlanetsSection() {
   return (
-    <section className="border-t border-white/10 px-6 py-24 md:px-10">
+    <section className="border-t border-white/10 px-4 py-16 sm:px-6 md:px-10 md:py-24">
       <div className="mx-auto max-w-6xl">
         <header className="max-w-3xl">
-          <p className="text-[11px] font-bold uppercase tracking-[0.34em] text-[#6ecbff]/70">Dwarf Planets</p>
-          <h2 className="mt-4 font-display text-4xl font-semibold tracking-[-0.03em] text-white md:text-6xl">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#6ecbff]/70 sm:tracking-[0.34em]">Dwarf Planets</p>
+          <h2 className="mt-4 break-words font-display text-3xl font-semibold leading-tight tracking-[-0.02em] text-white sm:text-4xl md:text-6xl">
             Small worlds with planet-scale stories.
           </h2>
-          <p className="mt-6 text-lg leading-9 text-slate-300/78">
+          <p className="mt-5 text-base leading-8 text-slate-300/78 sm:mt-6 sm:text-lg sm:leading-9">
             Dwarf planets orbit the Sun and are shaped by gravity, but they have not cleared their orbital neighborhoods. They complete the catalog by showing how diverse the Solar System becomes beyond the eight primary planets.
           </p>
         </header>
@@ -305,11 +305,11 @@ function DwarfPlanetsSection() {
 
 function CompareSection() {
   return (
-    <section className="border-t border-white/10 px-6 py-24 md:px-10">
+    <section className="border-t border-white/10 px-4 py-16 sm:px-6 md:px-10 md:py-24">
       <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.55fr_1fr]">
         <header>
-          <p className="text-[11px] font-bold uppercase tracking-[0.34em] text-[#6ecbff]/70">Comparative Science</p>
-          <h2 className="mt-4 font-display text-4xl font-semibold tracking-[-0.03em] text-white md:text-6xl">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#6ecbff]/70 sm:tracking-[0.34em]">Comparative Science</p>
+          <h2 className="mt-4 break-words font-display text-3xl font-semibold leading-tight tracking-[-0.02em] text-white sm:text-4xl md:text-6xl">
             Compare the worlds.
           </h2>
         </header>
@@ -319,8 +319,8 @@ function CompareSection() {
             <article key={row.label} className="grid gap-5 border-b border-white/12 py-7 last:border-b-0 md:grid-cols-[10rem_1fr]">
               <p className="text-[11px] font-bold uppercase tracking-[0.26em] text-slate-500">{row.label}</p>
               <div>
-                <h3 className="text-2xl font-semibold text-white">{row.title}</h3>
-                <p className="mt-3 text-lg leading-9 text-slate-300/78">{row.body}</p>
+                <h3 className="text-xl font-semibold text-white sm:text-2xl">{row.title}</h3>
+                <p className="mt-3 text-base leading-8 text-slate-300/78 sm:text-lg sm:leading-9">{row.body}</p>
               </div>
             </article>
           ))}
@@ -332,11 +332,11 @@ function CompareSection() {
 
 function NumbersSection() {
   return (
-    <section className="border-t border-white/10 px-6 py-24 md:px-10">
+    <section className="border-t border-white/10 px-4 py-16 sm:px-6 md:px-10 md:py-24">
       <div className="mx-auto max-w-6xl">
         <header className="max-w-3xl">
-          <p className="text-[11px] font-bold uppercase tracking-[0.34em] text-[#6ecbff]/70">Exploration Numbers</p>
-          <h2 className="mt-4 font-display text-4xl font-semibold tracking-[-0.03em] text-white md:text-6xl">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#6ecbff]/70 sm:tracking-[0.34em]">Exploration Numbers</p>
+          <h2 className="mt-4 break-words font-display text-3xl font-semibold leading-tight tracking-[-0.02em] text-white sm:text-4xl md:text-6xl">
             Numbers that put us in our place.
           </h2>
         </header>
@@ -344,7 +344,7 @@ function NumbersSection() {
         <div className="mt-12 grid border-y border-white/12 md:grid-cols-4">
           {explorationStats.map((stat) => (
             <div key={stat.value} className="border-b border-white/12 py-7 md:border-b-0 md:border-r md:px-6 md:last:border-r-0">
-              <p className="font-display text-5xl font-semibold tracking-[-0.04em] text-white">{stat.value}</p>
+              <p className="font-display text-4xl font-semibold tracking-[-0.03em] text-white sm:text-5xl">{stat.value}</p>
               <p className="mt-4 text-base leading-7 text-slate-300/78">{stat.label}</p>
             </div>
           ))}
@@ -356,11 +356,11 @@ function NumbersSection() {
 
 function FactsRowsSection() {
   return (
-    <section className="border-t border-white/10 px-6 py-24 md:px-10">
+    <section className="border-t border-white/10 px-4 py-16 sm:px-6 md:px-10 md:py-24">
       <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.55fr_1fr]">
         <header>
-          <p className="text-[11px] font-bold uppercase tracking-[0.34em] text-[#6ecbff]/70">Did You Know?</p>
-          <h2 className="mt-4 font-display text-4xl font-semibold tracking-[-0.03em] text-white md:text-6xl">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#6ecbff]/70 sm:tracking-[0.34em]">Did You Know?</p>
+          <h2 className="mt-4 break-words font-display text-3xl font-semibold leading-tight tracking-[-0.02em] text-white sm:text-4xl md:text-6xl">
             Facts without the card wall.
           </h2>
         </header>
@@ -370,8 +370,8 @@ function FactsRowsSection() {
             <article key={fact.title} className="flex gap-6 border-b border-white/12 py-7 last:border-b-0">
               <ArrowUpRight className="mt-1 h-4 w-4 shrink-0 text-[#6ecbff]" />
               <div>
-                <h3 className="text-2xl font-semibold text-white">{fact.title}</h3>
-                <p className="mt-3 text-lg leading-9 text-slate-300/78">{fact.body}</p>
+                <h3 className="text-xl font-semibold text-white sm:text-2xl">{fact.title}</h3>
+                <p className="mt-3 text-base leading-8 text-slate-300/78 sm:text-lg sm:leading-9">{fact.body}</p>
               </div>
             </article>
           ))}
@@ -415,7 +415,7 @@ export default function LovablePlanets() {
     <main className="relative min-h-screen bg-[#020712] text-white">
       <Starfield />
 
-      <section aria-label="Solar System spotlight" className="nasa-grid-bg relative w-full overflow-hidden" style={{ height: "92vh", minHeight: "640px", background: "radial-gradient(ellipse at center, #071a35 0%, #020712 72%, #000 100%)" }}>
+      <section aria-label="Solar System spotlight" className="nasa-grid-bg relative h-[86vh] min-h-[520px] w-full overflow-hidden sm:h-[92vh] sm:min-h-[640px]" style={{ background: "radial-gradient(ellipse at center, #071a35 0%, #020712 72%, #000 100%)" }}>
         <SolarSystemStage
           contained
           planetList={planets}
@@ -430,8 +430,8 @@ export default function LovablePlanets() {
 
         <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)" }} />
 
-        <div className="absolute top-28 left-1/2 -translate-x-1/2 z-10 text-center pointer-events-none transition-opacity duration-500 px-6" style={{ opacity: focusing ? 0 : 1 }}>
-          <div className="font-display text-[10px] tracking-[0.45em] uppercase text-[#6ecbff]/70">Solar System Atlas</div>
+        <div className="absolute left-1/2 top-24 z-10 w-full max-w-[min(38rem,100vw-2rem)] -translate-x-1/2 px-4 text-center pointer-events-none transition-opacity duration-500 sm:top-28 sm:px-6" style={{ opacity: focusing ? 0 : 1 }}>
+          <div className="font-display text-[10px] tracking-[0.26em] uppercase text-[#6ecbff]/70 sm:tracking-[0.45em]">Solar System Atlas</div>
           <h1 className="mt-4 font-display font-extralight tracking-[-0.035em] text-white/95" style={{ fontSize: "clamp(2rem, 4.5vw, 3.6rem)", textShadow: "0 4px 60px rgba(0,0,0,0.7)" }}>Select a planetary target.</h1>
           {isAdmin ? (
             <div className="pointer-events-auto mt-6 flex justify-center">
@@ -445,7 +445,7 @@ export default function LovablePlanets() {
           ) : null}
         </div>
 
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 pointer-events-none text-center transition-all duration-500" style={{ opacity: labelPlanet ? 1 : 0, transform: `translate(-50%, ${labelPlanet ? 0 : 12}px)` }}>
+        <div className="absolute bottom-8 left-1/2 z-10 w-full max-w-[min(32rem,100vw-2rem)] -translate-x-1/2 px-4 pointer-events-none text-center transition-all duration-500 sm:bottom-10" style={{ opacity: labelPlanet ? 1 : 0, transform: `translate(-50%, ${labelPlanet ? 0 : 12}px)` }}>
           {labelPlanet && (
             <>
               <div className="font-display text-[10px] tracking-[0.45em] uppercase text-[#6ecbff]/70">{labelPlanet.distance} from the Sun</div>

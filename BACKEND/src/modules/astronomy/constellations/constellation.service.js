@@ -1,14 +1,11 @@
 export {
+  createConstellation,
+  deleteConstellation,
   getAllConstellations,
   getConstellationBySlug,
   getConstellationsByMonth,
-} from "./domain/constellation.catalog.service.js";
-
-export {
-  createConstellation,
-  deleteConstellation,
   updateConstellation,
-} from "./domain/constellation.admin.service.js";
+} from "./domain/constellation.catalog.service.js";
 
 export { getConstellationAIContent } from "./domain/constellation.ai.service.js";
 

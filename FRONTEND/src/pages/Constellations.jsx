@@ -310,21 +310,21 @@ export default function LovableConstellations() {
     <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <Starfield />
 
-      <section className="relative z-10 mx-auto max-w-6xl px-8 pb-16 pt-40 md:px-14">
-        <h1 className="font-display text-5xl font-light tracking-tight text-white md:text-7xl">
+      <section className="relative z-10 mx-auto max-w-6xl px-4 pb-12 pt-32 sm:px-6 md:px-14 md:pb-16 md:pt-40">
+        <h1 className="break-words font-display text-4xl font-light leading-tight tracking-tight text-white sm:text-5xl md:text-7xl">
           Constellation
         </h1>
       </section>
 
-      <section className="relative z-10 mx-auto max-w-7xl px-6 pb-24 pt-0 md:px-10 lg:px-14">
-        <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-6 shadow-[0_24px_100px_rgba(0,0,0,0.28)] backdrop-blur-xl md:p-8">
+      <section className="relative z-10 mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 md:px-10 lg:px-14">
+        <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 shadow-[0_24px_100px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:rounded-3xl sm:p-6 md:p-8">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-cyan-200/12 bg-cyan-200/[0.045] px-5 py-4">
             <div className="flex items-center gap-3">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-cyan-200/20 bg-cyan-200/10 text-cyan-100">
                 <Sparkles size={18} />
               </span>
               <div>
-                <p className="text-sm font-bold uppercase tracking-[0.24em] text-cyan-100">AI Recognition Constellation</p>
+                <p className="text-sm font-bold uppercase tracking-[0.14em] text-cyan-100 sm:tracking-[0.24em]">AI Recognition Constellation</p>
                 <p className="mt-1 text-sm text-slate-400">Upload a sky image and compare it with the constellation catalog.</p>
               </div>
             </div>
@@ -392,7 +392,7 @@ export default function LovableConstellations() {
           <section className="mt-10 border-y border-white/10 py-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.34em] text-[#6ecbff]/72">Visible This Month</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#6ecbff]/72 sm:tracking-[0.34em]">Visible This Month</p>
                 <h2 className="mt-2 font-display text-3xl font-light text-white">Monthly guide</h2>
               </div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Month {currentMonth}</p>
@@ -405,7 +405,7 @@ export default function LovableConstellations() {
                   <Link
                     key={item.slug}
                     to={`/constellations/${item.slug}`}
-                    className="min-w-56 border border-white/10 bg-white/[0.025] px-4 py-3 transition hover:border-[#6ecbff]/45 hover:bg-[#6ecbff]/10"
+                    className="min-w-48 border border-white/10 bg-white/[0.025] px-4 py-3 transition hover:border-[#6ecbff]/45 hover:bg-[#6ecbff]/10 sm:min-w-56"
                   >
                     <p className="truncate text-base font-semibold text-white">{item.name}</p>
                     <p className="mt-1 text-xs text-slate-500">{item.bestSeason || "Seasonal"} / {item.brightestStar || item.abbreviation}</p>
@@ -475,12 +475,12 @@ export default function LovableConstellations() {
         <Pagination className="mt-12" page={currentPage} totalPages={pageCount} disabled={status === "loading"} onPageChange={setPage} />
 
         <section id="ai-recognition" className="mt-20 scroll-mt-28 rounded-3xl border border-white/10 bg-white/[0.035] shadow-[0_24px_100px_rgba(0,0,0,0.28)] backdrop-blur-xl">
-          <div className="grid gap-px bg-white/10 lg:grid-cols-[1.02fr_0.98fr]">
+          <div className="grid min-w-0 gap-px bg-white/10 lg:grid-cols-[1.02fr_0.98fr]">
             <form onSubmit={handleRecognize} className="bg-slate-950/60 p-6 md:p-8">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.36em] text-[#6ecbff]/70">Recognition</p>
-                  <h2 className="mt-3 font-display text-4xl font-light tracking-tight text-white">Sky Pattern Scan</h2>
+                  <h2 className="mt-3 font-display text-3xl font-light tracking-tight text-white sm:text-4xl">Sky Pattern Scan</h2>
                 </div>
                 {user ? (
                   <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-xs text-emerald-100">Signed in</span>
@@ -495,7 +495,7 @@ export default function LovableConstellations() {
               <div className="mt-6 grid gap-4">
                 <label htmlFor="constellation-image" className="group grid min-h-56 cursor-pointer place-items-center overflow-hidden rounded-2xl border border-dashed border-white/18 bg-white/[0.025] transition-colors hover:border-cyan-200/45 hover:bg-cyan-200/[0.045]">
                   {previewUrl ? (
-                    <img src={previewUrl} alt="Selected night sky" className="h-72 w-full object-cover" />
+                    <img src={previewUrl} alt="Selected night sky" className="h-56 w-full object-cover sm:h-72" />
                   ) : (
                     <span className="grid justify-items-center gap-3 px-6 text-center">
                       <ImageUp size={38} className="text-cyan-100/80" />
@@ -547,7 +547,7 @@ export default function LovableConstellations() {
             <div className="bg-slate-950/45 p-6 md:p-8">
               <div className="flex items-center gap-3">
                 <Sparkles size={22} className="text-cyan-100/75" />
-                <h3 className="font-display text-3xl font-light tracking-tight text-white">Recognition Result</h3>
+                <h3 className="font-display text-2xl font-light tracking-tight text-white sm:text-3xl">Recognition Result</h3>
               </div>
 
               {recognition ? (
@@ -556,7 +556,7 @@ export default function LovableConstellations() {
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="text-[11px] font-bold uppercase tracking-[0.34em] text-slate-500">{recognition.status}</p>
-                        <h4 className="mt-3 font-display text-4xl font-light tracking-tight text-white">{recognizedConstellation?.name || "No confident match"}</h4>
+                        <h4 className="mt-3 break-words font-display text-3xl font-light tracking-tight text-white sm:text-4xl">{recognizedConstellation?.name || "No confident match"}</h4>
                       </div>
                       {recognition.status === "RECOGNIZED" ? <CheckCircle2 size={26} className="shrink-0 text-emerald-200" /> : <AlertCircle size={26} className="shrink-0 text-amber-200" />}
                     </div>

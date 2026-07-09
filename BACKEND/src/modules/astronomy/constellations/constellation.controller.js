@@ -2,6 +2,7 @@
 import { asyncHandler } from "../../../utils/async.handler.util.js";
 import { sendSuccess } from "../../../utils/response.util.js";
 import { buildUploadedFileUrl } from "../../../middlewares/upload.middleware.js";
+import { env } from "../../../config/env.js";
 import {
   createConstellation as createConstellationRecord,
   deleteConstellation as deleteConstellationRecord,
@@ -35,9 +36,8 @@ export const getConstellationAIContent = asyncHandler(async (req, res) => {
 });
 
 export const getConstellationGallery = asyncHandler(async (req, res) => {
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
   const data = await fetchConstellationGallery(req.params.slug, {
-    baseUrl,
+    baseUrl: env.API_PUBLIC_URL,
     limit: req.query.limit,
   });
   return sendSuccess(res, data);

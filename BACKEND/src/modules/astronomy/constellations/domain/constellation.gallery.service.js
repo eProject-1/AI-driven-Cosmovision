@@ -106,7 +106,6 @@ async function collectConstellationImages(constellation, { baseUrl, safeLimit })
   });
 
   await addDbGalleryImages(addImage, constellation, { baseUrl, safeLimit });
-  await addUploadedImages(addImage, constellation, safeLimit);
   addLocalGalleryImages(addImage, constellation, { baseUrl, safeLimit });
 
   return images;
@@ -142,34 +141,6 @@ async function addDbGalleryImages(addImage, constellation, { baseUrl, safeLimit 
     }
   } catch {
     // The gallery table may not exist until the migration has been applied.
-  }
-}
-
-async function addUploadedImages(addImage, constellation, safeLimit) {
-  const uploadedImages = await prisma.imageUpload.findMany({
-    where: {
-      constellationId: constellation.id,
-      originalUrl: { not: "" },
-    },
-    select: {
-      id: true,
-      originalUrl: true,
-      fileName: true,
-      confidenceScore: true,
-      createdAt: true,
-    },
-    orderBy: { createdAt: "desc" },
-    take: safeLimit,
-  });
-
-  for (const upload of uploadedImages) {
-    addImage({
-      id: upload.id,
-      url: upload.originalUrl,
-      title: upload.fileName || `${constellation.name} uploaded scan`,
-      source: "ImageUpload DB",
-      confidenceScore: upload.confidenceScore,
-    });
   }
 }
 

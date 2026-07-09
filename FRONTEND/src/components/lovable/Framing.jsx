@@ -18,7 +18,7 @@ export function SectionPanel({ children, className = "", variant = "panel", allo
 export function ContentCard({ children, className = "" }) {
   return (
     <article
-      className={`rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-sm transition-colors duration-300 hover:bg-white/[0.045] ${className}`}
+      className={`rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-sm transition-colors duration-300 hover:bg-white/[0.045] sm:p-6 ${className}`}
     >
       {children}
     </article>
@@ -28,7 +28,7 @@ export function ContentCard({ children, className = "" }) {
 export function DataGrid({ children, className = "", columns = "sm:grid-cols-2 lg:grid-cols-3" }) {
   return (
     <SectionPanel variant="table" className={className}>
-      <div className={`grid gap-px bg-white/10 ${columns}`}>{children}</div>
+      <div className={`grid min-w-0 gap-px bg-white/10 ${columns}`}>{children}</div>
     </SectionPanel>
   );
 }
