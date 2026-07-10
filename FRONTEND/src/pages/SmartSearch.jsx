@@ -164,6 +164,13 @@ export function SmartSearchPanel() {
 
       {result ? (
         <div className="mt-10">
+          {result.answer ? (
+            <section className="mb-6 rounded-2xl border border-cyan-200/15 bg-cyan-200/[0.06] px-6 py-5 sm:px-8">
+              <p className="text-[10px] uppercase tracking-[0.35em] text-cyan-100/45">CosmoBot answer</p>
+              <p className="mt-3 text-sm font-light leading-relaxed text-cyan-50/85">{result.answer}</p>
+            </section>
+          ) : null}
+
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[10px] uppercase tracking-[0.35em] text-foreground/35">Interpreted</p>
