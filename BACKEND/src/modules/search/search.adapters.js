@@ -74,7 +74,27 @@ async function searchPlanets({ tokens, filters, limit }) {
     return { ...planet, _score: score, _matchReasons: reasons };
   });
 
+  if (filters.planetMetric) {
+    return sortMetricResults(results, limit, filters.planetMetric);
+  }
+
   return sortAndLimit(results, limit);
+}
+
+function sortMetricResults(items, limit, metric) {
+  const direction = metric.direction === "asc" ? 1 : -1;
+
+  return items
+    .filter((item) => item[metric.field] != null)
+    .sort((a, b) => direction * (Number(a[metric.field]) - Number(b[metric.field])))
+    .slice(0, limit)
+    .map(({ _score, _matchReasons, ...item }, index) => ({
+      ...item,
+      match: {
+        score: Number(Math.max(limit - index, 1).toFixed(2)),
+        reasons: _matchReasons,
+      },
+    }));
 }
 
 function scorePlanetMetric(value, metric) {

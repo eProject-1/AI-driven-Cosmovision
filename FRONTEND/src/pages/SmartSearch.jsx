@@ -57,7 +57,7 @@ function buildDisplayResults(result) {
   const planetResults = flatResults.filter((item) => item.type === "planets" && item.name);
   const mentionedPlanets = planetResults.filter((planet) => containsName(answer, planet.name));
 
-  if (filters.planetMetric) {
+  if (filters.planetMetric && !filters.requestedLimit) {
     const topResult = mentionedPlanets[0] || flatResults[0];
     return [{
       ...topResult,

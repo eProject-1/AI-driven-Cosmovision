@@ -89,11 +89,13 @@ function detectTargets(normalizedQuery) {
 function detectFilters(normalizedQuery, params = {}) {
   const lat = params.lat ?? params.latitude;
   const lon = params.lon ?? params.lng ?? params.longitude;
+  const requestedLimit = detectRequestedLimit(normalizedQuery);
 
   return {
     hasRings: includesAny(normalizedQuery, ["ring", "rings", "vanh dai"]),
     hasMoons: includesAny(normalizedQuery, ["moon", "moons", "mat trang"]),
     planetMetric: detectPlanetMetric(normalizedQuery),
+    requestedLimit,
     gasGiant: includesAny(normalizedQuery, ["gas giant", "khi khong lo"]),
     rocky: includesAny(normalizedQuery, ["rocky", "terrestrial", "da", "dat da"]),
     nearMe: includesAny(normalizedQuery, ["near me", "nearby", "gan toi", "gan day"]),
@@ -105,6 +107,16 @@ function detectFilters(normalizedQuery, params = {}) {
     lat: Number.isFinite(Number(lat)) ? Number(lat) : null,
     lon: Number.isFinite(Number(lon)) ? Number(lon) : null,
   };
+}
+
+function detectRequestedLimit(normalizedQuery) {
+  const explicitLimit = normalizedQuery.match(/\b(?:top|first|best|show|lay|chon)\s*(\d{1,2})\b/);
+  if (explicitLimit) return Number(explicitLimit[1]);
+
+  const vietnameseLimit = normalizedQuery.match(/\b(\d{1,2})\s*(?:hanh tinh|chom sao|dia diem|tin|ket qua)\b/);
+  if (vietnameseLimit) return Number(vietnameseLimit[1]);
+
+  return null;
 }
 
 function detectPlanetMetric(normalizedQuery) {

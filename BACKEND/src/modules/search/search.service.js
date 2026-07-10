@@ -15,7 +15,7 @@ export async function smartSearch({ query, limit = DEFAULT_LIMIT, ...params }) {
   if (!rawQuery) throw new AppError("Search query is required. Use ?q=show planets with rings", 400);
 
   const { tokens, filters, targets } = parseSearchQuery(rawQuery, params);
-  const safeLimit = clampInteger(limit, { fallback: DEFAULT_LIMIT, max: MAX_LIMIT });
+  const safeLimit = clampInteger(filters.requestedLimit || limit, { fallback: DEFAULT_LIMIT, max: MAX_LIMIT });
   const entries = await Promise.all(
     targets.map(async (target) => [
       target,
@@ -27,7 +27,7 @@ export async function smartSearch({ query, limit = DEFAULT_LIMIT, ...params }) {
   const flatResults = entries
     .flatMap(([type, items]) => items.map((item) => ({ type, ...item })))
     .sort((a, b) => (b.match?.score || 0) - (a.match?.score || 0))
-    .slice(0, safeLimit * 2);
+    .slice(0, filters.requestedLimit || safeLimit * 2);
   const answer = await generateSearchAnswer(rawQuery, flatResults, filters);
 
   return {
@@ -96,13 +96,16 @@ function buildFallbackSearchAnswer(query, flatResults = [], filters = {}) {
   const isVi = lang === "vi";
 
   if (filters.planetMetric) {
-    const planet = flatResults.find((item) => item.type === "planets");
-    if (planet) {
-      const measurement = describePlanetMetric(planet, filters.planetMetric);
-      const moons = planet.numberOfMoons != null ? ` and ${planet.numberOfMoons} known moons` : "";
-      return isVi
-        ? `${planet.name} la ket qua phu hop nhat cho yeu cau "${filters.planetMetric.label}". ${planet.description || "Du lieu CosmoVision xep hang ket qua nay theo thuoc tinh hanh tinh phu hop."}`
-        : `${planet.name} is the strongest match for "${filters.planetMetric.label}"${measurement}. ${planet.description || `CosmoVision ranked this result by the requested planet property${moons}.`}`;
+    const planets = flatResults.filter((item) => item.type === "planets");
+    if (planets.length) {
+      return planets
+        .map((planet, index) => {
+          const measurement = describePlanetMetric(planet, filters.planetMetric);
+          return isVi
+            ? `${index + 1}. ${planet.name}: ${filters.planetMetric.label}${measurement}. ${planet.description || ""}`.trim()
+            : `${index + 1}. ${planet.name}: ${filters.planetMetric.label}${measurement}. ${planet.description || ""}`.trim();
+        })
+        .join("\n");
     }
   }
 
@@ -138,7 +141,7 @@ function describePlanetMetric(planet, metric) {
   const value = planet[metric.field];
   if (value == null) return "";
   if (metric.field === "diameterKm") return ` at about ${formatNumber(value)} km in diameter`;
-  if (metric.field === "avgTempCelsius") return ` at about ${formatNumber(value)}C average temperature`;
+  if (metric.field === "avgTempCelsius") return ` at about ${formatNumber(value)}°C average temperature`;
   if (metric.field === "numberOfMoons") return ` with ${formatNumber(value)} known moons`;
   if (metric.field === "distanceFromSunAu") return ` at about ${formatNumber(value)} AU from the Sun`;
   return "";
