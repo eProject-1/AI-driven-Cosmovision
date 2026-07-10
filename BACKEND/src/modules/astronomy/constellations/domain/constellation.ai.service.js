@@ -1,7 +1,7 @@
 import groq from "../../../../config/groq.js";
 import prisma from "../../../../config/db.js";
 import { AppError } from "../../../../utils/app.error.util.js";
-import { stripJsonFences } from "../../../../utils/service.util.js";
+import { stripJsonFences } from "../../../../utils/ai-response-format.util.js";
 import { withVerifiedConstellationFallback } from "./constellation.fallback.service.js";
 
 export async function getConstellationAIContent(slug, { refresh = false } = {}) {

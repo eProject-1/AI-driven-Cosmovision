@@ -1,4 +1,5 @@
 import { AppError } from "../../utils/app.error.util.js";
+import { formatPlainAiResponse } from "../../utils/ai-response-format.util.js";
 import { createLogger } from "../../utils/logger.util.js";
 import { clampInteger, requireUserId } from "../../utils/service.util.js";
 
@@ -53,7 +54,7 @@ export async function sendMessage({ userId, message, sessionId }) {
     buildChatbotContext({ message: cleanMessage, intent, planetName }),
   ]);
 
-  const assistantMessage = await createGroqCompletion(
+  const rawAssistantMessage = await createGroqCompletion(
     buildChatMessages({
       userMessage: cleanMessage,
       intent,
@@ -65,6 +66,13 @@ export async function sendMessage({ userId, message, sessionId }) {
       lang: responseLanguage,
     })
   );
+  const assistantMessage = formatPlainAiResponse(rawAssistantMessage, {
+    maxLines: 10,
+    fallback:
+      responseLanguage === "vi"
+        ? "Tôi chưa có đủ thông tin để trả lời câu hỏi này."
+        : "I do not have enough information to answer that.",
+  });
 
   const saved = storageSession.sessionId
     ? await saveConversation({

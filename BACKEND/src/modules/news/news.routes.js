@@ -26,6 +26,7 @@ import {
 
 const router = Router();
 const adminOnly = [authenticate, roleMiddleware("ADMIN")];
+const aiOnly = [authenticate, aiRateLimit];
 
 router.get("/", listNews);
 router.post("/", ...adminOnly, createNews);
@@ -39,12 +40,12 @@ router.post("/fetch/nasa", ...adminOnly, aiRateLimit, fetchNasaNews);
 router.post("/fetch/exoplanets", ...adminOnly, aiRateLimit, fetchExoplanetNews);
 router.post("/refresh", ...adminOnly, aiRateLimit, refreshNews);
 router.post("/cleanup", ...adminOnly, cleanupNews);
-router.post("/:id/summarize", ...adminOnly, aiRateLimit, summarizeNews);
-router.post("/:id/ai/summary", ...adminOnly, aiRateLimit, aiSummary);
-router.post("/:id/ai/importance", ...adminOnly, aiRateLimit, aiImportance);
-router.post("/:id/ai/category", ...adminOnly, aiRateLimit, aiCategory);
-router.post("/:id/ai/tags", ...adminOnly, aiRateLimit, aiTags);
-router.post("/:id/ai/explain", ...adminOnly, aiRateLimit, aiExplain);
-router.post("/:id/ai/question", ...adminOnly, aiRateLimit, aiQuestion);
+router.post("/:id/summarize", ...aiOnly, summarizeNews);
+router.post("/:id/ai/summary", ...aiOnly, aiSummary);
+router.post("/:id/ai/importance", ...aiOnly, aiImportance);
+router.post("/:id/ai/category", ...aiOnly, aiCategory);
+router.post("/:id/ai/tags", ...aiOnly, aiTags);
+router.post("/:id/ai/explain", ...aiOnly, aiExplain);
+router.post("/:id/ai/question", ...aiOnly, aiQuestion);
 
 export default router;

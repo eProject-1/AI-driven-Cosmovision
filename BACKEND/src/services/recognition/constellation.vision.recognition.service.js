@@ -1,7 +1,8 @@
 import fs from "fs/promises";
 import groq from "../../config/groq.js";
 import { createLogger } from "../../utils/logger.util.js";
-import { clampUnitInterval, stripJsonFences } from "../../utils/service.util.js";
+import { stripJsonFences } from "../../utils/ai-response-format.util.js";
+import { clampUnitInterval } from "../../utils/service.util.js";
 import { MIN_DETECTED_STARS, summarizeStars } from "./constellation.image.analysis.service.js";
 
 const logger = createLogger("constellation-recognition");

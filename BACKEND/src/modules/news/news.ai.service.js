@@ -1,7 +1,7 @@
 import prisma from "../../config/db.js";
 import groq from "../../config/groq.js";
+import { formatPlainAiResponse, stripAiMarkdown, stripJsonFences } from "../../utils/ai-response-format.util.js";
 import { AppError } from "../../utils/app.error.util.js";
-import { stripJsonFences } from "../../utils/service.util.js";
 
 function buildArticleContext(article) {
   return `Title: ${article.title}
@@ -75,15 +75,6 @@ function parseJsonArray(raw) {
   return parsed.map(String).filter(Boolean).slice(0, 5);
 }
 
-function stripMarkdown(value = "") {
-  return String(value)
-    .replace(/\*\*/g, "")
-    .replace(/__+/g, "")
-    .replace(/`+/g, "")
-    .replace(/\r/g, "")
-    .trim();
-}
-
 function tryParseJson(raw) {
   const cleaned = stripJsonFences(raw);
 
@@ -112,13 +103,13 @@ function collectJsonLines(value, lines = []) {
     return lines;
   }
 
-  const text = stripMarkdown(value);
+  const text = stripAiMarkdown(value);
   if (text) lines.push(text);
   return lines;
 }
 
 function normalizeBulletLine(line) {
-  return stripMarkdown(line)
+  return stripAiMarkdown(line)
     .replace(/^\s*[-*•]\s*/, "")
     .replace(/^\s*\d+[.)]\s*/, "")
     .replace(/\s+/g, " ")
@@ -143,7 +134,7 @@ function formatBulletList(raw, { maxItems = 5 } = {}) {
 }
 
 function normalizeExplainLine(line) {
-  return stripMarkdown(line)
+  return stripAiMarkdown(line)
     .replace(/^\s*[-*.\u2022]\s*/, "")
     .replace(/^\s*\d+[.)]\s*/, "")
     .replace(/\s+/g, " ")
@@ -186,13 +177,17 @@ export async function generateNewsAiSummary(articleId, { force = false } = {}) {
   const article = await getNewsArticleById(articleId);
   if (article.aiSummary && !force) return article;
 
-  const aiSummary = await runNewsGroq({
+  const rawSummary = await runNewsGroq({
     system:
-      "You are an astronomy news editor. Summarize astronomy and space-related news accurately. Use ONLY the provided title and summary. Simple English. Max 80 words. Exactly 3 bullet points. Do not invent dates, causes, companies, outcomes, or background details. If the provided text lacks detail, say that the article does not provide enough detail.",
+      "You are an astronomy news editor. Summarize astronomy and space-related news accurately. Use ONLY the provided title and summary. Simple English. Max 80 words. Exactly 3 short lines. Do not use markdown syntax, headings, bold text, tables, or code blocks. If a list is useful, prefix each main line with '- '. Do not invent dates, causes, companies, outcomes, or background details. If the provided text lacks detail, say that the article does not provide enough detail.",
     user: `${buildArticleContext(article)}
 
 Generate a concise summary.`,
     maxTokens: 220,
+  });
+  const aiSummary = formatPlainAiResponse(rawSummary, {
+    maxLines: 3,
+    fallback: "- The article does not provide enough detail.",
   });
 
   return prisma.newsArticle.update({
@@ -205,10 +200,15 @@ export async function generateNewsImportance(articleId, { force = false } = {}) 
   const article = await getNewsArticleById(articleId);
   if (article.importance && !force) return article;
 
-  const importance = await runNewsGroq({
-    system: "Explain why this astronomy news matters in under 60 words. Be factual.",
+  const rawImportance = await runNewsGroq({
+    system:
+      "Explain why this astronomy news matters in under 60 words. Be factual. Return plain text only. Do not use markdown syntax, headings, bold text, tables, or code blocks. If a list is useful, prefix each main line with '- '.",
     user: buildArticleContext(article),
     maxTokens: 160,
+  });
+  const importance = formatPlainAiResponse(rawImportance, {
+    maxLines: 4,
+    fallback: "- The article does not provide enough detail.",
   });
 
   return prisma.newsArticle.update({
@@ -263,7 +263,7 @@ export async function explainNewsArticle(articleId) {
   const article = await getNewsArticleById(articleId);
   const rawExplanation = await runNewsGroq({
     system:
-      "You are an astronomy teacher. Explain astronomy news for beginners. Return plain text only. Do not return JSON. Do not use markdown bold, headings, tables, or code blocks. Use this exact structure: question lines have no prefix and end with '?'; main idea lines start with '- '; sub-detail lines start with '. '. Keep punctuation light and avoid unnecessary periods.",
+      "You are an astronomy teacher. Explain astronomy news for beginners. Return plain text only. Do not return JSON. Do not use markdown syntax, headings, bold text, tables, or code blocks. Use this exact structure: question lines have no prefix and end with '?'; main idea lines start with '- '; sub-detail lines start with '. '. Keep punctuation light and avoid unnecessary periods.",
     user: `Explain this article.
 ${buildArticleContext(article)}`,
     maxTokens: 420,
@@ -276,15 +276,19 @@ ${buildArticleContext(article)}`,
 
 export async function answerNewsQuestion(articleId, question) {
   const article = await getNewsArticleById(articleId);
-  const answer = await runNewsGroq({
+  const rawAnswer = await runNewsGroq({
     system:
-      "Answer questions ONLY using the provided article. If insufficient information, reply: I don't have enough information in this article.",
+      "Answer questions ONLY using the provided article. Return plain text only. Do not use markdown syntax, headings, bold text, tables, or code blocks. If a list is useful, prefix each main line with '- '. If insufficient information, reply: I don't have enough information in this article.",
     user: `Article:
 ${buildArticleContext(article)}
 
 Question: ${question}`,
     maxTokens: 260,
     temperature: 0.2,
+  });
+  const answer = formatPlainAiResponse(rawAnswer, {
+    maxLines: 6,
+    fallback: "I don't have enough information in this article.",
   });
 
   return { articleId: article.id, question, answer };
@@ -306,7 +310,7 @@ Tags: ${article.tags?.join(", ") || "No tags"}
       {
         role: "system",
         content:
-          "You are an astronomy news editor. Summarize astronomy and space articles in clear, concise English for a general audience.",
+          "You are an astronomy news editor. Summarize astronomy and space articles in clear, concise English for a general audience. Return plain text only. Do not use markdown syntax, headings, bold text, tables, or code blocks. If a list is useful, prefix each main line with '- '.",
       },
       {
         role: "user",
@@ -322,7 +326,10 @@ ${content}
     max_tokens: 350,
   });
 
-  return completion.choices?.[0]?.message?.content?.trim() || "";
+  return formatPlainAiResponse(completion.choices?.[0]?.message?.content || "", {
+    maxLines: 3,
+    fallback: "- The article does not provide enough detail.",
+  });
 }
 
 export async function summarizeNewsArticle(articleId, { force = false } = {}) {

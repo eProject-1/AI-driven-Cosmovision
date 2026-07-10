@@ -16,7 +16,3 @@ export function requireUserId(userId, message = "User authentication is required
   if (!userId) throw new AppError(message, 401);
   return userId;
 }
-
-export function stripJsonFences(raw = "") {
-  return String(raw).replace(/```json|```/gi, "").trim();
-}
