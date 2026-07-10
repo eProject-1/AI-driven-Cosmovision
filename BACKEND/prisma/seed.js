@@ -317,7 +317,7 @@ async function main() {
     imageUrl: null,
   },
   {
-    name: "Ursa Major Minh Pham ",
+    name: "Ursa Major  ",
     slug: "ursa-major",
     latinName: "Ursa Major",
     abbreviation: "UMa",

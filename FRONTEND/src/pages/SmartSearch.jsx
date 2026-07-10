@@ -15,14 +15,105 @@ const examples = [
 
 function getResultLink(item) {
   if (item.type === "planets") return `/planets/${item.slug}`;
+  if (item.type === "constellations") return `/constellations/${item.slug}`;
   if (item.type === "observatories") return `/observatory/${item.slug}`;
   if (item.type === "news") return item.sourceUrl;
   return null;
 }
 
+function normalizeSearchResult(result) {
+  if (!result) return null;
+  const groupedResults = result.results || {};
+  const flatResults = Array.isArray(result.flatResults) && result.flatResults.length
+    ? result.flatResults
+    : Object.entries(groupedResults).flatMap(([type, items]) =>
+        (items || []).map((item) => ({ type, ...item }))
+      );
+
+  return {
+    ...result,
+    flatResults,
+    total: result.total ?? flatResults.length,
+  };
+}
+
+function buildDisplayResults(result) {
+  if (!result) return [];
+  const answer = result.answer?.trim();
+  const flatResults = result.flatResults || [];
+  const filters = result.interpreted?.filters || {};
+
+  if (!answer) return flatResults;
+
+  if (!flatResults.length) {
+    return [{
+      type: result.interpreted?.targets?.[0] || "answer",
+      title: result.query || "Search answer",
+      generatedAnswer: answer,
+      match: { score: "-", reasons: ["AI generated"] },
+    }];
+  }
+
+  const planetResults = flatResults.filter((item) => item.type === "planets" && item.name);
+  const mentionedPlanets = planetResults.filter((planet) => containsName(answer, planet.name));
+
+  if (filters.planetMetric) {
+    const topResult = mentionedPlanets[0] || flatResults[0];
+    return [{
+      ...topResult,
+      title: topResult.title || topResult.name || result.query || "Search answer",
+      generatedAnswer: extractTextForItem(answer, topResult.name || topResult.title) || answer,
+      match: topResult.match || { score: "-", reasons: ["AI generated"] },
+    }];
+  }
+
+  return flatResults.map((item) => {
+    const itemName = item.name || item.title;
+    return {
+      ...item,
+      generatedAnswer: extractTextForItem(answer, itemName) || null,
+    };
+  });
+}
+
+function containsName(text = "", name = "") {
+  if (!name) return false;
+  return new RegExp(`\\b${escapeRegExp(name)}\\b`, "i").test(text);
+}
+
+function extractTextForItem(text = "", name = "") {
+  if (!name) return text;
+  const chunks = text
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean);
+  const matches = chunks.filter((chunk) => containsName(chunk, name));
+  return matches.join(" ");
+}
+
+function escapeRegExp(value = "") {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function formatAnswerParts(text = "") {
+  return text
+    .split(/\n+|(?<=[.!?])\s+(?=[A-Z0-9])/)
+    .map((part) => part.replace(/^[-*]\s*/, "").trim())
+    .filter(Boolean);
+}
+
 function ResultItem({ item }) {
   const link = getResultLink(item);
   const external = item.type === "news" && link;
+  const description = item.generatedAnswer
+    || item.description
+    || item.summary
+    || item.aiSummary
+    || item.source
+    || item.category
+    || "Matched by CosmoVision search.";
+
+  const answerParts = item.generatedAnswer ? formatAnswerParts(description) : [];
   const body = (
     <article className="grid gap-3 px-6 py-5 transition-colors hover:bg-white/[0.04] sm:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -34,9 +125,20 @@ function ResultItem({ item }) {
           Score {item.match?.score ?? "-"}
         </span>
       </div>
-      <p className="line-clamp-2 text-sm font-light leading-relaxed text-foreground/60">
-        {item.description || item.summary || item.aiSummary || item.source || item.category || "Matched by CosmoVision search."}
-      </p>
+      {answerParts.length > 1 ? (
+        <ul className="grid gap-2 text-sm font-light leading-relaxed text-foreground/65">
+          {answerParts.map((part) => (
+            <li key={part} className="flex gap-2">
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-200/60" />
+              <span>{part}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm font-light leading-relaxed text-foreground/65">
+          {description}
+        </p>
+      )}
       {item.match?.reasons?.length ? (
         <p className="text-[10px] uppercase tracking-[0.22em] text-cyan-200/60">{item.match.reasons.join(" / ")}</p>
       ) : null}
@@ -59,7 +161,8 @@ export function SmartSearchPanel() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
-  const flatResults = useMemo(() => result?.flatResults || [], [result]);
+  const normalizedResult = useMemo(() => normalizeSearchResult(result), [result]);
+  const displayResults = useMemo(() => buildDisplayResults(normalizedResult), [normalizedResult]);
 
   async function runSearch(nextQuery = query) {
     const cleanQuery = nextQuery.trim();
@@ -162,26 +265,19 @@ export function SmartSearchPanel() {
         <div className="mt-6 rounded-2xl border border-red-300/20 bg-red-950/20 p-4 text-sm text-red-100/85">{error}</div>
       ) : null}
 
-      {result ? (
+      {normalizedResult ? (
         <div className="mt-10">
-          {result.answer ? (
-            <section className="mb-6 rounded-2xl border border-cyan-200/15 bg-cyan-200/[0.06] px-6 py-5 sm:px-8">
-              <p className="text-[10px] uppercase tracking-[0.35em] text-cyan-100/45">CosmoBot answer</p>
-              <p className="mt-3 text-sm font-light leading-relaxed text-cyan-50/85">{result.answer}</p>
-            </section>
-          ) : null}
-
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[10px] uppercase tracking-[0.35em] text-foreground/35">Interpreted</p>
               <p className="mt-2 text-sm text-foreground/65">
-                {result.interpreted?.targets?.join(", ") || "All sources"} / {result.total} matches
+                {normalizedResult.interpreted?.targets?.join(", ") || "All sources"} / {normalizedResult.total} matches
               </p>
             </div>
             <Compass className="h-5 w-5 text-cyan-100/70" />
           </div>
           <DividerList>
-            {flatResults.length ? flatResults.map((item) => (
+            {displayResults.length ? displayResults.map((item) => (
               <ResultItem key={`${item.type}-${item.id || item.slug || item.title}`} item={item} />
             )) : (
               <p className="px-6 py-5 text-sm text-foreground/55">No matching results.</p>

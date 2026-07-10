@@ -28,7 +28,7 @@ export async function smartSearch({ query, limit = DEFAULT_LIMIT, ...params }) {
     .flatMap(([type, items]) => items.map((item) => ({ type, ...item })))
     .sort((a, b) => (b.match?.score || 0) - (a.match?.score || 0))
     .slice(0, safeLimit * 2);
-  const answer = await generateSearchAnswer(rawQuery, flatResults);
+  const answer = await generateSearchAnswer(rawQuery, flatResults, filters);
 
   return {
     query: rawQuery,
@@ -49,7 +49,7 @@ export async function smartSearch({ query, limit = DEFAULT_LIMIT, ...params }) {
   };
 }
 
-async function generateSearchAnswer(query, flatResults) {
+async function generateSearchAnswer(query, flatResults, filters = {}) {
   try {
     const lang = detectResponseLanguage(query);
     const context = buildSearchAnswerContext(flatResults);
@@ -58,7 +58,7 @@ async function generateSearchAnswer(query, flatResults) {
         ? "Tra loi bang tieng Viet tu nhien, co dau, ngan gon va de hieu."
         : "Answer in English, concise and easy to understand.";
 
-    return await createChatCompletion({
+    const aiAnswer = await createChatCompletion({
       model: SEARCH_AI_MODEL,
       temperature: 0.35,
       maxTokens: SEARCH_AI_MAX_TOKENS,
@@ -71,7 +71,8 @@ ${languageRule}
 Use the provided search results as context when they are relevant.
 If the results do not contain enough information, answer with general astronomy knowledge and say that CosmoVision has no exact matching record.
 Do not invent CosmoVision database items, URLs, dates, or live observations.
-Return plain text only, 2 to 4 short sentences.
+If multiple search results answer the question, write one short line per result and start each line with the result name.
+Return plain text only, concise and easy to scan.
 `.trim(),
         },
         {
@@ -80,13 +81,73 @@ Return plain text only, 2 to 4 short sentences.
         },
       ],
     });
+    return aiAnswer || buildFallbackSearchAnswer(query, flatResults, filters);
   } catch (error) {
     logger.warn("Search AI answer unavailable", {
       message: error.message,
       statusCode: error.statusCode,
     });
-    return null;
+    return buildFallbackSearchAnswer(query, flatResults, filters);
   }
+}
+
+function buildFallbackSearchAnswer(query, flatResults = [], filters = {}) {
+  const lang = detectResponseLanguage(query);
+  const isVi = lang === "vi";
+
+  if (filters.planetMetric) {
+    const planet = flatResults.find((item) => item.type === "planets");
+    if (planet) {
+      const measurement = describePlanetMetric(planet, filters.planetMetric);
+      const moons = planet.numberOfMoons != null ? ` and ${planet.numberOfMoons} known moons` : "";
+      return isVi
+        ? `${planet.name} la ket qua phu hop nhat cho yeu cau "${filters.planetMetric.label}". ${planet.description || "Du lieu CosmoVision xep hang ket qua nay theo thuoc tinh hanh tinh phu hop."}`
+        : `${planet.name} is the strongest match for "${filters.planetMetric.label}"${measurement}. ${planet.description || `CosmoVision ranked this result by the requested planet property${moons}.`}`;
+    }
+  }
+
+  if (filters.month?.name) {
+    const constellations = flatResults
+      .filter((item) => item.type === "constellations")
+      .slice(0, 5)
+      .map((item) => item.name);
+    if (constellations.length) {
+      return isVi
+        ? `Trong thang ${filters.month.name}, mot so chom sao phu hop de quan sat la ${joinNames(constellations)}. Ket qua duoc uu tien theo thang/ mua quan sat tot nhat trong du lieu CosmoVision.`
+        : `In ${filters.month.name}, good constellation matches include ${joinNames(constellations)}. CosmoVision ranks these by their best observing month or season.`;
+    }
+  }
+
+  const top = flatResults[0];
+  if (top) {
+    const title = top.name || top.title || "the top match";
+    const summary = top.description || top.summary || top.aiSummary || "It is the strongest CosmoVision match for your search.";
+    return isVi ? `${title} la ket qua phu hop nhat. ${summary}` : `${title} is the strongest match. ${summary}`;
+  }
+
+  return isVi
+    ? "CosmoVision chua tim thay ban ghi trung khop ro rang, nhung ban co the thu tim theo ten hanh tinh, chom sao, dia diem quan sat hoac tin NASA."
+    : "CosmoVision did not find an exact record, but you can search by planet, constellation, observatory, NASA news, or sky event.";
+}
+
+function formatNumber(value) {
+  return new Intl.NumberFormat("en-US").format(value);
+}
+
+function describePlanetMetric(planet, metric) {
+  const value = planet[metric.field];
+  if (value == null) return "";
+  if (metric.field === "diameterKm") return ` at about ${formatNumber(value)} km in diameter`;
+  if (metric.field === "avgTempCelsius") return ` at about ${formatNumber(value)}C average temperature`;
+  if (metric.field === "numberOfMoons") return ` with ${formatNumber(value)} known moons`;
+  if (metric.field === "distanceFromSunAu") return ` at about ${formatNumber(value)} AU from the Sun`;
+  return "";
+}
+
+function joinNames(names) {
+  if (names.length <= 1) return names.join("");
+  if (names.length === 2) return names.join(" and ");
+  return `${names.slice(0, -1).join(", ")}, and ${names.at(-1)}`;
 }
 
 function buildSearchAnswerContext(flatResults = []) {
@@ -104,6 +165,8 @@ function buildSearchAnswerContext(flatResults = []) {
         item.bestSeason ? `best season: ${item.bestSeason}` : null,
         item.hasRings != null ? `has rings: ${item.hasRings}` : null,
         item.numberOfMoons != null ? `moons: ${item.numberOfMoons}` : null,
+        item.diameterKm != null ? `diameter: ${item.diameterKm} km` : null,
+        item.massKg != null ? `mass: ${item.massKg} kg` : null,
         item.publishedAt ? `published: ${item.publishedAt}` : null,
         item.startDate ? `starts: ${item.startDate}` : null,
       ].filter(Boolean);

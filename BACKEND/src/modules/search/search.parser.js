@@ -49,7 +49,11 @@ const STOPWORDS = new Set([
 ]);
 
 const TARGET_KEYWORDS = {
-  planets: ["planet", "planets", "hanh tinh", "rings", "moons", "atmosphere", "venus", "mars", "jupiter", "saturn"],
+  planets: [
+    "planet", "planets", "hanh tinh", "rings", "moons", "atmosphere",
+    "biggest", "largest", "smallest", "hottest", "coldest", "nearest", "farthest",
+    "venus", "mars", "jupiter", "saturn",
+  ],
   constellations: ["constellation", "constellations", "chom sao", "zodiac", "orion", "ursa", "scorpius", "visible"],
   observatories: ["observatory", "observatories", "dai quan sat", "stargazing site", "near me", "nearby", "gan toi"],
   news: ["news", "tin tuc", "latest", "nasa", "mission", "spaceflight", "discovery"],
@@ -89,6 +93,7 @@ function detectFilters(normalizedQuery, params = {}) {
   return {
     hasRings: includesAny(normalizedQuery, ["ring", "rings", "vanh dai"]),
     hasMoons: includesAny(normalizedQuery, ["moon", "moons", "mat trang"]),
+    planetMetric: detectPlanetMetric(normalizedQuery),
     gasGiant: includesAny(normalizedQuery, ["gas giant", "khi khong lo"]),
     rocky: includesAny(normalizedQuery, ["rocky", "terrestrial", "da", "dat da"]),
     nearMe: includesAny(normalizedQuery, ["near me", "nearby", "gan toi", "gan day"]),
@@ -100,6 +105,31 @@ function detectFilters(normalizedQuery, params = {}) {
     lat: Number.isFinite(Number(lat)) ? Number(lat) : null,
     lon: Number.isFinite(Number(lon)) ? Number(lon) : null,
   };
+}
+
+function detectPlanetMetric(normalizedQuery) {
+  if (includesAny(normalizedQuery, ["biggest", "largest", "largest planet", "biggest planet", "lon nhat"])) {
+    return { field: "diameterKm", direction: "desc", label: "largest by diameter" };
+  }
+  if (includesAny(normalizedQuery, ["smallest", "smallest planet", "nho nhat"])) {
+    return { field: "diameterKm", direction: "asc", label: "smallest by diameter" };
+  }
+  if (includesAny(normalizedQuery, ["hottest", "warmest", "nong nhat"])) {
+    return { field: "avgTempCelsius", direction: "desc", label: "highest average temperature" };
+  }
+  if (includesAny(normalizedQuery, ["coldest", "coolest", "lanh nhat"])) {
+    return { field: "avgTempCelsius", direction: "asc", label: "lowest average temperature" };
+  }
+  if (includesAny(normalizedQuery, ["most moons", "many moons", "nhieu mat trang"])) {
+    return { field: "numberOfMoons", direction: "desc", label: "most known moons" };
+  }
+  if (includesAny(normalizedQuery, ["nearest to sun", "closest to sun", "gan mat troi"])) {
+    return { field: "distanceFromSunAu", direction: "asc", label: "closest to the Sun" };
+  }
+  if (includesAny(normalizedQuery, ["farthest from sun", "furthest from sun", "xa mat troi"])) {
+    return { field: "distanceFromSunAu", direction: "desc", label: "farthest from the Sun" };
+  }
+  return null;
 }
 
 function detectMonth(normalizedQuery) {

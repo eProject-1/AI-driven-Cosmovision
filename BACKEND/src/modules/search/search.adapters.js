@@ -31,6 +31,8 @@ async function searchPlanets({ tokens, filters, limit }) {
       imageUrl: true,
       hasRings: true,
       numberOfMoons: true,
+      diameterKm: true,
+      massKg: true,
       atmosphere: true,
       distanceFromSunAu: true,
       avgTempCelsius: true,
@@ -51,6 +53,12 @@ async function searchPlanets({ tokens, filters, limit }) {
       score += 1.5;
       reasons.push("has moons");
     }
+    if (filters.planetMetric) {
+      const value = planet[filters.planetMetric.field];
+      if (value == null) return { ...planet, _score: 0, _matchReasons: [] };
+      score += scorePlanetMetric(value, filters.planetMetric);
+      reasons.push(filters.planetMetric.label);
+    }
     if (filters.gasGiant) {
       if (!normalizeSearchText(planet.type).includes("gas")) return { ...planet, _score: 0, _matchReasons: [] };
       score += 2;
@@ -67,6 +75,17 @@ async function searchPlanets({ tokens, filters, limit }) {
   });
 
   return sortAndLimit(results, limit);
+}
+
+function scorePlanetMetric(value, metric) {
+  const normalized = Number(value);
+  if (!Number.isFinite(normalized)) return 0;
+
+  if (metric.field === "diameterKm") return metric.direction === "asc" ? 8 - normalized / 25000 : normalized / 25000;
+  if (metric.field === "avgTempCelsius") return metric.direction === "asc" ? 5 - normalized / 80 : normalized / 80;
+  if (metric.field === "numberOfMoons") return normalized / 25;
+  if (metric.field === "distanceFromSunAu") return metric.direction === "asc" ? 6 - normalized : normalized;
+  return 1;
 }
 
 async function searchConstellations({ tokens, filters, limit }) {
