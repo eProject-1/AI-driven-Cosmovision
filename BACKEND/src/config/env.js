@@ -48,7 +48,7 @@ export const env = {
   DEFAULT_LOCATION_TIMEZONE: process.env.DEFAULT_LOCATION_TIMEZONE || "Asia/Ho_Chi_Minh",
   WEATHER_CACHE_TTL_MINUTES: parseInt(process.env.WEATHER_CACHE_TTL_MINUTES || "60"),
   NASA_API_KEY: process.env.NASA_API_KEY,
-  NEWS_RETENTION_DAYS: parseInt(process.env.NEWS_RETENTION_DAYS || "60"),
+  NEWS_RETENTION_DAYS: parseInt(process.env.NEWS_RETENTION_DAYS || "30"),
   NEWS_AUTO_FETCH_ENABLED: (process.env.NEWS_AUTO_FETCH_ENABLED || "true") === "true",
   NEWS_AUTO_FETCH_INTERVAL_MINUTES: parseInt(process.env.NEWS_AUTO_FETCH_INTERVAL_MINUTES || "720"),
 };

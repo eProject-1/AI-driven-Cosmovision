@@ -43,7 +43,7 @@ export async function fetchLatestExoplanetNews({ pageSize = 10 } = {}) {
 
 export async function cleanupOldNews({ retentionDays = env.NEWS_RETENTION_DAYS } = {}) {
   const days = Number(retentionDays) || env.NEWS_RETENTION_DAYS;
-  const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const cutoffDate = new Date(Date.now() - days *24 * 60 * 60 * 1000);
   const result = await prisma.newsArticle.deleteMany({
     where: {
       publishedAt: { lt: cutoffDate },
