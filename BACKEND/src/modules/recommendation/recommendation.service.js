@@ -1,7 +1,7 @@
 import prisma from "../../config/db.js";
 import { AppError } from "../../utils/app.error.util.js";
 import { createLogger } from "../../utils/logger.util.js";
-import { clampInteger } from "../../utils/service.util.js";
+import { clampInteger } from "../../utils/service.helpers.util.js";
 
 import { trackAnalyticsEvent } from "../../services/analytics/analytics.service.js";
 import { geocode, reverseGeocode } from "../../services/external/maps.service.js";

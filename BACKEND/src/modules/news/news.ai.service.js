@@ -1,6 +1,6 @@
 import prisma from "../../config/db.js";
 import groq from "../../config/groq.js";
-import { formatPlainAiResponse, stripAiMarkdown, stripJsonFences } from "../../utils/ai-response-format.util.js";
+import { formatPlainAiResponse, stripAiMarkdown, stripJsonFences } from "../../utils/ai.response.util.js";
 import { AppError } from "../../utils/app.error.util.js";
 
 function buildArticleContext(article) {

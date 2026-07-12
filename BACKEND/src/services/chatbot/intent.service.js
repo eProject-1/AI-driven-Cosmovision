@@ -1,5 +1,4 @@
 import { findMatchedKeywords, hasKeyword } from "../../utils/fuzzy.match.util.js";
-import { normalizeText } from "../../utils/normalize.util.js";
 
 const INTENT_TYPES = {
   GENERAL: "general",
@@ -170,6 +169,16 @@ function buildIntentMatch(config, normalizedMessage, messageWords) {
 
 function normalizeForIntent(text = "") {
   return normalizeText(stripVietnameseTone(text));
+}
+
+function normalizeText(text = "") {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/[^\p{L}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function stripVietnameseTone(text = "") {

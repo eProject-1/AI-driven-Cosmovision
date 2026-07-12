@@ -1,6 +1,7 @@
 import prisma from "../../config/db.js";
 import { AppError } from "../../utils/app.error.util.js";
-import { clampInteger } from "../../utils/service.util.js";
+import { clampInteger } from "../../utils/service.helpers.util.js";
+import { pickDefined } from "../../utils/service.helpers.util.js";
 
 export function slugify(text = "") {
   return text
@@ -220,9 +221,3 @@ async function buildNewsArticleWriteData(payload = {}, { requireBasics = false }
   return data;
 }
 
-function pickDefined(source, fields) {
-  return fields.reduce((result, field) => {
-    if (source[field] !== undefined) result[field] = source[field];
-    return result;
-  }, {});
-}

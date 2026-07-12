@@ -16,3 +16,10 @@ export function requireUserId(userId, message = "User authentication is required
   if (!userId) throw new AppError(message, 401);
   return userId;
 }
+
+export function pickDefined(source = {}, fields = []) {
+  return fields.reduce((result, field) => {
+    if (source[field] !== undefined) result[field] = source[field];
+    return result;
+  }, {});
+}

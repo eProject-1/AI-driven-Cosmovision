@@ -1,15 +1,98 @@
 import prisma from "../../../../config/db.js";
 import { AppError } from "../../../../utils/app.error.util.js";
+import { pickDefined } from "../../../../utils/service.helpers.util.js";
 import { withVerifiedConstellationFallback } from "./constellation.fallback.service.js";
 
-export async function getAllConstellations({ search, season, quadrant } = {}) {
-  const constellations = await prisma.constellation.findMany({
-    where: buildConstellationListWhere({ search, season, quadrant }),
-    select: constellationListSelect,
-    orderBy: { name: "asc" },
-  });
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 50;
 
-  return constellations.map(withVerifiedConstellationFallback);
+const categoryNames = {
+  Mythology: [
+    "Andromeda",
+    "Aquarius",
+    "Capricornus",
+    "Centaurus",
+    "Cetus",
+    "Draco",
+    "Pegasus",
+    "Phoenix",
+    "Sagittarius",
+  ],
+  Human: [
+    "Auriga",
+    "Bootes",
+    "Cassiopeia",
+    "Cepheus",
+    "Coma Berenices",
+    "Gemini",
+    "Hercules",
+    "Indus",
+    "Ophiuchus",
+    "Orion",
+    "Perseus",
+    "Virgo",
+  ],
+  Objects: [
+    "Antlia",
+    "Ara",
+    "Caelum",
+    "Carina",
+    "Circinus",
+    "Corona Australis",
+    "Corona Borealis",
+    "Crater",
+    "Crux",
+    "Eridanus",
+    "Fornax",
+    "Libra",
+    "Lyra",
+    "Mensa",
+    "Microscopium",
+    "Norma",
+    "Octans",
+    "Pictor",
+    "Puppis",
+    "Pyxis",
+    "Reticulum",
+    "Sagitta",
+    "Sculptor",
+    "Scutum",
+    "Sextans",
+    "Telescopium",
+    "Triangulum",
+    "Triangulum Australe",
+    "Vela",
+  ],
+};
+
+const nonAnimalNames = Object.values(categoryNames).flat();
+
+export async function getAllConstellations(query = {}) {
+  const { page, limit, skip, take } = parsePagination(query);
+  const where = buildConstellationListWhere(query);
+
+  const [constellations, total] = await Promise.all([
+    prisma.constellation.findMany({
+      where,
+      select: constellationListSelect,
+      orderBy: { name: "asc" },
+      skip,
+      take,
+    }),
+    prisma.constellation.count({ where }),
+  ]);
+
+  return {
+    constellations: constellations.map(withVerifiedConstellationFallback),
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      hasNext: skip + take < total,
+      hasPrev: page > 1,
+    },
+  };
 }
 
 export async function getConstellationBySlug(slug) {
@@ -134,15 +217,36 @@ const constellationWriteFields = [
   "isVisible",
 ];
 
-function buildConstellationListWhere({ search, season, quadrant }) {
+function parsePagination(query = {}) {
+  const page = Math.max(1, Number.parseInt(query.page, 10) || 1);
+  const limit = Math.min(
+    MAX_PAGE_SIZE,
+    Math.max(1, Number.parseInt(query.limit, 10) || DEFAULT_PAGE_SIZE)
+  );
+
+  return {
+    page,
+    limit,
+    skip: (page - 1) * limit,
+    take: limit,
+  };
+}
+
+function buildConstellationListWhere({ search, season, quadrant, letter, category, hemisphere }) {
   const where = { isVisible: true };
+  const and = [];
 
   if (search) {
-    where.OR = [
-      { name: { contains: search, mode: "insensitive" } },
-      { latinName: { contains: search, mode: "insensitive" } },
-      { abbreviation: { contains: search, mode: "insensitive" } },
-    ];
+    and.push({
+      OR: [
+        { name: { contains: search, mode: "insensitive" } },
+        { latinName: { contains: search, mode: "insensitive" } },
+        { abbreviation: { contains: search, mode: "insensitive" } },
+        { brightestStar: { contains: search, mode: "insensitive" } },
+        { family: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ],
+    });
   }
 
   if (season) {
@@ -152,6 +256,38 @@ function buildConstellationListWhere({ search, season, quadrant }) {
   if (quadrant) {
     where.quadrant = { equals: quadrant, mode: "insensitive" };
   }
+
+  if (letter && /^[a-z]$/i.test(letter)) {
+    and.push({ name: { startsWith: letter, mode: "insensitive" } });
+  }
+
+  if (hemisphere === "Northern") {
+    where.quadrant = { startsWith: "N", mode: "insensitive" };
+  } else if (hemisphere === "Southern") {
+    where.quadrant = { startsWith: "S", mode: "insensitive" };
+  } else if (hemisphere === "Equatorial") {
+    and.push({
+      OR: [
+        { quadrant: null },
+        {
+          AND: [
+            { quadrant: { not: { startsWith: "N", mode: "insensitive" } } },
+            { quadrant: { not: { startsWith: "S", mode: "insensitive" } } },
+          ],
+        },
+      ],
+    });
+  }
+
+  if (category && category !== "All") {
+    if (category === "Animals") {
+      and.push({ name: { notIn: nonAnimalNames } });
+    } else if (categoryNames[category]) {
+      and.push({ name: { in: categoryNames[category] } });
+    }
+  }
+
+  if (and.length) where.AND = and;
 
   return where;
 }
@@ -189,13 +325,6 @@ function getMonthName(month) {
   }
 
   return monthNames[monthNum];
-}
-
-function pickDefined(source, fields) {
-  return fields.reduce((result, field) => {
-    if (source[field] !== undefined) result[field] = source[field];
-    return result;
-  }, {});
 }
 
 function slugify(value = "") {

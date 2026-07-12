@@ -42,39 +42,9 @@ function parseCsv(value) {
     .filter(Boolean);
 }
 
-function normalizeText(value) {
-  return String(value ?? "")
-    .trim()
-    .toLowerCase();
-}
-
-function matchesSearch(obs, search) {
-  const term = normalizeText(search);
-  if (!term) return true;
-
-  return [
-    obs.name,
-    obs.description,
-    obs.type,
-    obs.address,
-    obs.city,
-    obs.province,
-    obs.country,
-    ...(obs.equipment || []),
-  ].some((value) => normalizeText(value).includes(term));
-}
-
-function matchesEquipment(obs, equipmentTerms) {
-  if (!equipmentTerms.length) return true;
-  const equipmentText = normalizeText((obs.equipment || []).join(" "));
-
-  return equipmentTerms.some((term) =>
-    equipmentText.includes(normalizeText(term))
-  );
-}
-
 export function buildObservatoryWhere(query = {}) {
   const where = { isActive: true };
+  const and = [];
 
   if (query.city) {
     where.city = { contains: query.city, mode: "insensitive" };
@@ -102,16 +72,28 @@ export function buildObservatoryWhere(query = {}) {
     where.lightPollutionScore = { lte: maxLightPollution };
   }
 
-  return where;
-}
+  if (query.search) {
+    const search = String(query.search).trim();
+    and.push({
+      OR: [
+        { name: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+        { address: { contains: search, mode: "insensitive" } },
+        { city: { contains: search, mode: "insensitive" } },
+        { province: { contains: search, mode: "insensitive" } },
+        { country: { contains: search, mode: "insensitive" } },
+      ],
+    });
+  }
 
-export function applyTextFilters(observatories, query = {}) {
   const equipment = parseCsv(query.equipment);
+  if (equipment.length) {
+    and.push({ equipment: { hasSome: equipment } });
+  }
 
-  return observatories.filter((obs) =>
-    matchesSearch(obs, query.search) &&
-    matchesEquipment(obs, equipment)
-  );
+  if (and.length) where.AND = and;
+
+  return where;
 }
 
 export { calculateDistanceKm };

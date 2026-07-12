@@ -1,8 +1,8 @@
 import prisma from "../../config/db.js";
 import { AppError } from "../../utils/app.error.util.js";
+import { pickDefined } from "../../utils/service.helpers.util.js";
 import { getUserRecommendations } from "../recommendation/recommendation.service.js";
 import {
-  applyTextFilters,
   buildObservatoryWhere,
   calculateDistanceKm,
   clampLimit,
@@ -71,21 +71,25 @@ export async function deleteObservatory(slug) {
 
 export async function getAllObservatories(query = {}) {
   const { page, limit, skip, take } = parsePagination(query);
-  const allObservatories = await prisma.observatory.findMany({
-    where: buildObservatoryWhere(query),
-    orderBy: defaultObservatoryOrder,
-  });
-  const filteredObservatories = applyTextFilters(allObservatories, query);
-  const observatories = filteredObservatories.slice(skip, skip + take);
+  const where = buildObservatoryWhere(query);
+  const [observatories, total] = await Promise.all([
+    prisma.observatory.findMany({
+      where,
+      orderBy: defaultObservatoryOrder,
+      skip,
+      take,
+    }),
+    prisma.observatory.count({ where }),
+  ]);
 
   return {
     observatories: observatories.map((obs) => formatObservatory(obs)),
     pagination: {
       page,
       limit,
-      total: filteredObservatories.length,
-      totalPages: Math.ceil(filteredObservatories.length / limit),
-      hasNext: skip + take < filteredObservatories.length,
+      total,
+      totalPages: Math.ceil(total / limit),
+      hasNext: skip + take < total,
       hasPrev: page > 1,
     },
   };
@@ -153,18 +157,27 @@ export async function getObservatoryBySlug(slug, userId = null) {
 }
 
 export async function getObservatoryStats(query = {}, userId = null) {
-  const [allObservatories, savedCount] = await Promise.all([
-    prisma.observatory.findMany({ where: buildObservatoryWhere(query) }),
+  const where = buildObservatoryWhere(query);
+  const [total, featured, averages, savedCount] = await Promise.all([
+    prisma.observatory.count({ where }),
+    prisma.observatory.count({ where: { ...where, isFeatured: true } }),
+    prisma.observatory.aggregate({
+      where,
+      _avg: {
+        skyQualityScore: true,
+        lightPollutionScore: true,
+        elevation: true,
+      },
+    }),
     userId ? prisma.savedObservatory.count({ where: { userId } }) : Promise.resolve(0),
   ]);
-  const observatories = applyTextFilters(allObservatories, query);
-  const avgSkyQuality = numericAverage(observatories, "skyQualityScore");
-  const avgLightPollution = numericAverage(observatories, "lightPollutionScore");
-  const avgElevation = numericAverage(observatories, "elevation");
+  const avgSkyQuality = averages._avg.skyQualityScore;
+  const avgLightPollution = averages._avg.lightPollutionScore;
+  const avgElevation = averages._avg.elevation;
 
   return {
-    total: observatories.length,
-    featured: observatories.filter((obs) => obs.isFeatured).length,
+    total,
+    featured,
     savedCount,
     averages: {
       skyQualityScore: avgSkyQuality ? Number(avgSkyQuality.toFixed(1)) : null,
@@ -268,22 +281,6 @@ async function ensureObservatoryExists(observatoryId) {
 
   if (!observatory) throw new AppError("Observatory not found", 404);
   return observatory;
-}
-
-function numericAverage(items, key) {
-  const values = items
-    .map((item) => item[key])
-    .filter((value) => value !== null && value !== undefined);
-
-  if (!values.length) return null;
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
-}
-
-function pickDefined(source, fields) {
-  return fields.reduce((result, field) => {
-    if (source[field] !== undefined) result[field] = source[field];
-    return result;
-  }, {});
 }
 
 function slugify(value = "") {

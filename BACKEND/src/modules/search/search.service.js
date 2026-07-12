@@ -1,6 +1,6 @@
 import { AppError } from "../../utils/app.error.util.js";
 import { createLogger } from "../../utils/logger.util.js";
-import { clampInteger } from "../../utils/service.util.js";
+import { clampInteger } from "../../utils/service.helpers.util.js";
 import { detectResponseLanguage } from "../../services/chatbot/intent.service.js";
 import { createChatCompletion } from "../../services/chatbot/llm.service.js";
 import { SEARCH_ADAPTERS } from "./search.adapters.js";

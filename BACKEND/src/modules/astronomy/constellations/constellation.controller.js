@@ -1,6 +1,6 @@
 // modules/astronomy/constellations/constellation.controller.js
-import { asyncHandler } from "../../../utils/async.handler.util.js";
-import { sendSuccess } from "../../../utils/response.util.js";
+import { asyncHandler } from "../../../utils/controller.helpers.util.js";
+import { sendSuccess } from "../../../utils/controller.helpers.util.js";
 import { buildUploadedFileUrl } from "../../../middlewares/upload.middleware.js";
 import { env } from "../../../config/env.js";
 import {
@@ -19,8 +19,17 @@ import {
 } from "./constellation.service.js";
 
 export const getAllConstellations = asyncHandler(async (req, res) => {
-  const { search, season, quadrant } = req.query;
-  const constellations = await fetchAllConstellations({ search, season, quadrant });
+  const { search, season, quadrant, page, limit, letter, category, hemisphere } = req.query;
+  const constellations = await fetchAllConstellations({
+    search,
+    season,
+    quadrant,
+    page,
+    limit,
+    letter,
+    category,
+    hemisphere,
+  });
   return sendSuccess(res, constellations);
 });
 

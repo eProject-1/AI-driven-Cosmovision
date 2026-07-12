@@ -1,5 +1,5 @@
 import prisma from "../config/db.js";
-import { sendError } from "../utils/response.util.js";
+import { sendError } from "../utils/controller.helpers.util.js";
 import { verifyToken } from "../utils/jwt.util.js";
 
 const userSessionSelect = {
