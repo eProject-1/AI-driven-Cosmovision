@@ -4,7 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { promisify } from "util";
 import { createLogger } from "../../utils/logger.util.js";
-import { clampUnitInterval } from "../../utils/service.util.js";
+import { clampUnitInterval } from "../../utils/service.helpers.util.js";
 
 const execFileAsync = promisify(execFile);
 const logger = createLogger("constellation-recognition");

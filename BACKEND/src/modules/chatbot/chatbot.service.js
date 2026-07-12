@@ -1,7 +1,7 @@
 import { AppError } from "../../utils/app.error.util.js";
-import { formatPlainAiResponse } from "../../utils/ai-response-format.util.js";
+import { formatPlainAiResponse } from "../../utils/ai.response.util.js";
 import { createLogger } from "../../utils/logger.util.js";
-import { clampInteger, requireUserId } from "../../utils/service.util.js";
+import { clampInteger, requireUserId } from "../../utils/service.helpers.util.js";
 
 import { trackAnalyticsEvent } from "../../services/analytics/analytics.service.js";
 import {

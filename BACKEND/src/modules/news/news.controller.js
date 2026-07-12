@@ -1,6 +1,6 @@
-import { asyncHandler } from "../../utils/async.handler.util.js";
-import { sendSuccess } from "../../utils/response.util.js";
-import { parseOrSendError } from "../../utils/validation.util.js";
+import { asyncHandler } from "../../utils/controller.helpers.util.js";
+import { sendSuccess } from "../../utils/controller.helpers.util.js";
+import { parseOrSendError } from "../../utils/controller.helpers.util.js";
 
 import {
   getNewsQuerySchema,

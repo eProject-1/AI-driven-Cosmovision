@@ -1,18 +1,26 @@
 // auth.service.js
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import prisma from "../../config/db.js";
+import { env } from "../../config/env.js";
 import { signToken } from "../../utils/jwt.util.js";
 import { AppError } from "../../utils/app.error.util.js";
 import { createLogger } from "../../utils/logger.util.js";
-import {
-  assertEmailCanReceiveVerification,
-  createVerificationToken,
-  getStoredTokenParts,
-  hashVerificationToken,
-} from "../../utils/email.verification.util.js";
 import { sendVerificationEmailOrDevFallback } from "../../services/external/email.service.js";
 
 const logger = createLogger("auth");
+const TOKEN_SEPARATOR = ":";
+const disposableDomains = new Set([
+  "10minutemail.com",
+  "20minutemail.com",
+  "guerrillamail.com",
+  "mailinator.com",
+  "sharklasers.com",
+  "tempmail.com",
+  "temp-mail.org",
+  "throwawaymail.com",
+  "yopmail.com",
+]);
 
 const toAuthUser = (user) => ({
   id: user.id,
@@ -45,6 +53,38 @@ const emailDeliveryError = (err) => {
 };
 
 const RESEND_COOLDOWN_SECONDS = 60;
+
+const createVerificationToken = () => {
+  const token = crypto.randomBytes(32).toString("hex");
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const expiresAt = Date.now() + env.EMAIL_VERIFICATION_TOKEN_TTL_MINUTES * 60 * 1000;
+
+  return {
+    token,
+    storedToken: `${tokenHash}${TOKEN_SEPARATOR}${expiresAt}`,
+    expiresAt: new Date(expiresAt),
+  };
+};
+
+const hashVerificationToken = (token) =>
+  crypto.createHash("sha256").update(token).digest("hex");
+
+const getStoredTokenParts = (storedToken) => {
+  const [tokenHash, expiresAt] = String(storedToken || "").split(TOKEN_SEPARATOR);
+  return { tokenHash, expiresAt: Number(expiresAt) };
+};
+
+const assertEmailCanReceiveVerification = (email) => {
+  const domain = email.split("@")[1]?.toLowerCase();
+
+  if (!domain) {
+    throw new AppError("Email is invalid", 400);
+  }
+
+  if (disposableDomains.has(domain)) {
+    throw new AppError("Please use a real email address, not a temporary email.", 400);
+  }
+};
 
 const makeUsername = async (email) => {
   const base =

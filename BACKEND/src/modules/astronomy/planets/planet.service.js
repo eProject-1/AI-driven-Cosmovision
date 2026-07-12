@@ -1,7 +1,8 @@
 import prisma from "../../../config/db.js";
 import groq from "../../../config/groq.js";
 import { AppError } from "../../../utils/app.error.util.js";
-import { stripJsonFences } from "../../../utils/ai-response-format.util.js";
+import { stripJsonFences } from "../../../utils/ai.response.util.js";
+import { pickDefined } from "../../../utils/service.helpers.util.js";
 
 export async function getAllPlanets() {
   return prisma.planet.findMany({
@@ -255,13 +256,6 @@ function buildPlanetWriteData(payload = {}, { requireBasics = false } = {}) {
   }
 
   return data;
-}
-
-function pickDefined(source, fields) {
-  return fields.reduce((result, field) => {
-    if (source[field] !== undefined) result[field] = source[field];
-    return result;
-  }, {});
 }
 
 function slugify(value = "") {
