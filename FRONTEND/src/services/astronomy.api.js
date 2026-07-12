@@ -2,7 +2,34 @@ import { deleteData, getData, postData } from "./api.js";
 
 export const getPlanets = () => getData("/astronomy/planets");
 
-export const getConstellations = () => getData("/astronomy/constellations");
+const CONSTELLATION_PAGE_SIZE = 50;
+
+function normalizeConstellationList(data) {
+  if (Array.isArray(data)) return { items: data, pagination: null };
+  return {
+    items: Array.isArray(data?.constellations) ? data.constellations : [],
+    pagination: data?.pagination || null,
+  };
+}
+
+export const getConstellations = async () => {
+  const firstPage = normalizeConstellationList(
+    await getData("/astronomy/constellations", { params: { page: 1, limit: CONSTELLATION_PAGE_SIZE } })
+  );
+
+  const totalPages = firstPage.pagination?.totalPages || 1;
+  if (totalPages <= 1) return firstPage.items;
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, index) =>
+      getData("/astronomy/constellations", {
+        params: { page: index + 2, limit: CONSTELLATION_PAGE_SIZE },
+      }).then((data) => normalizeConstellationList(data).items)
+    )
+  );
+
+  return [firstPage.items, ...remainingPages].flat();
+};
 
 export const getConstellationsByMonth = (month) => getData(`/astronomy/constellations/month/${month}`);
 
